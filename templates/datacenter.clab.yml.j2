@@ -1,0 +1,26 @@
+name: {{ dc.name }}
+
+mgmt:
+  network: {{ dc.mgmt.network }}
+  ipv4-subnet: {{ dc.mgmt.subnet }}
+
+topology:
+  defaults:
+    kind: linux
+    image: {{ dc.image }}
+
+  nodes:
+{% for name, node in dc.nodes.items() %}
+    {{ name }}:
+      mgmt-ipv4: {{ node.mgmt_ip }}
+      cpu: {{ node.cpu }}
+      memory: {{ node.memory }}
+
+{% endfor %}
+
+  links:
+{% for link in dc.links %}
+    - endpoints:
+        - "{{ link[0] }}"
+        - "{{ link[1] }}"
+{% endfor %}
