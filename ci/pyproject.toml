@@ -3,9 +3,7 @@ name = "datacenter-ci"
 version = "0.1.0"
 description = "Dagger CI pipeline for the datacenter simulator"
 requires-python = ">=3.12"
-dependencies = [
-  "dagger-io==0.21.8",
-]
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]
