@@ -5,66 +5,47 @@ dc:
     network: gpu-dc-mgmt
     subnet: 172.30.0.0/24
 
-  image: ghcr.io/srl-labs/network-multitool:latest
+  profiles:
+    spine:
+      kind: linux
+      image: frrouting/frr:<pinned-version>
+      cpu: 0.5
+      memory: 256Mb
+
+    leaf:
+      kind: linux
+      image: frrouting/frr:<pinned-version>
+      cpu: 0.5
+      memory: 256Mb
+
+    server:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool:<pinned-version>
+      cpu: 1
+      memory: 512Mb
 
   nodes:
+
     spine1:
       role: spine
       mgmt_ip: 172.30.0.11
-      cpu: 0.5
-      memory: 256Mb
+      asn: 65001
+      loopback: 10.255.0.1/32
 
     spine2:
       role: spine
       mgmt_ip: 172.30.0.12
-      cpu: 0.5
-      memory: 256Mb
+      asn: 65002
+      loopback: 10.255.0.2/32
 
     leaf1:
       role: leaf
       mgmt_ip: 172.30.0.21
-      cpu: 0.5
-      memory: 256Mb
+      asn: 65101
+      loopback: 10.255.1.1/32
 
     leaf2:
       role: leaf
       mgmt_ip: 172.30.0.22
-      cpu: 0.5
-      memory: 256Mb
-
-    server1:
-      role: server
-      mgmt_ip: 172.30.0.101
-      cpu: 1
-      memory: 512Mb
-
-    server2:
-      role: server
-      mgmt_ip: 172.30.0.102
-      cpu: 1
-      memory: 512Mb
-
-    server3:
-      role: server
-      mgmt_ip: 172.30.0.103
-      cpu: 1
-      memory: 512Mb
-
-    server4:
-      role: server
-      mgmt_ip: 172.30.0.104
-      cpu: 1
-      memory: 512Mb
-
-  links:
-    - ["spine1:eth1", "leaf1:eth1"]
-    - ["spine1:eth2", "leaf2:eth1"]
-
-    - ["spine2:eth1", "leaf1:eth2"]
-    - ["spine2:eth2", "leaf2:eth2"]
-
-    - ["leaf1:eth3", "server1:eth1"]
-    - ["leaf1:eth4", "server2:eth1"]
-
-    - ["leaf2:eth3", "server3:eth1"]
-    - ["leaf2:eth4", "server4:eth1"]
+      asn: 65102
+      loopback: 10.255.1.2/32
