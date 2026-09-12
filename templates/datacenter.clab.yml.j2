@@ -5,22 +5,25 @@ mgmt:
   ipv4-subnet: {{ dc.mgmt.subnet }}
 
 topology:
-  defaults:
-    kind: linux
-    image: {{ dc.image }}
-
   nodes:
 {% for name, node in dc.nodes.items() %}
+{% set profile = dc.profiles[node.role] %}
     {{ name }}:
+      kind: {{ profile.kind }}
+      image: {{ profile.image }}
       mgmt-ipv4: {{ node.mgmt_ip }}
-      cpu: {{ node.cpu }}
-      memory: {{ node.memory }}
+      cpu: {{ profile.cpu }}
+      memory: {{ profile.memory }}
+      labels:
+        role: "{{ node.role }}"
+        asn: "{{ node.asn }}"
+        loopback: "{{ node.loopback }}"
 
 {% endfor %}
-
   links:
 {% for link in dc.links %}
     - endpoints:
-        - "{{ link[0] }}"
-        - "{{ link[1] }}"
+{% for endpoint in link.endpoints %}
+        - "{{ endpoint.node }}:{{ endpoint.interface }}"
+{% endfor %}
 {% endfor %}

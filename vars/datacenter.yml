@@ -1,3 +1,4 @@
+---
 dc:
   name: gpu-dc
 
@@ -8,24 +9,23 @@ dc:
   profiles:
     spine:
       kind: linux
-      image: frrouting/frr:<pinned-version>
+      image: frrouting/frr:v10.5.0
       cpu: 0.5
       memory: 256Mb
 
     leaf:
       kind: linux
-      image: frrouting/frr:<pinned-version>
+      image: frrouting/frr:v10.5.0
       cpu: 0.5
       memory: 256Mb
 
     server:
       kind: linux
-      image: ghcr.io/srl-labs/network-multitool:<pinned-version>
+      image: ghcr.io/srl-labs/network-multitool:v0.9.0
       cpu: 1
       memory: 512Mb
 
   nodes:
-
     spine1:
       role: spine
       mgmt_ip: 172.30.0.11
@@ -49,3 +49,44 @@ dc:
       mgmt_ip: 172.30.0.22
       asn: 65102
       loopback: 10.255.1.2/32
+
+  links:
+    - name: spine1-leaf1
+      endpoints:
+        - node: spine1
+          interface: eth1
+          address: 10.0.0.0/31
+
+        - node: leaf1
+          interface: eth1
+          address: 10.0.0.1/31
+
+    - name: spine1-leaf2
+      endpoints:
+        - node: spine1
+          interface: eth2
+          address: 10.0.0.2/31
+
+        - node: leaf2
+          interface: eth1
+          address: 10.0.0.3/31
+
+    - name: spine2-leaf1
+      endpoints:
+        - node: spine2
+          interface: eth1
+          address: 10.0.0.4/31
+
+        - node: leaf1
+          interface: eth2
+          address: 10.0.0.5/31
+
+    - name: spine2-leaf2
+      endpoints:
+        - node: spine2
+          interface: eth2
+          address: 10.0.0.6/31
+
+        - node: leaf2
+          interface: eth2
+          address: 10.0.0.7/31
