@@ -1,0 +1,41 @@
+---
+- name: Destroy virtual datacenter
+  hosts: labhost
+  gather_facts: false
+
+  vars_files:
+    - ../vars/datacenter.yml
+
+  vars:
+    project_root: "{{ playbook_dir }}/.."
+    topology_file: "{{ project_root }}/build/{{ dc.name }}.clab.yml"
+
+  tasks:
+    - name: Check whether generated topology exists
+      ansible.builtin.stat:
+        path: "{{ topology_file }}"
+      register: topology_file_status
+
+    - name: Destroy containerlab datacenter
+      become: true
+      ansible.builtin.command:
+        argv:
+          - containerlab
+          - destroy
+          - --topo
+          - "{{ topology_file }}"
+          - --cleanup
+      register: containerlab_destroy
+      when: topology_file_status.stat.exists
+
+    - name: Show destroy output
+      ansible.builtin.debug:
+        var: containerlab_destroy.stdout_lines
+      when:
+        - topology_file_status.stat.exists
+        - containerlab_destroy is defined
+
+    - name: Report when topology does not exist
+      ansible.builtin.debug:
+        msg: "Topology {{ topology_file }} does not exist; nothing to destroy."
+      when: not topology_file_status.stat.exists
