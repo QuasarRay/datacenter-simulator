@@ -189,3 +189,18 @@ def test_simulator_resource_units_and_quota(number,unit,binary):
     assert module.cpu_limit({'NanoCpus':0,'CpuQuota':number*25000,'CpuPeriod':100000})==Fraction(number,4)
     for bad in [{},{'CpuQuota':-1,'CpuPeriod':100000},{'CpuQuota':50000,'CpuPeriod':0}]:
         with pytest.raises(ValueError):module.cpu_limit(bad)
+
+
+@given(st.sampled_from(['name','label','subnet','attached','driver']))
+def test_network_cleanup_refuses_unowned_or_active_network(defect):
+    file=ROOT.parents[2]/'ci/cleanup_network.py'
+    spec=importlib.util.spec_from_file_location('ex457_network_cleanup',file)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    network={'Id':'synthetic-id','Name':'gpu-dc-mgmt','Driver':'bridge','Labels':{'containerlab':''},'Containers':{},'IPAM':{'Config':[{'Subnet':'172.30.0.0/24'}]}}
+    assert module.validate(network,'gpu-dc-mgmt','172.30.0.0/24')=='synthetic-id'
+    if defect=='name':network['Name']='other-lab'
+    elif defect=='label':network['Labels']={}
+    elif defect=='subnet':network['IPAM']['Config'][0]['Subnet']='192.0.2.0/24'
+    elif defect=='attached':network['Containers']={'active':{'Name':'other-lab-node'}}
+    else:network['Driver']='overlay'
+    with pytest.raises(ValueError):module.validate(network,'gpu-dc-mgmt','172.30.0.0/24')

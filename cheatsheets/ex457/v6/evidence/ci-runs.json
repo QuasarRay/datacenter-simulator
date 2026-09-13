@@ -63,6 +63,21 @@
       ],
       "cause": "All four legacy nodes and fabric links ran. Original pyATS incorrectly assumed NanoCpus and binary Mb units. Containerlab 0.79 source uses quota/period and go-humanize decimal MB. Corrected the oracle and added SI/IEC and CPU quota properties.",
       "live_lab": "LEGACY_RESOURCES_REJECTED_BY_INCORRECT_ORACLE"
+    },
+    {
+      "id": 34749817183,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749817183",
+      "commit": "b0fbb8874c339e895a23c7895125626414e94e12",
+      "status": "FAIL",
+      "passed": [
+        "legacy-deploy",
+        "legacy-pyats",
+        "legacy-destroy",
+        "v6-prepare",
+        "v6-image"
+      ],
+      "cause": "All original simulator tests passed and the v6 adapter built. Teardown returned success but left gpu-dc-mgmt holding the shared subnet. Added exact-name/label/subnet/no-endpoint checks and explicit empty-network release; reject unrelated or active networks.",
+      "live_lab": "V6_DEPLOY_BLOCKED_BY_RETAINED_NETWORK"
     }
   ]
 }

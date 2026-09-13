@@ -391,5 +391,12 @@
     "status": "PASS",
     "cases": 69,
     "scope": "Clean Git archive of 3d1ac5542731a85cf3d2df93022bd31c6bdcc742 before adding three Controller/resource regression tests; all 24 full validation groups passed there."
+  },
+  "network_cleanup_followup": {
+    "status": "PASS",
+    "targeted_pytest_cases": 11,
+    "log": "logs/network-cleanup-followup.log",
+    "root_destroy_syntax": "PASS",
+    "live_release_postcondition": "CI_PENDING"
   }
 }

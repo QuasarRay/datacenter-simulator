@@ -30,10 +30,24 @@
 
     - name: Show destroy output
       ansible.builtin.debug:
-        var: containerlab_destroy.stdout_lines
+        msg: "{{ containerlab_destroy.stdout_lines + containerlab_destroy.stderr_lines }}"
       when:
         - topology_file_status.stat.exists
         - containerlab_destroy is defined
+
+    - name: Verify release of the empty owned management network
+      become: true
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - "{{ project_root }}/ci/cleanup_network.py"
+          - --name
+          - "{{ dc.mgmt.network }}"
+          - --subnet
+          - "{{ dc.mgmt.subnet }}"
+      register: management_cleanup
+      changed_when: "'Management network released:' in management_cleanup.stdout"
+      when: topology_file_status.stat.exists
 
     - name: Report when topology does not exist
       ansible.builtin.debug:

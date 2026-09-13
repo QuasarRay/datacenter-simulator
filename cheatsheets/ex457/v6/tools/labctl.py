@@ -162,6 +162,7 @@ def main():
         print('Lifecycle complete; run verify_fabric.yml and labctl dataplane next')
     elif args.action == 'destroy':
         run(['containerlab', 'destroy', '--topo', STATE / 'datacenter.clab.yml', '--cleanup'], privileged=True)
+        run([sys.executable, ROOT.parents[2] / 'ci/cleanup_network.py', '--name', 'ex457-v6-mgmt', '--subnet', DC['mgmt']['subnet']], privileged=True)
         print('Lab destroyed; private host identities and backups retained in .state')
 
 
