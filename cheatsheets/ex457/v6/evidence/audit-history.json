@@ -1,0 +1,1261 @@
+{
+  "schema": 1,
+  "scope": "103 available historical findings: 32 v3 entries carried in v4, 48 v4 findings, 23 v5 findings. Original v3 audit and any earlier audits were not available. Regression coverage, source review and runtime acceptance are separate. Two newly discovered v6 integration defects are documented in v6-changes.md.",
+  "findings": [
+    {
+      "id": "V3-001",
+      "title": "established-filter hides stale peer",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-002",
+      "title": "stale-peer drill can false-pass",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-003",
+      "title": "wrong CaC workflow field",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-004",
+      "title": "no Controller groups/vars",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-005",
+      "title": "local-only custom EE",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-006",
+      "title": "`source_mapping` hard-coded PASS",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-007",
+      "title": "model validator hard-coded topology",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_properties.py::test_invalid_model_rejected"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-008",
+      "title": "Job Templates omit EE",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-009",
+      "title": "`run_id` undefined in Controller",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_state.py::TestBackupLifecycle"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-010",
+      "title": "Navigator smoke tests after `cd ee`",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-011",
+      "title": "no exact address set",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-012",
+      "title": "route check placeholder",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-013",
+      "title": "stale address no failure gate",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-014",
+      "title": "anchors not validated",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-015",
+      "title": "external URL live check absent",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-016",
+      "title": "Containerlab unpinned",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_properties.py::test_exact_containerlab_version"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-017",
+      "title": "ssh-keyscan trust issue",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-018",
+      "title": "host-key mount ownership risk",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-019",
+      "title": "Controller EE object absent",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-020",
+      "title": "backup durability not implemented",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_state.py::test_export_conditional_write_and_readback"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-021",
+      "title": "legacy FRR compatibility",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-022",
+      "title": "image digests",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-023",
+      "title": "global known_hosts pollution",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-024",
+      "title": "weak saved-state grep",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-025",
+      "title": "no lifecycle-aware restart",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-026",
+      "title": "Dockerfile/Jinja not runtime validated",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-027",
+      "title": "YAML not Ansible schema",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-028",
+      "title": "relative-link check vacuous",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-029",
+      "title": "source URL hashes",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-030",
+      "title": "Project uses mutable main",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-031",
+      "title": "SCM credential missing from CaC",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V3-032",
+      "title": "backup restore never tested",
+      "severity": "INHERITED_UNRATED",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "source": "v4/evidence/10_v3_audit_closure.md",
+      "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
+    },
+    {
+      "id": "V4-001",
+      "title": "Alpine `ansible` account is created but never unlocked",
+      "severity": "CRITICAL",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-002",
+      "title": "Lab `known_hosts` is wired through OpenSSH args that do not define `network_cli` trust",
+      "severity": "CRITICAL",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-003",
+      "title": "`remote_nodes` is undefined in the shipped verifier",
+      "severity": "CRITICAL",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Convergence",
+        "tests/test_properties.py::test_generated_model_oracle"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-004",
+      "title": "`0% packet loss` substring test also matches `100% packet loss`",
+      "severity": "CRITICAL",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_ping_truth_table"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-005",
+      "title": "Inventory points at `examples/lab/known_hosts`, while setup creates root `lab/known_hosts`",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-006",
+      "title": "Controller path has no deterministic server-host-key trust mechanism",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_pinned_awx_injector",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-007",
+      "title": "BGP route predicate only tests non-empty JSON, not the exact expected route/path",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-008",
+      "title": "Address equality loses interface-to-address mapping",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed",
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-009",
+      "title": "Referenced `playbooks/show_version.yml` is not shipped",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-010",
+      "title": "Controller-referenced change/verify/diag playbooks are not shipped",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives",
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-011",
+      "title": "Chapter 02 requires custom EE before chapter 06 builds it",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-012",
+      "title": "EE build instructions use root `ee/`, while ZIP only ships `examples/ee/`",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-013",
+      "title": "`lab/authorized_keys` copy occurs before root `lab/` is created",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_automation.py::test_invalid_public_key_rejected_before_state_writes"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-014",
+      "title": "Static checks do not detect undefined Ansible/Jinja variables",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-015",
+      "title": "Verification check is fragment-based and missed the packet-loss false positive",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_ping_truth_table"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-016",
+      "title": "`manual_source_review` is hard-coded rather than derived",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-017",
+      "title": "`reviewed: true` is self-asserted and machine-accepted without source content",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-018",
+      "title": "Vendored repo snapshot is not cryptographically compared with the pinned GitHub blob",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-019",
+      "title": "Multi-vendor chapter is anchored to a claim that does not state the multi-vendor preparation fact",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-020",
+      "title": "`repo_model_validation` status can remain PASS for some model-check failures",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_invalid_model_rejected"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-021",
+      "title": "Bespoke assertions are not real `infra.aap_configuration` schema validation",
+      "severity": "HIGH",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-022",
+      "title": "v3 route-verification defect is marked closed although v4 route/ping gates cannot run correctly",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected",
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-023",
+      "title": "v3 host-trust defect is marked closed although `network_cli` does not consume the lab trust design",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-024",
+      "title": "\u201cexact address set\u201d is only flat value equality, not interface-scoped state",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed",
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-025",
+      "title": "Saved-state verification is prose, not a runnable verified implementation",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-026",
+      "title": "Backup restore drill is prose and does not prove backup usability",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Persistence",
+        "tests/test_state.py::TestBackupLifecycle"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-027",
+      "title": "Restart config reload is insufficiently proven; upstream start script does not visibly invoke `vtysh -b`",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-028",
+      "title": "Red Hat registry authentication prerequisite is omitted before using entitled base image",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-029",
+      "title": "`network_cli` SSH backend is left on `auto`, so libssh/Paramiko behavior can change",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-030",
+      "title": "Suggestion to use `set_stats` for propagating `backup_run_id` is misleading",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_state.py::TestBackupLifecycle"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-031",
+      "title": "Address regex only recognizes one exact FRR `ip address` line form",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-032",
+      "title": "BGP-table presence is not the same as forwarding-table installation",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected",
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-033",
+      "title": "Several operational sources use moving `latest`/current docs",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-034",
+      "title": "Containerlab-image tag construction/publication is weakly evidenced",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-035",
+      "title": "`00_content_to_sources.md` itself is not cross-validated",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-036",
+      "title": "File-level anchors remain coarse for files containing many independent claims",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-037",
+      "title": "\u201cOFFICIAL-REDHAT-COP\u201d can be mistaken for Red Hat product support",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-038",
+      "title": "Manifest is unsigned; it proves self-consistency, not authenticity",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_nonempty_manifest_exact_coverage"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-039",
+      "title": "No real Ansible module argument/spec or playbook syntax validation occurs",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
+        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-040",
+      "title": "Dockerfile, Jinja, shell, and FRR commands are not built/linted/executed",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Transport",
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-041",
+      "title": "Runtime plan inherits the undefined-`remote_nodes` and ping predicate defects",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Convergence"
+      ],
+      "acceptance": "Run named live pyATS case on the pinned image; see CI results for this revision.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-042",
+      "title": "Durable backup storage is explained but not implemented in the integrated Controller exercise",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_state.py::test_export_conditional_write_and_readback"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-043",
+      "title": "Stable host keys are machine-local, so Controller trust is not portable to another operator/host",
+      "severity": "MEDIUM",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_automation.py::test_pinned_awx_injector",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-044",
+      "title": "No automated check verifies key/bind/trust files exist before deployment",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_topology_mutations_rejected"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-045",
+      "title": "Timestamp fallback can vary across serial batches if neither `awx_job_id` nor explicit `run_id` exists",
+      "severity": "LOW",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_state.py::TestBackupLifecycle"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-046",
+      "title": "Address normalization is textual; semantically equivalent forms are not normalized",
+      "severity": "LOW",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_address_drift_rejected_and_removed"
+      ],
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-047",
+      "title": "Evidence anchors are IDs, not direct navigable links",
+      "severity": "LOW",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V4-048",
+      "title": "Generated private keys/backups/trust artifacts have no complete cleanup/retention policy",
+      "severity": "LOW",
+      "status": "DOCUMENTED_BOUNDARY",
+      "tests": [
+        "tests/test_state.py::test_state_permissions_repaired"
+      ],
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "source": "ex457_v4_adversarial_audit.zip",
+      "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
+    },
+    {
+      "id": "V5-F001",
+      "title": "The network playbooks fail before creating their SSH configuration",
+      "severity": "CRITICAL",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
+        "tests/pyats_live.py::Transport"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F002",
+      "title": "The credential injector namespace disagrees with AWX 24.6.1",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_pinned_awx_injector"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F003",
+      "title": "The startup reader is not tied to the integrated FRR save file",
+      "severity": "HIGH",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/pyats_live.py::Persistence"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F004",
+      "title": "The configuration parser loses routing and address-family context",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_wrong_address_family_rejected",
+        "tests/test_properties.py::test_out_of_scope_statements_rejected",
+        "tests/test_properties.py::test_unsupported_bgp_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F005",
+      "title": "A good next hop masks additional unmodeled forwarding next hops",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F006",
+      "title": "Route verification ignores the modeled output interface",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_route_mutation_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F007",
+      "title": "Nonadjacent routers may share an ASN that defeats the generated eBGP design",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_invalid_model_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F008",
+      "title": "A router may collide with the default management gateway",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_invalid_model_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F009",
+      "title": "An all-zero loopback becomes an invalid BGP router ID",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_invalid_model_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F010",
+      "title": "Preflight accepts a malformed topology and never checks its actual binds",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_topology_mutations_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F011",
+      "title": "Client public-key validation only checks a textual prefix",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_automation.py::test_invalid_public_key_rejected_before_state_writes"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F012",
+      "title": "The exact Containerlab pin is implemented as a substring test",
+      "severity": "LOW",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_exact_containerlab_version"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F013",
+      "title": "Backup confidentiality depends on which command creates state first",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_state.py::test_state_permissions_repaired"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F014",
+      "title": "Reusing a backup run ID overwrites the previous recovery point",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_state.py::TestBackupLifecycle"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F015",
+      "title": "The restore instructions refer to recorded hashes that are never exported",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_state.py::test_backup_index_and_partial_capture_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F016",
+      "title": "A failed dataplane run leaves an indistinguishable old success artifact",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_state.py::test_fresh_runtime_failure_replaces_success"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F017",
+      "title": "Controller as code does not converge the entire workflow graph",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_exact_controller_graph"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F018",
+      "title": "Controller setup cannot supply the client key passphrase",
+      "severity": "MEDIUM",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_machine_passphrase_and_privilege_contract"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F019",
+      "title": "The custom credential type requires an undocumented superuser prerequisite",
+      "severity": "LOW",
+      "status": "IMPLEMENTED_RUNTIME_GATED",
+      "tests": [
+        "tests/test_automation.py::test_machine_passphrase_and_privilege_contract"
+      ],
+      "acceptance": "Run named lab case; Controller namespace/schema/graph additionally require actual target-server acceptance in chapter 20.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F020",
+      "title": "Validation does not compare topology and inventory with the model",
+      "severity": "HIGH",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_properties.py::test_topology_mutations_rejected",
+        "tests/test_properties.py::test_inventory_address_swap_rejected"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F021",
+      "title": "An empty manifest is reported as an integrity pass",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_evidence.py::test_nonempty_manifest_exact_coverage"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F022",
+      "title": "The evidence validator accepts an empty claim registry",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_evidence.py::test_nonempty_complete_claims"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    },
+    {
+      "id": "V5-F023",
+      "title": "Human audit-closure Markdown is not checked against its registry",
+      "severity": "MEDIUM",
+      "status": "REGRESSION_COVERED",
+      "tests": [
+        "tests/test_evidence.py::test_human_evidence_matches_registry"
+      ],
+      "acceptance": "Named regression rejects the audited counterexample; generated cases broaden the finite check.",
+      "source": "ex457_v5_adversarial_audit.zip",
+      "source_sha256": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284"
+    }
+  ]
+}

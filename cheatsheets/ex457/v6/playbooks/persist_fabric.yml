@@ -1,0 +1,37 @@
+---
+- name: Verify and save integrated FRR state
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Require the lab host for integrated-file readback
+      ansible.builtin.assert:
+        that: awx_job_id is not defined
+        fail_msg: Run persistence on the Docker lab host; Controller jobs have no Docker socket.
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Verify current control plane
+          ansible.builtin.import_tasks: tasks/verify.yml
+        - name: Save integrated configuration
+          ansible.netcommon.cli_command:
+            command: write memory
+          changed_when: true
+        - name: Read and compare the actual integrated file on the lab host
+          ansible.builtin.command:
+            argv:
+              - "{{ ansible_playbook_python }}"
+              - "{{ playbook_dir }}/../tools/labctl.py"
+              - saved
+          delegate_to: localhost
+          run_once: true
+          changed_when: false
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

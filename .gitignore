@@ -1,0 +1,14 @@
+.state/
+.venv/
+collections/
+__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+artifacts/
+build/
+cheatsheets/ex457/*/context/
+cheatsheets/ex457/*/controller/site.yml
+cheatsheets/ex457/*/controller/secrets.yml
+*.zip
+pytest-of-*/

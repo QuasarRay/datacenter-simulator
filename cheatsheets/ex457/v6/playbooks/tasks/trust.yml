@@ -1,0 +1,34 @@
+---
+- name: Locate portable public host trust
+  ansible.builtin.set_fact:
+    ex457_trust_path: "{{ lookup('ansible.builtin.env', 'EX457_KNOWN_HOSTS') | default(playbook_dir + '/../.state/known_hosts', true) }}"
+- name: Check trust input exists in the execution environment
+  ansible.builtin.stat:
+    path: "{{ ex457_trust_path }}"
+  register: ex457_trust_stat
+  delegate_to: localhost
+- name: Require an explicitly supplied trust file
+  ansible.builtin.assert:
+    that:
+      - ex457_trust_stat.stat.isreg | default(false)
+      - ex457_trust_stat.stat.size | default(0) > 0
+- name: Allocate backend configuration in the execution environment
+  ansible.builtin.tempfile:
+    state: file
+    suffix: .ex457-ssh-config
+  changed_when: false
+  register: ex457_ssh_config
+  delegate_to: localhost
+- name: Set libssh's documented config_file input
+  ansible.builtin.copy:
+    dest: "{{ ex457_ssh_config.path }}"
+    mode: "0600"
+    content: |
+      Host *
+        UserKnownHostsFile {{ ex457_trust_path }}
+        StrictHostKeyChecking yes
+  delegate_to: localhost
+  changed_when: false
+- name: Publish the concrete backend path after the file exists
+  ansible.builtin.set_fact:
+    ansible_libssh_config_file: "{{ ex457_ssh_config.path }}"

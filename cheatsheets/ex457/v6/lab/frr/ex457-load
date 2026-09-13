@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+# Topology exec invokes this on deploy; labctl explicitly invokes it on restart.
+attempt=0
+while [ "$attempt" -lt 60 ]; do
+    if vtysh -d zebra -c 'show version' >/dev/null 2>&1 &&
+       vtysh -d bgpd -c 'show version' >/dev/null 2>&1; then
+        exec vtysh -b
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+done
+echo 'FRR daemons not ready for integrated configuration load' >&2
+exit 1

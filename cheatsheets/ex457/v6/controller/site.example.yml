@@ -1,0 +1,13 @@
+---
+# AWX 24.6.1 uses tower. For AAP, verify the actual installed injector schema.
+credential_filename_namespace: tower
+credential_type_preprovisioned: false
+organization_name: EX457 Lab
+scm_url: https://github.com/QuasarRay/datacenter-simulator.git
+scm_branch: main
+project_prefix: cheatsheets/ex457/v6
+ee_image: registry.example.net/training/ex457-ee@sha256:REPLACE_WITH_DIGEST
+backup_url: https://backup.example.net/ex457
+# Operator input, not a shipped credential. Set these in encrypted secrets.yml:
+# machine_private_key, scm_username, scm_token, registry_username,
+# registry_password, known_hosts_text, backup_token

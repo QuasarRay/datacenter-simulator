@@ -1,3 +1,2 @@
-ansible==14.4.0
-pyats==26.8
-PyYAML==6.0.2
+-r ../cheatsheets/ex457/v6/requirements.txt
+-r ../cheatsheets/ex457/v6/tests/requirements.txt

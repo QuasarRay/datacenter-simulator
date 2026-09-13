@@ -1,0 +1,61 @@
+---
+- name: Capture an immutable private backup with a durable index
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Capture and seal the recovery point
+      block:
+        - name: Select a caller or Controller capture ID
+          ansible.builtin.set_fact:
+            backup_run_id: "{{ awx_job_id | default(backup_run_id | default(run_id | default(''))) | string }}"
+        - name: Validate capture ID and Controller export prerequisites
+          ansible.builtin.assert:
+            that:
+              - backup_run_id is match('^[A-Za-z0-9_-]+$')
+              - awx_job_id is not defined or (backup_url | default('') is match('^https://'))
+              - awx_job_id is not defined or (lookup('ansible.builtin.env', 'EX457_BACKUP_TOKEN') | length > 0)
+        - name: Locate capture directory
+          ansible.builtin.set_fact:
+            backup_directory: "{{ playbook_dir }}/../.state/backups/{{ backup_run_id }}"
+        - name: Reserve a private directory and reject a reused ID
+          ansible.builtin.command:
+            argv: ["{{ ansible_playbook_python }}", "{{ playbook_dir }}/../tools/backup_store.py", reserve, --run-id, "{{ backup_run_id }}"]
+          delegate_to: localhost
+          run_once: true
+          changed_when: true
+        - name: Capture actual running configuration
+          ansible.netcommon.cli_backup:
+            dir_path: "{{ backup_directory }}"
+            filename: "{{ inventory_hostname }}.cfg"
+          register: backup_result
+          no_log: true
+        - name: Restrict each backup file
+          ansible.builtin.file:
+            path: "{{ backup_directory }}/{{ inventory_hostname }}.cfg"
+            mode: '0600'
+          delegate_to: localhost
+        - name: Validate the complete capture and persist its checksum index
+          ansible.builtin.command:
+            argv: ["{{ ansible_playbook_python }}", "{{ playbook_dir }}/../tools/backup_store.py", seal, --directory, "{{ backup_directory }}"]
+          delegate_to: localhost
+          run_once: true
+          changed_when: true
+        - name: Export immutable objects and index over HTTPS and read each back
+          ansible.builtin.command:
+            argv: ["{{ ansible_playbook_python }}", "{{ playbook_dir }}/../tools/backup_store.py", export, --directory, "{{ backup_directory }}", --url, "{{ backup_url }}"]
+          when: backup_url is defined
+          delegate_to: localhost
+          run_once: true
+          changed_when: true
+          no_log: true
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

@@ -1,0 +1,16 @@
+{
+  "input_sha256": {
+    "ex457_v4_adversarial_audit.zip": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d",
+    "ex457_containerlab_cheatsheet_v4.zip": "785f2e2dc940d253edca81ae2f37174fa397a4e46ed8cb0a2c9b129c7effc5f5",
+    "ex457_v5_adversarial_audit.zip": "a036863c18eb609c023f5a3c50a44047438cbe197eed1207266fc7936a780284",
+    "ex457_containerlab_cheatsheet_v5.zip": "6a9a3df1fb95d0e5f93dcfffd872a2f329e502e4b83a94bd763a24bade686145"
+  },
+  "repo": "QuasarRay/datacenter-simulator",
+  "base_commit": "2003f8bdd88423c77c528785f7ffa70f398a23e0",
+  "source_model_path": "vars/datacenter.yml",
+  "model_git_blob": "0f89fe231473254e3aa4bba6fe87b5285ee69a25",
+  "method": "GitHub plugin fetched base64 bytes at exact commit; Git blob hash recomputed from header plus raw bytes.",
+  "audit_findings": 48,
+  "v6_base_commit": "ac35cf136e0317a61b5cfe8022a6f5200475a5c6",
+  "available_historical_findings": 103
+}

@@ -249,4 +249,5 @@ class ContainerlabOperationalState(aetest.Testcase):
 
 
 if __name__ == "__main__":
-    aetest.main()
+    result = aetest.main()
+    raise SystemExit(0 if str(result).lower() == 'passed' else 1)

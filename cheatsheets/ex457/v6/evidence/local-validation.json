@@ -1,0 +1,384 @@
+{
+  "recorded_on": "2026-09-13",
+  "scope": "local Python/Ansible and real loopback HTTPS; no local Docker or Controller",
+  "pytest": {
+    "status": "PASS",
+    "collected_cases": 67,
+    "log": "logs/pytest.log"
+  },
+  "validation": {
+    "overall": "STATIC_AND_FIXTURE_VALIDATED_RUNTIME_GATED",
+    "mode": "full",
+    "checks": [
+      {
+        "check": "structure_links_claims_and_blueprint",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "objectives": 23,
+          "families": 8,
+          "available_historical_findings": 103
+        }
+      },
+      {
+        "check": "model_template_and_git_blob",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "git_blob": "0f89fe231473254e3aa4bba6fe87b5285ee69a25"
+        }
+      },
+      {
+        "check": "shell_parse:ex457-start",
+        "status": "PASS",
+        "errors": [],
+        "detail": null
+      },
+      {
+        "check": "shell_parse:ex457-load",
+        "status": "PASS",
+        "errors": [],
+        "detail": null
+      },
+      {
+        "check": "predicate_unit_tests",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "/workspace/scratch/dd1ed62d0423/.venv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test_fabric.py",
+            "-v"
+          ],
+          "log": ".state/predicate_unit_tests.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:configure",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/controller/configure.yml"
+          ],
+          "log": ".state/ansible_syntax-configure.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:launch",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/controller/launch.yml"
+          ],
+          "log": ".state/ansible_syntax-launch.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:ee_smoke",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/ee_smoke.yml"
+          ],
+          "log": ".state/ansible_syntax-ee_smoke.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:backup_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/backup_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-backup_fabric.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:configure_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/configure_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-configure_fabric.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:diagnose_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/diagnose_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-diagnose_fabric.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:facts_filters",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/facts_filters.yml"
+          ],
+          "log": ".state/ansible_syntax-facts_filters.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:persist_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/persist_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-persist_fabric.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:render",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/render.yml"
+          ],
+          "log": ".state/ansible_syntax-render.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:restore_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/restore_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-restore_fabric.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:show_version",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/show_version.yml"
+          ],
+          "log": ".state/ansible_syntax-show_version.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:task_control",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/task_control.yml"
+          ],
+          "log": ".state/ansible_syntax-task_control.log"
+        }
+      },
+      {
+        "check": "ansible_syntax:verify_fabric",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-playbook",
+            "--syntax-check",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/playbooks/verify_fabric.yml"
+          ],
+          "log": ".state/ansible_syntax-verify_fabric.log"
+        }
+      },
+      {
+        "check": "actual_module_arguments",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "/workspace/scratch/dd1ed62d0423/.venv/bin/python",
+            "tools/check_module_args.py"
+          ],
+          "log": ".state/actual_module_arguments.log"
+        }
+      },
+      {
+        "check": "ansible_synthetic_dataflow",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "/workspace/scratch/dd1ed62d0423/.venv/bin/python",
+            "tools/check_dataflow.py"
+          ],
+          "log": ".state/ansible_synthetic_dataflow.log"
+        }
+      },
+      {
+        "check": "navigator_host_inventory",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-navigator",
+            "inventory",
+            "-i",
+            "inventory/network.yml",
+            "--list",
+            "--mode",
+            "stdout",
+            "--ee",
+            "false"
+          ],
+          "log": ".state/navigator_host_inventory.log"
+        }
+      },
+      {
+        "check": "navigator_settings",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-navigator",
+            "settings",
+            "--mode",
+            "stdout"
+          ],
+          "log": ".state/navigator_settings.log"
+        }
+      },
+      {
+        "check": "builder_definition",
+        "status": "PASS",
+        "errors": [],
+        "detail": {
+          "command": [
+            "ansible-builder",
+            "create",
+            "-f",
+            "execution-environment.yml",
+            "--context",
+            "/workspace/scratch/dd1ed62d0423/v6-repo/cheatsheets/ex457/v6/.state/ee-context"
+          ],
+          "log": ".state/builder_definition.log"
+        }
+      },
+      {
+        "check": "docker_image_ssh",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "live_frr_negative_cases",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "kernel_and_ping",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "restart_and_restore",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "ee_build_push_pull",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "controller_jobs_cac_and_durable_backup",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      },
+      {
+        "check": "rhel_vm_reboot",
+        "status": "NOT_RUN",
+        "reason": "requires external lab/runtime; see chapter 20"
+      }
+    ],
+    "limits": "No machine claim of source semantics, vendor support, live runtime success or unseen LMS blueprint coverage."
+  },
+  "historical_counterexamples": {
+    "check": "historical_counterexamples",
+    "scope": "six concrete predicate counterexamples; not all historical findings",
+    "results": [
+      {
+        "finding": "V5-F007",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      },
+      {
+        "finding": "V5-F008",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      },
+      {
+        "finding": "V5-F009",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      },
+      {
+        "finding": "V5-F004",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      },
+      {
+        "finding": "V5-F005",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      },
+      {
+        "finding": "V5-F006",
+        "v5": "ACCEPTED_INVALID_STATE",
+        "v6": "REJECTED_INVALID_STATE",
+        "status": "PASS"
+      }
+    ]
+  }
+}
