@@ -22,7 +22,16 @@ from state import recorded_run, secure_dir
 DC=yaml.safe_load((ROOT/'model-upstream.yml').read_text())['dc']
 STATE=secure_dir(ROOT/'.state')
 LOGS=secure_dir(STATE/'live-logs')
+OFFICIAL_SOURCES=json.loads((ROOT/'evidence/official-source-quotes.json').read_text())['sources']
+RUNTIME_DOCS={row['id']:row for row in json.loads((ROOT/'evidence/runtime-doc-contracts.json').read_text())['contracts']}
 COUNTER=0
+
+
+def doc_contract(contract_id,observer):
+    row=RUNTIME_DOCS[contract_id]
+    assert row['observer']==observer,(contract_id,row['observer'],observer)
+    assert row['source_id'] in OFFICIAL_SOURCES,(contract_id,row['source_id'])
+    return row
 
 
 def cmd(argv, expected=0, env=None):
@@ -60,6 +69,7 @@ class LabSetup(aetest.CommonSetup):
 class Transport(aetest.Testcase):
     @aetest.test
     def ssh_policy_and_real_libssh(self):
+        doc_contract('R001','Transport.ssh_policy_and_real_libssh')
         for node in DC['nodes']:
             policy=docker(node,'/usr/sbin/sshd','-T').stdout
             for directive in ['passwordauthentication no','kbdinteractiveauthentication no','pubkeyauthentication yes','permitrootlogin no']:
@@ -67,7 +77,7 @@ class Transport(aetest.Testcase):
             account=docker(node,'awk','-F:', '$1 == "ansible" { if ($2 ~ /^[!*]/) print "LOCKED"; else print "UNLOCKED" }','/etc/shadow').stdout.strip()
             assert account == 'UNLOCKED', 'missing or locked public-key account'
             assert '10.7.1' in cli(node,'show version')
-        play('show_version')  # full real network_cli bootstrap, no pre-seeded trust fact
+        play('show_version')
         wrong=STATE/'wrong-hostkey';cmd(['ssh-keygen','-q','-t','ed25519','-N','','-f',wrong])
         trust=STATE/'wrong-known-hosts';key=wrong.with_suffix('.pub').read_text().strip()
         trust.write_text('\n'.join(n['mgmt_ip']+' '+key for n in DC['nodes'].values())+'\n')
@@ -85,7 +95,15 @@ class Convergence(aetest.Testcase):
         assert len(recaps)==len(DC['nodes']) and all(changed=='0' and failed=='0' for changed,failed in recaps),'second run must converge without changes'
 
     @aetest.test
+    def documented_frr_config_facts(self):
+        doc_contract('R002','Convergence.documented_frr_config_facts')
+        output=play('facts_filters').stdout
+        assert 'ansible_net_config' in output,'config gather_subset must expose ansible_net_config on the live pinned lab'
+        assert 'ansible_net_version' in output,'live facts must include the device software version'
+
+    @aetest.test
     def independent_addresses_and_routes(self):
+        doc_contract('R003','Convergence.independent_addresses_and_routes')
         with recorded_run(ROOT,'live-independent',STATE) as record:
             for name,node in DC['nodes'].items():
                 want=intent(DC,name)
@@ -113,7 +131,6 @@ class Convergence(aetest.Testcase):
 class NegativeCases(aetest.Testcase):
     @aetest.test
     def extra_peer_and_address_fail_then_reconcile(self):
-        # Idle peer must be rejected by the ordinary, unfiltered verifier.
         cli('spine1','configure terminal','router bgp 65001','neighbor 192.0.2.250 remote-as 65250','end')
         try:
             failed=play('verify_fabric','--limit','spine1',expected='failure')
@@ -142,6 +159,7 @@ class NegativeCases(aetest.Testcase):
 class Persistence(aetest.Testcase):
     @aetest.test
     def private_backup_restore_save_restart(self):
+        doc_contract('R004','Persistence.private_backup_restore_save_restart')
         run_id='ci_'+uuid.uuid4().hex
         play('backup_fabric','-e','backup_run_id='+run_id)
         directory=STATE/'backups'/run_id
@@ -155,7 +173,6 @@ class Persistence(aetest.Testcase):
         play('persist_fabric')
         saved={n:hashlib.sha256(docker(n,'cat','/etc/frr/frr.conf').stdout.encode()).hexdigest() for n in DC['nodes']}
         cmd([sys.executable,'tools/labctl.py','restart'])
-        # No configure/restore call is permitted between restart and these checks.
         play('verify_fabric')
         cmd([sys.executable,'tools/labctl.py','dataplane'])
         cmd([sys.executable,'tools/labctl.py','saved'])
