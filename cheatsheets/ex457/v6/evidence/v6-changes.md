@@ -28,3 +28,7 @@ Unsupported FRR routing processes, AFs and policies fail closed; this small gram
 ## v5 improvement notes
 
 I001 is addressed by new blank-file inventory construction and network-role creation exercises in chapters 02 and 06, with explicit positive and negative acceptance. I002 is addressed by Docker backend-aware forwarding diagnostics in chapter 19, sourced to Docker's official firewall documentation. These two improvement notes are separate from the 103 historical finding IDs.
+
+## CI iteration — exact exported evidence
+
+The first hosted run showed that two separate Dagger calls could execute the graph twice even with the same run ID (different start timestamps appeared in the log). Actions now calls Dagger once and gates the exact exported `results.json`, JUnit and ZIP with `ci/check_results.py`. The checker also requires every mapped pytest regression to appear in the actual JUnit results, preventing a merely present test file from counting as execution evidence.

@@ -35,13 +35,13 @@ Run from the **repository root**, or the ZIP's `ex457-v6-project` root:
 
 ```bash
 dagger -m ci call artifacts --source=. --run-id="local-$(date +%s)" export --path=artifacts
-# Reuse precisely the same run ID to inspect/enforce the cached run.
-dagger -m ci call ci --source=. --run-id=REPLACE_WITH_SAME_RUN_ID
+# Check the exact exported run without invoking the lab again.
+python3 ci/check_results.py --run-id=REPLACE_WITH_SAME_RUN_ID
 ```
 
 Dagger engine 0.21.8 installs the pinned Ansible and test dependencies, deploys/tests/destroys the original simulator, then builds the FRR 10.7.1 adapter and runs the v6 lab. Both labs use overlapping management space, so they run sequentially. Nested Docker requires a Docker-capable Linux host and Dagger's privileged execution option. The default CI runs on disposable GitHub-hosted Ubuntu 24.04 runners, with a read-only repository token and action commit pins. It does not use `pull_request_target` or expose a real Controller to untrusted pull requests.
 
-`artifacts()` preserves diagnostics and `ci()` enforces the same fresh run's result. Calling only `artifacts()` is not a pass gate. Every required test must pass; missing required checks fail the result. Actions uploads logs even on failure. A source ZIP is generated only after all required lab gates pass. This is the delivery portion of the pipeline; merging and deployment to an external environment are separate operator actions.
+`artifacts()` preserves diagnostics. The next Actions step checks those exact exported bytes with `ci/check_results.py`, including the run identity, source manifest, mandatory gates, every audit-mapped pytest case and the ZIP. It does not start a second lab run. Calling only `artifacts()` is not a pass gate. The standalone Dagger `ci()` function can run the suite without exporting artifacts. Every required test must pass; missing required checks fail the result. Actions uploads logs even on failure. A source ZIP is generated only after all required lab gates pass. This is the delivery portion of the pipeline; merging and deployment to an external environment are separate operator actions.
 
 The artifact allowlist excludes client keys, host private keys, backup files and tokens. Do not upload `.state` wholesale. System package repositories and Python transitive dependencies remain external build inputs; named top-level versions and OCI base digests do not make this a fully hermetic supply chain.
 

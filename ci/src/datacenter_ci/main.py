@@ -11,7 +11,7 @@ class DatacenterCi:
         return (dag.container().from_('ubuntu@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254')
                 .with_exec(['bash','-ec','apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates docker.io iproute2 iputils-ping iptables openssh-client jq python3 python3-pip python3-venv sudo git && rm -rf /var/lib/apt/lists/*'])
                 .with_file('/usr/local/bin/containerlab',clab)
-                .with_directory('/workspace',source,exclude=['.git','**/.state','**/.venv','**/collections','**/__pycache__','**/.pytest_cache','**/.hypothesis','artifacts'])
+                .with_directory('/workspace',source,exclude=['ci/sdk','.git','**/.state','**/.venv','**/collections','**/__pycache__','**/.pytest_cache','**/.hypothesis','artifacts'])
                 .with_workdir('/workspace')
                 .with_exec(['python3','-m','venv','/opt/datacenter-ci'])
                 .with_env_variable('PATH','/opt/datacenter-ci/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin')

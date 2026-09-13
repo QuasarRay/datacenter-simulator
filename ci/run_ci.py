@@ -21,6 +21,7 @@ def main():
     logs=ARTIFACTS/'logs';logs.mkdir(exist_ok=True)
     rows=[];daemon=None
     report={'schema':1,'run_id':os.environ.get('CI_RUN_ID','local'), 'started_at':datetime.now(timezone.utc).isoformat(),
+            'source_manifest_sha256':hashlib.sha256((PACK/'evidence/manifest.sha256').read_bytes()).hexdigest(),
             'status':'RUNNING','required':REQUIRED,'checks':rows,'external_gates':{'aap_controller':'NOT_RUN','entitled_ee':'NOT_RUN','cachyos_host':'NOT_RUN','rhel_vm_reboot':'NOT_RUN'}}
     target=ARTIFACTS/'results.json'
     def save():target.write_text(json.dumps(report,indent=2)+'\n')

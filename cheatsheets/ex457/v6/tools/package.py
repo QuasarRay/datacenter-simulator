@@ -15,6 +15,7 @@ def package(output):
     files=[]
     for path in sorted(REPO.rglob('*')):
         rel=path.relative_to(REPO)
+        if rel.parts[:2]==('ci','sdk'):continue
         if not path.is_file() or path.is_symlink() or set(rel.parts).intersection(EXCLUDE|{'artifacts','build'}):continue
         if rel.parts[0] not in allowed and not (len(rel.parts)==1 and (path.suffix in {'.md','.yml','.yaml','.cfg','.ini','.py','.toml'} or path.name=='.gitignore')):continue
         if path.suffix in {'.zip','.pyc'} or path.name in {'site.yml','secrets.yml'}:continue

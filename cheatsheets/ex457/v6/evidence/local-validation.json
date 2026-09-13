@@ -3,7 +3,7 @@
   "scope": "local Python/Ansible and real loopback HTTPS; no local Docker or Controller",
   "pytest": {
     "status": "PASS",
-    "collected_cases": 67,
+    "collected_cases": 68,
     "log": "logs/pytest.log"
   },
   "validation": {
@@ -380,5 +380,10 @@
         "status": "PASS"
       }
     ]
+  },
+  "fresh_checkout_pytest": {
+    "status": "PASS",
+    "cases": 67,
+    "scope": "clean checkout of 142b407 with private state initialization; before adding the CI report gate unit test"
   }
 }
