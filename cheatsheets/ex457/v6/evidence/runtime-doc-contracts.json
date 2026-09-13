@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "contracts": [
+    {"id":"R001","claim_id":"C003","source_id":"ANS-NETCLI","observer":"Transport.ssh_policy_and_real_libssh","documented_proposition":"network_cli host-key checking is enabled unless explicitly disabled","runtime_oracle":"A correct pinned host key succeeds and a deliberately wrong host key is rejected."},
+    {"id":"R002","claim_id":"C009","source_id":"ANS-FRR-FACTS","observer":"Convergence.documented_frr_config_facts","documented_proposition":"frr_facts accepts the config gather subset and returns ansible_net_config when config is gathered","runtime_oracle":"facts_filters.yml must expose ansible_net_config on the live pinned FRR 10.7 lab; this is runtime evidence beyond the documented FRR 6.0 test scope."},
+    {"id":"R003","claim_id":"C014","source_id":"ANS-CLI-CONFIG","observer":"Convergence.independent_addresses_and_routes","documented_proposition":"cli_config pushes text configuration over network_cli","runtime_oracle":"After configure_fabric.yml, independently observed addresses, running configuration, peers and routes must match model-derived intent."},
+    {"id":"R004","claim_id":"C020","source_id":"ANS-CLI-BACKUP","observer":"Persistence.private_backup_restore_save_restart","documented_proposition":"cli_backup backs up device configuration over network_cli","runtime_oracle":"backup_fabric.yml must create immutable per-node backups that can be selected, restored, persisted and verified after restart."}
+  ]
+}
