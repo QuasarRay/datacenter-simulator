@@ -1,0 +1,19 @@
+{% for iface, addresses in fabric_intent.interfaces | dictsort %}
+interface {{ iface }}
+{% for address in addresses %}
+ ip address {{ address }}
+{% endfor %}
+exit
+{% endfor %}
+router bgp {{ fabric_intent.asn }}
+ bgp router-id {{ fabric_intent.router_id }}
+ no bgp ebgp-requires-policy
+{% for ip, asn in fabric_intent.peers | dictsort %}
+ neighbor {{ ip }} remote-as {{ asn }}
+{% endfor %}
+ address-family ipv4 unicast
+{% for prefix in fabric_intent.networks %}
+  network {{ prefix }}
+{% endfor %}
+ exit-address-family
+exit

@@ -1,0 +1,9 @@
+---
+- name: Close persistent session before removing backend configuration
+  ansible.builtin.meta: reset_connection
+- name: Remove temporary SSH configuration
+  ansible.builtin.file:
+    path: "{{ ex457_ssh_config.path }}"
+    state: absent
+  when: ex457_ssh_config.path is defined
+  delegate_to: localhost

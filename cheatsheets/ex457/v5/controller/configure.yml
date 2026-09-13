@@ -1,0 +1,183 @@
+---
+- name: Declare Controller study infrastructure
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../model-upstream.yml
+    - site.yml
+    - secrets.yml
+  tasks:
+    - name: Require explicit image and service settings
+      ansible.builtin.assert:
+        that:
+          - ee_image is search('@sha256:[0-9a-f]{64}$')
+          - backup_url is match('^https://')
+          - known_hosts_text | length > 0
+    - name: Create study organization
+      awx.awx.organization:
+        name: "{{ organization_name }}"
+        state: present
+    - name: Create Machine identity
+      awx.awx.credential:
+        name: EX457 Machine
+        organization: "{{ organization_name }}"
+        credential_type: Machine
+        inputs:
+          username: ansible
+          ssh_key_data: "{{ machine_private_key }}"
+      no_log: true
+    - name: Create source control credential
+      awx.awx.credential:
+        name: EX457 SCM
+        organization: "{{ organization_name }}"
+        credential_type: Source Control
+        inputs:
+          username: "{{ scm_username }}"
+          password: "{{ scm_token }}"
+      no_log: true
+    - name: Create container registry credential
+      awx.awx.credential:
+        name: EX457 Registry
+        organization: "{{ organization_name }}"
+        credential_type: Container Registry
+        inputs:
+          host: "{{ ee_image.split('/')[0] }}"
+          username: "{{ registry_username }}"
+          password: "{{ registry_password }}"
+          verify_ssl: true
+      no_log: true
+    - name: Declare portable server trust and backup credential type
+      awx.awx.credential_type:
+        name: EX457 Trust and Backup
+        kind: cloud
+        inputs:
+          fields:
+            - id: known_hosts
+              label: Verified public host keys
+              type: string
+              multiline: true
+            - id: backup_token
+              label: Backup endpoint token
+              type: string
+              secret: true
+          required: [known_hosts, backup_token]
+        injectors:
+          file:
+            template: "{{ '{{ known_hosts }}' }}"
+          env:
+            EX457_KNOWN_HOSTS: "{{ '{{ awx.filename }}' }}"
+            EX457_BACKUP_TOKEN: "{{ '{{ backup_token }}' }}"
+    - name: Supply verified public host keys and export identity
+      awx.awx.credential:
+        name: EX457 Trust and Backup
+        organization: "{{ organization_name }}"
+        credential_type: EX457 Trust and Backup
+        inputs:
+          known_hosts: "{{ known_hosts_text }}"
+          backup_token: "{{ backup_token }}"
+      no_log: true
+    - name: Register published execution environment
+      awx.awx.execution_environment:
+        name: EX457 EE v5
+        image: "{{ ee_image }}"
+        credential: EX457 Registry
+        pull: always
+        organization: "{{ organization_name }}"
+    - name: Create Git project and wait for sync
+      awx.awx.project:
+        name: EX457 Project v5
+        organization: "{{ organization_name }}"
+        scm_type: git
+        scm_url: "{{ scm_url }}"
+        scm_branch: "{{ scm_branch }}"
+        credential: EX457 SCM
+        scm_update_on_launch: false
+        wait: true
+    - name: Create inventory
+      awx.awx.inventory:
+        name: EX457 Fabric
+        organization: "{{ organization_name }}"
+    - name: Add hosts
+      awx.awx.host:
+        name: "{{ item.key }}"
+        inventory: EX457 Fabric
+        variables:
+          ansible_host: "{{ item.value.mgmt_ip }}"
+      loop: "{{ dc.nodes | dict2items }}"
+    - name: Create role groups
+      awx.awx.group:
+        name: "{{ item.group }}"
+        inventory: EX457 Fabric
+        hosts: "{{ dc.nodes | dict2items | selectattr('value.role', 'equalto', item.role) | map(attribute='key') | list }}"
+        preserve_existing_hosts: false
+      loop:
+        - {group: spines, role: spine}
+        - {group: leafs, role: leaf}
+    - name: Connect parent group and connection settings
+      awx.awx.group:
+        name: fabric
+        inventory: EX457 Fabric
+        children: [spines, leafs]
+        preserve_existing_children: false
+        variables:
+          ansible_connection: ansible.netcommon.network_cli
+          ansible_network_os: frr.frr.frr
+          ansible_user: ansible
+          ansible_network_cli_ssh_type: libssh
+          ansible_host_key_checking: true
+          ansible_libssh_host_key_checking: true
+          ansible_libssh_config_file: "{{ '{{ ex457_ssh_config.path }}' }}"
+    - name: Create job templates for supplied files
+      awx.awx.job_template:
+        name: "EX457 {{ item.name }}"
+        organization: "{{ organization_name }}"
+        inventory: EX457 Fabric
+        project: EX457 Project v5
+        playbook: "{{ project_prefix }}/playbooks/{{ item.file }}.yml"
+        execution_environment: EX457 EE v5
+        credentials: [EX457 Machine, EX457 Trust and Backup]
+        extra_vars:
+          backup_url: "{{ backup_url }}"
+        job_type: run
+        ask_variables_on_launch: false
+      loop:
+        - {name: Backup, file: backup_fabric}
+        - {name: Change, file: configure_fabric}
+        - {name: Verify, file: verify_fabric}
+        - {name: Diagnose, file: diagnose_fabric}
+    - name: Create workflow
+      awx.awx.workflow_job_template:
+        name: EX457 Workflow v5
+        organization: "{{ organization_name }}"
+        inventory: EX457 Fabric
+    - name: Create workflow nodes before linking
+      awx.awx.workflow_job_template_node:
+        identifier: "{{ item }}"
+        workflow_job_template: EX457 Workflow v5
+        organization: "{{ organization_name }}"
+        unified_job_template: "EX457 {{ item }}"
+      loop: [Backup, Change, Verify, Diagnose]
+    - name: Link backup success to change
+      awx.awx.workflow_job_template_node:
+        identifier: Backup
+        workflow_job_template: EX457 Workflow v5
+        organization: "{{ organization_name }}"
+        success_nodes: [Change]
+        failure_nodes: [Diagnose]
+        always_nodes: []
+    - name: Link change success to verify and failure to diagnosis
+      awx.awx.workflow_job_template_node:
+        identifier: Change
+        workflow_job_template: EX457 Workflow v5
+        organization: "{{ organization_name }}"
+        success_nodes: [Verify]
+        failure_nodes: [Diagnose]
+        always_nodes: []
+    - name: Link verification failure to diagnosis
+      awx.awx.workflow_job_template_node:
+        identifier: Verify
+        workflow_job_template: EX457 Workflow v5
+        organization: "{{ organization_name }}"
+        success_nodes: []
+        failure_nodes: [Diagnose]
+        always_nodes: []

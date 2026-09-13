@@ -1,0 +1,86 @@
+
+PLAY [Synthetic verifier dataflow good] ****************************************
+
+TASK [Validate the source of truth] ********************************************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Derive intent including all remote nodes before any loop] ****************
+ok: [spine1]
+
+TASK [Wait for exact unfiltered peer set, state and remote ASNs] ***************
+ok: [spine1]
+
+TASK [Read running configuration] **********************************************
+ok: [spine1]
+
+TASK [Compare interface-scoped addresses and BGP configuration] ****************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify each modeled remote prefix] ***************************************
+included: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-4_3tebpx/verify_remote.yml for spine1 => (item={'name': 'leaf1', 'loopback': '10.255.1.1/32'})
+included: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-4_3tebpx/verify_remote.yml for spine1 => (item={'name': 'leaf2', 'loopback': '10.255.1.2/32'})
+included: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-4_3tebpx/verify_remote.yml for spine1 => (item={'name': 'spine2', 'loopback': '10.255.0.2/32'})
+
+TASK [Read BGP path for exact remote prefix] ***********************************
+ok: [spine1]
+
+TASK [Require valid best BGP path through a modeled peer] **********************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read Zebra route for exact remote prefix] ********************************
+ok: [spine1]
+
+TASK [Require selected installed BGP route with a FIB nexthop] *****************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read BGP path for exact remote prefix] ***********************************
+ok: [spine1]
+
+TASK [Require valid best BGP path through a modeled peer] **********************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read Zebra route for exact remote prefix] ********************************
+ok: [spine1]
+
+TASK [Require selected installed BGP route with a FIB nexthop] *****************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read BGP path for exact remote prefix] ***********************************
+ok: [spine1]
+
+TASK [Require valid best BGP path through a modeled peer] **********************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read Zebra route for exact remote prefix] ********************************
+ok: [spine1]
+
+TASK [Require selected installed BGP route with a FIB nexthop] *****************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+PLAY RECAP *********************************************************************
+spine1                     : ok=20   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

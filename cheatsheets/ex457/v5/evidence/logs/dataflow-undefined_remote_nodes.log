@@ -1,0 +1,53 @@
+
+PLAY [Synthetic verifier dataflow undefined_remote_nodes] **********************
+
+TASK [Validate the source of truth] ********************************************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Derive intent including all remote nodes before any loop] ****************
+ok: [spine1]
+
+TASK [ansible.builtin.set_fact] ************************************************
+ok: [spine1]
+
+TASK [Wait for exact unfiltered peer set, state and remote ASNs] ***************
+ok: [spine1]
+
+TASK [Read running configuration] **********************************************
+ok: [spine1]
+
+TASK [Compare interface-scoped addresses and BGP configuration] ****************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify each modeled remote prefix] ***************************************
+[ERROR]: Task failed: object of type 'dict' has no attribute 'remote_nodes'
+
+Task failed.
+Origin: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-vw8ry_c9/verify.yml:27:3
+
+25   ansible.builtin.assert:
+26     that: running_config.stdout | fabric_config_ok(fabric_intent)
+27 - name: Verify each modeled remote prefix
+     ^ column 3
+
+<<< caused by >>>
+
+object of type 'dict' has no attribute 'remote_nodes'
+Origin: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-vw8ry_c9/verify.yml:29:9
+
+27 - name: Verify each modeled remote prefix
+28   ansible.builtin.include_tasks: verify_remote.yml
+29   loop: '{{ fabric_intent.remote_nodes }}'
+           ^ column 9
+
+fatal: [spine1]: FAILED! => {"changed": false, "msg": "Task failed: object of type 'dict' has no attribute 'remote_nodes'"}
+
+PLAY RECAP *********************************************************************
+spine1                     : ok=6    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

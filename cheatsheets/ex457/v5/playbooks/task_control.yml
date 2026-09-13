@@ -1,0 +1,29 @@
+---
+- name: Exercise conditions and failure handling locally
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Conditional loop with a named loop variable
+      ansible.builtin.debug:
+        msg: "selected={{ node }}"
+      loop: [spine1, leaf1]
+      loop_control:
+        loop_var: node
+      when: node is match('spine')
+    - name: Handle a deliberate failure
+      block:
+        - name: Trigger the exercise failure
+          ansible.builtin.command:
+            argv: [/bin/false]
+          changed_when: false
+      rescue:
+        - name: Record recovery
+          ansible.builtin.set_fact:
+            recovered: true
+      always:
+        - name: Show cleanup reached
+          ansible.builtin.debug:
+            msg: cleanup ran
+    - name: Check recovery ran
+      ansible.builtin.assert:
+        that: recovered | default(false)

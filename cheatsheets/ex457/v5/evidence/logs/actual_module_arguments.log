@@ -1,0 +1,322 @@
+{
+  "check": "actual_collection_module_argument_specs",
+  "status": "PASS",
+  "cases": [
+    {
+      "file": "controller/configure.yml",
+      "task": "Create study organization",
+      "module": "awx.awx.organization",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create Machine identity",
+      "module": "awx.awx.credential",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create source control credential",
+      "module": "awx.awx.credential",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create container registry credential",
+      "module": "awx.awx.credential",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Declare portable server trust and backup credential type",
+      "module": "awx.awx.credential_type",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Supply verified public host keys and export identity",
+      "module": "awx.awx.credential",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Register published execution environment",
+      "module": "awx.awx.execution_environment",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create Git project and wait for sync",
+      "module": "awx.awx.project",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create inventory",
+      "module": "awx.awx.inventory",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Add hosts",
+      "module": "awx.awx.host",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Add hosts",
+      "module": "awx.awx.host",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Add hosts",
+      "module": "awx.awx.host",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Add hosts",
+      "module": "awx.awx.host",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create role groups",
+      "module": "awx.awx.group",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create role groups",
+      "module": "awx.awx.group",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Connect parent group and connection settings",
+      "module": "awx.awx.group",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create job templates for supplied files",
+      "module": "awx.awx.job_template",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create job templates for supplied files",
+      "module": "awx.awx.job_template",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create job templates for supplied files",
+      "module": "awx.awx.job_template",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create job templates for supplied files",
+      "module": "awx.awx.job_template",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create workflow",
+      "module": "awx.awx.workflow_job_template",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create workflow nodes before linking",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create workflow nodes before linking",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create workflow nodes before linking",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Create workflow nodes before linking",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Link backup success to change",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Link change success to verify and failure to diagnosis",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/configure.yml",
+      "task": "Link verification failure to diagnosis",
+      "module": "awx.awx.workflow_job_template_node",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "controller/launch.yml",
+      "task": "Launch workflow and wait for completion",
+      "module": "awx.awx.workflow_launch",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/backup_fabric.yml",
+      "task": "Capture full running configuration",
+      "module": "ansible.netcommon.cli_backup",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/diagnose_fabric.yml",
+      "task": "Read diagnostic commands",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/diagnose_fabric.yml",
+      "task": "Read diagnostic commands",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/diagnose_fabric.yml",
+      "task": "Read diagnostic commands",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/diagnose_fabric.yml",
+      "task": "Read diagnostic commands",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/facts_filters.yml",
+      "task": "Gather legacy FRR network facts",
+      "module": "frr.frr.frr_facts",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/persist_fabric.yml",
+      "task": "Save integrated configuration",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/persist_fabric.yml",
+      "task": "Read saved configuration",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/show_version.yml",
+      "task": "Read version",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/tasks/verify.yml",
+      "task": "Wait for exact unfiltered peer set, state and remote ASNs",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/tasks/verify.yml",
+      "task": "Read running configuration",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/tasks/verify_remote.yml",
+      "task": "Read BGP path for exact remote prefix",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "playbooks/tasks/verify_remote.yml",
+      "task": "Read Zebra route for exact remote prefix",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "roles/fabric/tasks/main.yml",
+      "task": "Read state before computing explicit removals",
+      "module": "ansible.netcommon.cli_command",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "roles/fabric/tasks/main.yml",
+      "task": "Remove stale managed state",
+      "module": "ansible.netcommon.cli_config",
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "file": "roles/fabric/tasks/main.yml",
+      "task": "Apply intended configuration",
+      "module": "ansible.netcommon.cli_config",
+      "status": "PASS",
+      "errors": []
+    }
+  ],
+  "limit": "Schema validation only; Controller API payload acceptance and FRR transport remain runtime gates."
+}

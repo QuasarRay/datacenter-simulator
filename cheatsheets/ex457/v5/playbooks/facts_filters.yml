@@ -1,0 +1,29 @@
+---
+- name: Gather network facts and transform data
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Gather legacy FRR network facts
+          frr.frr.frr_facts:
+            gather_subset:
+              - config
+          register: device_facts
+        - name: Show registered network facts
+          ansible.builtin.debug:
+            var: device_facts.ansible_facts
+        - name: Transform modeled peers to sorted keys
+          ansible.builtin.debug:
+            msg: "{{ fabric_intent.peers | dict2items | map(attribute='key') | sort }}"
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

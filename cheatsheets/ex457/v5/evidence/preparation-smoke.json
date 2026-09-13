@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "command": "python tools/labctl.py prepare --public-key <temporary-client.pub> (twice)",
+  "checks": [
+    "state directory exists before authorization copy",
+    "four persistent host identities",
+    "private host keys mode 0600",
+    "known_hosts unchanged on repeated prepare",
+    "four topology nodes and four links"
+  ],
+  "stdout": [
+    "Prepared topology and private host identities; public trust: .state/known_hosts\n",
+    "Prepared topology and private host identities; public trust: .state/known_hosts\n"
+  ],
+  "limits": "No container deployment or SSH session was performed. Temporary keys were deleted with the isolated test directory."
+}

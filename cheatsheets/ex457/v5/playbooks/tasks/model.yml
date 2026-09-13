@@ -1,0 +1,7 @@
+---
+- name: Validate the source of truth
+  ansible.builtin.assert:
+    that: dc | fabric_model
+- name: Derive intent including all remote nodes before any loop
+  ansible.builtin.set_fact:
+    fabric_intent: "{{ dc | fabric_intent(inventory_hostname) }}"

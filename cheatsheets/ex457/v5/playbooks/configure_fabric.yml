@@ -1,0 +1,25 @@
+---
+- name: Reconcile the lab fabric
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Import configuration role
+          ansible.builtin.import_role:
+            name: "{{ playbook_dir }}/../roles/fabric"
+          vars:
+            fabric_apply: true
+        - name: Verify before any persistence operation
+          ansible.builtin.include_tasks: tasks/verify.yml
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

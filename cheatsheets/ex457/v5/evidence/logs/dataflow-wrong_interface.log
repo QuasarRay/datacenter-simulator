@@ -1,0 +1,44 @@
+
+PLAY [Synthetic verifier dataflow wrong_interface] *****************************
+
+TASK [Validate the source of truth] ********************************************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Derive intent including all remote nodes before any loop] ****************
+ok: [spine1]
+
+TASK [Wait for exact unfiltered peer set, state and remote ASNs] ***************
+ok: [spine1]
+
+TASK [Read running configuration] **********************************************
+ok: [spine1]
+
+TASK [Compare interface-scoped addresses and BGP configuration] ****************
+[ERROR]: Task failed: The filter plugin 'fabric_config_ok' failed: managed config mismatch: interfaces
+
+Task failed.
+Origin: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-ni0qtm30/verify.yml:24:3
+
+22     - show running-config
+23     - wrong_interface
+24 - name: Compare interface-scoped addresses and BGP configuration
+     ^ column 3
+
+<<< caused by >>>
+
+The filter plugin 'fabric_config_ok' failed: managed config mismatch: interfaces
+Origin: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-ni0qtm30/verify.yml:26:11
+
+24 - name: Compare interface-scoped addresses and BGP configuration
+25   ansible.builtin.assert:
+26     that: running_config.stdout | fabric_config_ok(fabric_intent)
+             ^ column 11
+
+fatal: [spine1]: FAILED! => {"changed": false, "msg": "Task failed: The filter plugin 'fabric_config_ok' failed: managed config mismatch: interfaces"}
+
+PLAY RECAP *********************************************************************
+spine1                     : ok=4    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

@@ -1,0 +1,10 @@
+.state/
+.venv/
+collections/
+ee/context/
+__pycache__/
+*.retry
+*artifact*.json
+ansible-navigator.log
+controller/site.yml
+controller/secrets.yml

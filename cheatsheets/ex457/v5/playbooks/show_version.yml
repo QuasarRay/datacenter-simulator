@@ -1,0 +1,26 @@
+---
+- name: Inspect FRR versions
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Read version
+          ansible.netcommon.cli_command:
+            command: show version
+          register: version_result
+          changed_when: false
+        - name: Display version
+          ansible.builtin.debug:
+            var: version_result.stdout
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

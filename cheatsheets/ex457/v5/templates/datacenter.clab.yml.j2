@@ -1,0 +1,24 @@
+name: ex457-v5
+mgmt:
+  network: ex457-v5-mgmt
+  ipv4-subnet: {{ dc.mgmt.subnet }}
+topology:
+  defaults:
+    kind: linux
+    image: ex457-frr:v5
+    sysctls:
+      net.ipv4.ip_forward: "1"
+  nodes:
+{% for name, node in dc.nodes | dictsort %}
+    {{ name }}:
+      mgmt-ipv4: {{ node.mgmt_ip }}
+      binds:
+        - {{ pack_root }}/.state/authorized_keys:/run/ex457-auth/authorized_keys:ro
+        - {{ pack_root }}/.state/hostkeys/{{ name }}:/run/ex457-hostkeys:ro
+      exec:
+        - /usr/local/sbin/ex457-load
+{% endfor %}
+  links:
+{% for link in dc.links %}
+    - endpoints: ["{{ link.endpoints[0].node }}:{{ link.endpoints[0].interface }}", "{{ link.endpoints[1].node }}:{{ link.endpoints[1].interface }}"]
+{% endfor %}
