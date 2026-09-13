@@ -25,6 +25,14 @@
       "status": "QUEUED_AT_REVIEW",
       "cause": "No runner job had been assigned at this checkpoint.",
       "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34749008788,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749008788",
+      "commit": "c5c15eba3a6a190ee8de509f35f512ac16e14b18",
+      "status": "FAIL",
+      "cause": "68 pytest cases passed; the new ZIP gate test found ansible-navigator.log in the local manifest even though Git ignores it. Release selection now excludes this generated runtime log.",
+      "live_lab": "NOT_RUN"
     }
   ]
 }

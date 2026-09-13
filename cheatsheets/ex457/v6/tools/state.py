@@ -37,7 +37,7 @@ def atomic_json(path, data):
 def source_digest(root):
     root = Path(root)
     digest = hashlib.sha256()
-    ignored = {'.state', '.git', '.venv', 'collections', '__pycache__', '.pytest_cache', '.hypothesis', 'context', 'evidence', 'pytest-of-root'}
+    ignored = {'.state', '.git', '.venv', 'collections', '__pycache__', '.pytest_cache', '.hypothesis', 'context', 'evidence', 'pytest-of-root', 'ansible-navigator.log'}
     for path in sorted(root.rglob('*')):
         rel = path.relative_to(root)
         if path.is_file() and not set(rel.parts).intersection(ignored):

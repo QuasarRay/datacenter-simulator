@@ -10,6 +10,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def test_nonempty_manifest_exact_coverage(tmp_path):
     (tmp_path/'README.md').write_text('content')
+    (tmp_path/'ansible-navigator.log').write_text('generated runtime log; never release content')
     text=manifest_text(tmp_path);assert manifest_ok(tmp_path,text)
     for mutation in ['',text+text,text.replace('README.md','../README.md'),text.replace('README.md','absent.md')]:
         with pytest.raises(ValueError):manifest_ok(tmp_path,mutation)

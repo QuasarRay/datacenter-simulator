@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 import re
 
-EXCLUDE = {'.state', '.git', '.venv', 'collections', '__pycache__', '.pytest_cache', '.hypothesis', 'context', 'pytest-of-root'}
+EXCLUDE = {'.state', '.git', '.venv', 'collections', '__pycache__', '.pytest_cache', '.hypothesis', 'context', 'pytest-of-root', 'ansible-navigator.log'}
 
 
 def release_files(root):
