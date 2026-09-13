@@ -1,0 +1,3 @@
+---
+# Root-level entry point keeps the complete project adjacent to Navigator's playbook.
+- import_playbook: playbooks/show_version.yml

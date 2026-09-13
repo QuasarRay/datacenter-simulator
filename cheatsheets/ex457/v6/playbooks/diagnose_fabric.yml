@@ -1,0 +1,33 @@
+---
+- name: Collect failure diagnostics
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Read diagnostic commands
+          ansible.netcommon.cli_command:
+            command: "{{ diagnostic_command }}"
+          loop:
+            - show version
+            - show running-config
+            - show bgp ipv4 unicast summary json
+            - show ip route json
+          loop_control:
+            loop_var: diagnostic_command
+          register: diagnostics
+          changed_when: false
+        - name: Display diagnostic output
+          ansible.builtin.debug:
+            var: diagnostics.results
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

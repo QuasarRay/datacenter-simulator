@@ -1,0 +1,41 @@
+{
+  "check": "real_ansible_verifier_with_synthetic_device_io",
+  "status": "PASS",
+  "scenarios": [
+    {
+      "scenario": "good",
+      "expected": "success",
+      "returncode": 0,
+      "status": "PASS",
+      "log": ".state/dataflow-logs/dataflow-good.log"
+    },
+    {
+      "scenario": "undefined_remote_nodes",
+      "expected": "failure",
+      "returncode": 2,
+      "status": "PASS",
+      "log": ".state/dataflow-logs/dataflow-undefined_remote_nodes.log"
+    },
+    {
+      "scenario": "wrong_interface",
+      "expected": "failure",
+      "returncode": 2,
+      "status": "PASS",
+      "log": ".state/dataflow-logs/dataflow-wrong_interface.log"
+    },
+    {
+      "scenario": "extra_idle_peer",
+      "expected": "failure",
+      "returncode": 2,
+      "status": "PASS",
+      "log": ".state/dataflow-logs/dataflow-extra_idle_peer.log"
+    },
+    {
+      "scenario": "uninstalled_route",
+      "expected": "failure",
+      "returncode": 2,
+      "status": "PASS",
+      "log": ".state/dataflow-logs/dataflow-uninstalled_route.log"
+    }
+  ]
+}

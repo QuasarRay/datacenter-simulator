@@ -1,0 +1,72 @@
+- name: Launch and wait for the study workflow
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - site.yml
+  tasks:
+  - name: Resolve the owned workflow before any launch
+    ansible.builtin.uri:
+      url: '{{ lookup(''ansible.builtin.env'', ''CONTROLLER_HOST'') }}{{ lookup(''ansible.builtin.env'', ''CONTROLLER_OPTIONAL_API_URLPATTERN_PREFIX'')
+        | default(''/api/controller/'', true) }}v2/workflow_job_templates/?name={{ ''EX457 Workflow v6'' | urlencode }}&page_size=200'
+      headers: &id001
+        Authorization: Bearer {{ lookup('ansible.builtin.env', 'CONTROLLER_OAUTH_TOKEN') }}
+      return_content: true
+      validate_certs: true
+    register: owned_workflows
+    no_log: true
+  - name: Require one workflow in the intended organization
+    ansible.builtin.assert:
+      that:
+      - owned_workflows.json.next == None
+      - owned_workflows.json.results | selectattr('summary_fields.organization.name', 'equalto', organization_name) | list | length == 1
+  - name: Select verified workflow identity
+    ansible.builtin.set_fact:
+      owned_workflow: '{{ owned_workflows.json.results | selectattr(''summary_fields.organization.name'', ''equalto'', organization_name) | first
+        }}'
+  - name: Inspect all template edges before launch
+    ansible.builtin.uri:
+      url: '{{ lookup(''ansible.builtin.env'', ''CONTROLLER_HOST'') }}{{ lookup(''ansible.builtin.env'', ''CONTROLLER_OPTIONAL_API_URLPATTERN_PREFIX'')
+        | default(''/api/controller/'', true) }}v2/workflow_job_templates/{{ owned_workflow.id }}/workflow_nodes/?page_size=200'
+      headers: *id001
+      return_content: true
+      validate_certs: true
+    register: template_graph
+    no_log: true
+  - name: Reject extra jobs or edges before running any job
+    ansible.builtin.assert:
+      that:
+      - template_graph.json.next == None
+      - template_graph.json.results | ex457_workflow_graph_ok
+  - name: Launch workflow and wait for completion
+    awx.awx.workflow_launch:
+      workflow_template: EX457 Workflow v6
+      organization: '{{ organization_name }}'
+      wait: true
+      timeout: 600
+    register: workflow_result
+  - name: Show workflow result for audit
+    ansible.builtin.debug:
+      var: workflow_result
+  - name: Require successful workflow
+    ansible.builtin.assert:
+      that: workflow_result.status == 'successful'
+  - name: Read node outcomes because a handled failure can yield workflow success
+    ansible.builtin.uri:
+      url: '{{ lookup(''ansible.builtin.env'', ''CONTROLLER_HOST'') }}{{ lookup(''ansible.builtin.env'', ''CONTROLLER_OPTIONAL_API_URLPATTERN_PREFIX'')
+        | default(''/api/controller/'', true) }}v2/workflow_jobs/{{ workflow_result.id }}/workflow_nodes/?page_size=200'
+      headers:
+        Authorization: Bearer {{ lookup('ansible.builtin.env', 'CONTROLLER_OAUTH_TOKEN') }}
+      return_content: true
+      validate_certs: true
+    register: workflow_nodes
+    no_log: true
+  - name: Reject incomplete pagination or missing required nodes
+    ansible.builtin.assert:
+      that:
+      - workflow_nodes.json.next == None
+      - workflow_nodes.json.results | ex457_workflow_graph_ok
+      - workflow_nodes.json.results | selectattr('identifier', 'in', ['Backup', 'Change', 'Verify']) | list | length == 3
+  - name: Require every core job to have succeeded
+    ansible.builtin.assert:
+      that: item.summary_fields.job.status == 'successful'
+    loop: '{{ workflow_nodes.json.results | selectattr(''identifier'', ''in'', [''Backup'', ''Change'', ''Verify'']) | list }}'

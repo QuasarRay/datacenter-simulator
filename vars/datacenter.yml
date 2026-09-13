@@ -9,13 +9,13 @@ dc:
   profiles:
     spine:
       kind: linux
-      image: frrouting/frr:v10.5.0
+      image: quay.io/frrouting/frr@sha256:da3009abda75bd7cace6b2a9cbe28887cb2044ab1451103031340162704539fc
       cpu: 0.5
       memory: 256Mb
 
     leaf:
       kind: linux
-      image: frrouting/frr:v10.5.0
+      image: quay.io/frrouting/frr@sha256:da3009abda75bd7cace6b2a9cbe28887cb2044ab1451103031340162704539fc
       cpu: 0.5
       memory: 256Mb
 

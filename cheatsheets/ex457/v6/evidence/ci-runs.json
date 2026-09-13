@@ -1,0 +1,83 @@
+{
+  "scope": "Actual hosted attempts; later attempts do not erase earlier failures.",
+  "runs": [
+    {
+      "id": 34748520391,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748520391",
+      "commit": "76de3b8612cbf8a749ec87379b11bc25b59a4506",
+      "status": "FAIL",
+      "cause": "Fresh checkout lacked .state parent for pytest basetemp; 58 passed and 9 fixture setup errors. Fixed by private state initialization in conftest before fixtures.",
+      "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34748634627,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748634627",
+      "commit": "142b407fbc51f8df19abe2717170b17aeb666484",
+      "status": "STARTUP_FAILURE",
+      "cause": "GitHub reported an internal Actions error before assigning any job; annotation advised retry.",
+      "github_request_id": "BF23:198AB4:115E2F9D:10DFC682:6AA6645D",
+      "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34748754722,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748754722",
+      "commit": "915750110ad9ca6b23451016e8efd13fe50c32bc",
+      "status": "QUEUED_AT_REVIEW",
+      "cause": "No runner job had been assigned at this checkpoint.",
+      "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34749008788,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749008788",
+      "commit": "c5c15eba3a6a190ee8de509f35f512ac16e14b18",
+      "status": "FAIL",
+      "cause": "68 pytest cases passed; the new ZIP gate test found ansible-navigator.log in the local manifest even though Git ignores it. Release selection now excludes this generated runtime log.",
+      "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34749132829,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749132829",
+      "commit": "1f69d526054959e34838da8e91c749393788b7a2",
+      "status": "FAIL",
+      "passed": [
+        "historical-counterexamples",
+        "property-regressions",
+        "release-contracts",
+        "docker-ready"
+      ],
+      "cause": "The published image pulled successfully; nested Docker could not start containers because cgroup v2 domain controllers were in an invalid state. Added explicit DinD subtree initialization; CPU/memory assertions remain required.",
+      "live_lab": "FAILED_AT_LEGACY_DEPLOY"
+    },
+    {
+      "id": 34749504898,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749504898",
+      "commit": "3d1ac5542731a85cf3d2df93022bd31c6bdcc742",
+      "status": "FAIL",
+      "passed": [
+        "historical-counterexamples",
+        "property-regressions",
+        "release-contracts",
+        "dind-preparation",
+        "docker-ready",
+        "legacy-deploy"
+      ],
+      "cause": "All four legacy nodes and fabric links ran. Original pyATS incorrectly assumed NanoCpus and binary Mb units. Containerlab 0.79 source uses quota/period and go-humanize decimal MB. Corrected the oracle and added SI/IEC and CPU quota properties.",
+      "live_lab": "LEGACY_RESOURCES_REJECTED_BY_INCORRECT_ORACLE"
+    },
+    {
+      "id": 34749817183,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749817183",
+      "commit": "b0fbb8874c339e895a23c7895125626414e94e12",
+      "status": "FAIL",
+      "passed": [
+        "legacy-deploy",
+        "legacy-pyats",
+        "legacy-destroy",
+        "v6-prepare",
+        "v6-image"
+      ],
+      "cause": "All original simulator tests passed and the v6 adapter built. Teardown returned success but left gpu-dc-mgmt holding the shared subnet. Added exact-name/label/subnet/no-endpoint checks and explicit empty-network release; reject unrelated or active networks.",
+      "live_lab": "V6_DEPLOY_BLOCKED_BY_RETAINED_NETWORK"
+    }
+  ]
+}

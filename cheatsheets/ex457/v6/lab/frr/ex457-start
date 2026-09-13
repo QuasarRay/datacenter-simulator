@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+install -o root -g root -m 0600 /run/ex457-hostkeys/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key
+install -o root -g root -m 0644 /run/ex457-hostkeys/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_ed25519_key.pub
+install -o ansible -g ansible -m 0600 /run/ex457-auth/authorized_keys /home/ansible/.ssh/authorized_keys
+/usr/sbin/sshd -t
+# The pinned containerlab-flavor entrypoint starts sshd and watchfrr. Topology exec handles deploy; labctl handles restart reload.
+exec /usr/lib/frr/docker-start

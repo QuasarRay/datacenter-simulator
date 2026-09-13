@@ -1,0 +1,292 @@
+{
+  "source": "EXAM",
+  "scope": "Public AAP 2.6 blueprint retrieved 2026-09-13; not private LMS objectives",
+  "leaf_count": 23,
+  "family_count": 8,
+  "objectives": [
+    {
+      "id": "DEV-1",
+      "family": "Development",
+      "objective": "Edit with VS Code",
+      "section": "03_git_playbooks.md#development-exercise",
+      "exercise": "Save a modified playbook in VS Code",
+      "acceptance": "Saved diff and syntax-check output",
+      "sources": [
+        "DEVTOOLS",
+        "VSCODE"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "DEV-2",
+      "family": "Development",
+      "objective": "Use a shell",
+      "section": "03_git_playbooks.md#development-exercise",
+      "exercise": "Run Git and Ansible from the integrated terminal",
+      "acceptance": "Command transcript",
+      "sources": [
+        "GIT",
+        "PLAY"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "DEV-3",
+      "family": "Development",
+      "objective": "Connect with SSH",
+      "section": "01_lab_baseline.md#build-and-deploy",
+      "exercise": "Log into a router with strict key checking",
+      "acceptance": "Successful login and wrong-key rejection",
+      "sources": [
+        "SSH",
+        "NETCLI"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "NAV-1",
+      "family": "Navigator",
+      "objective": "Build inventory",
+      "section": "02_inventory_navigator.md#inventory",
+      "exercise": "Inspect the supplied nested YAML inventory",
+      "acceptance": "Four hosts in the correct groups",
+      "sources": [
+        "INV"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "NAV-2",
+      "family": "Navigator",
+      "objective": "Configure Navigator",
+      "section": "02_inventory_navigator.md#host-mode-first",
+      "exercise": "Inspect settings; run host mode then EE mode",
+      "acceptance": "Settings output and successful runs",
+      "sources": [
+        "NAV"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "GIT-1",
+      "family": "Playbooks and Git",
+      "objective": "Author and execute playbooks",
+      "section": "03_git_playbooks.md#playbook-pattern",
+      "exercise": "Extend show_version and limit its target",
+      "acceptance": "Syntax check and correct recap",
+      "sources": [
+        "PLAY"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "GIT-2",
+      "family": "Playbooks and Git",
+      "objective": "Perform Git operations",
+      "section": "03_git_playbooks.md#development-exercise",
+      "exercise": "Branch, stage, diff, commit and resolve a conflict",
+      "acceptance": "Commit history and resolved file",
+      "sources": [
+        "GIT"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "GIT-3",
+      "family": "Playbooks and Git",
+      "objective": "Use VS Code Git tools",
+      "section": "03_git_playbooks.md#development-exercise",
+      "exercise": "Stage and commit in Source Control",
+      "acceptance": "Visible staged diff and commit",
+      "sources": [
+        "VSCODE"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "VAR-1",
+      "family": "Variables and facts",
+      "objective": "Parameterize playbooks",
+      "section": "04_variables_facts_filters.md#data-model",
+      "exercise": "Derive per-node intent from dc",
+      "acceptance": "Correct four-node intent output",
+      "sources": [
+        "VARS"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "VAR-2",
+      "family": "Variables and facts",
+      "objective": "Collect network facts",
+      "section": "04_variables_facts_filters.md#device-facts",
+      "exercise": "Run facts_filters.yml",
+      "acceptance": "Network version/config facts",
+      "sources": [
+        "FACTS"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "VAR-3",
+      "family": "Variables and facts",
+      "objective": "Apply data filters",
+      "section": "04_variables_facts_filters.md#data-model",
+      "exercise": "Transform a dictionary to sorted peer IPs",
+      "acceptance": "Expected normalized result",
+      "sources": [
+        "FILTER"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "TASK-1",
+      "family": "Task control",
+      "objective": "Loop and branch",
+      "section": "05_task_control.md#control-flow",
+      "exercise": "Run a named-variable loop with when",
+      "acceptance": "Expected selected node",
+      "sources": [
+        "LOOP"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "TASK-2",
+      "family": "Task control",
+      "objective": "Recover from task failures",
+      "section": "05_task_control.md#control-flow",
+      "exercise": "Trigger failure, rescue and always",
+      "acceptance": "Recovery assertion and cleanup output",
+      "sources": [
+        "BLOCK"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "CTRL-1",
+      "family": "Controller",
+      "objective": "Configure machine and SCM credentials",
+      "section": "11_controller.md#create-and-inspect",
+      "exercise": "Create and attach credentials",
+      "acceptance": "Correct credential types and associations",
+      "sources": [
+        "CREDS"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "CTRL-2",
+      "family": "Controller",
+      "objective": "Create projects",
+      "section": "11_controller.md#create-and-inspect",
+      "exercise": "Sync the v6 Git project",
+      "acceptance": "Successful sync and discovered playbooks",
+      "sources": [
+        "PROJECT"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "CTRL-3",
+      "family": "Controller",
+      "objective": "Design workflow templates",
+      "section": "11_controller.md#workflow-gate",
+      "exercise": "Build success and failure paths",
+      "acceptance": "Four-node graph with correct edges",
+      "sources": [
+        "WORKFLOW"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "CTRL-4",
+      "family": "Controller",
+      "objective": "Execute jobs",
+      "section": "11_controller.md#workflow-gate",
+      "exercise": "Launch workflow and inspect every core job",
+      "acceptance": "Backup/Change/Verify successful job IDs",
+      "sources": [
+        "WORKFLOW"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "CTRL-5",
+      "family": "Controller",
+      "objective": "Declare Controller as code",
+      "section": "12_controller_iac.md#prepare-site-inputs",
+      "exercise": "Apply configure.yml twice",
+      "acceptance": "Two recaps and converged object graph",
+      "sources": [
+        "AWX-SRC",
+        "AAP"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "ROLE-1",
+      "family": "Roles and collections",
+      "objective": "Include and import content",
+      "section": "06_roles_collections_ee.md#reuse",
+      "exercise": "Compare supplied static imports and dynamic includes",
+      "acceptance": "Task lists and execution explanation",
+      "sources": [
+        "REUSE"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "ROLE-2",
+      "family": "Roles and collections",
+      "objective": "Develop network roles",
+      "section": "06_roles_collections_ee.md#reuse",
+      "exercise": "Extend the fabric role in a practice branch",
+      "acceptance": "Working role, defaults and second-run behavior",
+      "sources": [
+        "REUSE",
+        "CONFIG"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "NET-1",
+      "family": "Network tasks",
+      "objective": "Render Jinja configuration",
+      "section": "07_network_automation.md#candidate-and-apply",
+      "exercise": "Render four distinct candidates",
+      "acceptance": "Correct interfaces, peers and networks",
+      "sources": [
+        "VARS",
+        "FILTER",
+        "FRR-BGP"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "NET-2",
+      "family": "Network tasks",
+      "objective": "Use netcommon modules",
+      "section": "07_network_automation.md#candidate-and-apply",
+      "exercise": "Run cli_command and cli_config",
+      "acceptance": "Read/apply/verify transcripts",
+      "sources": [
+        "NETCLI",
+        "CONFIG"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    },
+    {
+      "id": "NET-3",
+      "family": "Network tasks",
+      "objective": "Back up configurations",
+      "section": "10_backups_persistence.md#backup-and-consume-it",
+      "exercise": "Capture, consume and export backups",
+      "acceptance": "Usable backup and verified recovery",
+      "sources": [
+        "BACKUP"
+      ],
+      "status": "MAPPED_RUNTIME_ACCEPTANCE_PENDING"
+    }
+  ]
+}

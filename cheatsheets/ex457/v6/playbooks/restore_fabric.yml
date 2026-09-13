@@ -1,0 +1,49 @@
+---
+- name: Restore managed configuration from an actual backup
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Require backup run selected by the operator
+          ansible.builtin.assert:
+            that: restore_run_id | default('') is match('^[A-Za-z0-9_-]+$')
+        - name: Validate the complete backup index and hashes before reading recovery state
+          ansible.builtin.command:
+            argv: ["{{ ansible_playbook_python }}", "{{ playbook_dir }}/../tools/backup_store.py", verify, --directory, "{{ playbook_dir }}/../.state/backups/{{ restore_run_id }}"]
+          delegate_to: localhost
+          run_once: true
+          changed_when: false
+        - name: Parse backup as the recovery source
+          ansible.builtin.set_fact:
+            recovery_state: "{{ lookup('ansible.builtin.file', playbook_dir + '/../.state/backups/' + restore_run_id + '/' + inventory_hostname + '.cfg') | fabric_config }}"
+        - name: Require this backup matches current modeled managed intent
+          ansible.builtin.assert:
+            that:
+              - recovery_state.interfaces == fabric_intent.interfaces
+              - recovery_state.peers == fabric_intent.peers
+              - recovery_state.asn == fabric_intent.asn
+              - recovery_state.router_id == fabric_intent.router_id
+              - recovery_state.networks == fabric_intent.networks
+              - recovery_state.ebgp_requires_policy == fabric_intent.ebgp_requires_policy
+        - name: Use parsed backup values for recovery
+          ansible.builtin.set_fact:
+            fabric_intent: "{{ fabric_intent | combine(recovery_state) }}"
+        - name: Reconcile to the backup state
+          ansible.builtin.include_role:
+            name: "{{ playbook_dir }}/../roles/fabric"
+          vars:
+            fabric_apply: true
+        - name: Verify recovery before saving
+          ansible.builtin.include_tasks: tasks/verify.yml
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

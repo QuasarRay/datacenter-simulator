@@ -1,0 +1,22 @@
+---
+- name: Render topology on the lab host
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../model-upstream.yml
+  vars:
+    pack_root: "{{ playbook_dir | dirname }}"
+  tasks:
+    - name: Validate topology model
+      ansible.builtin.assert:
+        that: dc | fabric_model
+    - name: Create generated directory
+      ansible.builtin.file:
+        path: "{{ pack_root }}/.state"
+        state: directory
+        mode: "0700"
+    - name: Render complete topology
+      ansible.builtin.template:
+        src: ../templates/datacenter.clab.yml.j2
+        dest: "{{ pack_root }}/.state/datacenter.clab.yml"
+        mode: "0600"
