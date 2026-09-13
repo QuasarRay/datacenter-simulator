@@ -18,6 +18,16 @@ topology:
         role: "{{ node.role }}"
         asn: "{{ node.asn }}"
         loopback: "{{ node.loopback }}"
+      exec:
+        - "ip address replace {{ node.loopback }} dev lo"
+{% for link in dc.links %}
+{% for endpoint in link.endpoints %}
+{% if endpoint.node == name %}
+        - "ip address replace {{ endpoint.address }} dev {{ endpoint.interface }}"
+        - "ip link set {{ endpoint.interface }} up"
+{% endif %}
+{% endfor %}
+{% endfor %}
 
 {% endfor %}
   links:
