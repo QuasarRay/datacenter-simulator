@@ -69,3 +69,11 @@ The compatibility `master`/`slave-type` syntax is documented for RHEL 9; newer N
 
 [RHEL network bridges](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/configuring_and_managing_networking/configuring-a-network-bridge_configuring-and-managing-networking).
 
+
+## Docker forwarding diagnostics
+
+Record Docker's version and effective daemon configuration before applying a host firewall rule. Inspect `sysctl net.ipv4.ip_forward`, `sudo iptables -S FORWARD`, `sudo iptables -S DOCKER-USER` on an iptables-backed daemon, and `sudo nft list ruleset` when the installed backend uses nftables. An absent DOCKER-USER chain is not by itself a fault on the nftables backend. Compare the route from the execution node to the container and the return route; both are required.
+
+Docker creates bridge firewall rules independently of UFW; a UFW status listing alone cannot establish container isolation or reachability. Keep Docker-managed rules intact. Do not copy a libvirt forwarding rule into a Docker topology without checking the actual interfaces/subnets. Enabling Docker's nftables backend has different forwarding prerequisites and depends on the installed Docker version. Record the selected backend and narrow any operator-managed rules to the lab path.
+
+[Docker packet filtering and firewall behavior](https://docs.docker.com/engine/network/packet-filtering-firewalls/).

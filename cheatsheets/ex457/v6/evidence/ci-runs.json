@@ -1,0 +1,13 @@
+{
+  "scope": "Actual hosted attempts; later attempts do not erase earlier failures.",
+  "runs": [
+    {
+      "id": 34748520391,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748520391",
+      "commit": "76de3b8612cbf8a749ec87379b11bc25b59a4506",
+      "status": "FAIL",
+      "cause": "Fresh checkout lacked .state parent for pytest basetemp; 58 passed and 9 fixture setup errors. Fixed by private state initialization in conftest before fixtures.",
+      "live_lab": "NOT_RUN"
+    }
+  ]
+}

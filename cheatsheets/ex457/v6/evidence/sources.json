@@ -452,5 +452,14 @@
     "version": "frr-10.7.1",
     "retrieved_on": "2026-09-13",
     "review_note": "The upstream entrypoint runs watchfrr, without starting sshd; the v6 adapter explicitly starts sshd before entering this process."
+  },
+  "DOCKER-FIREWALL": {
+    "title": "Docker packet filtering and firewalls",
+    "url": "https://docs.docker.com/engine/network/packet-filtering-firewalls/",
+    "locator": "Firewall backend; Docker on a router; Docker and ufw",
+    "authority": "Docker maintainers",
+    "version": "current official documentation; inspect installed daemon",
+    "retrieved_on": "2026-09-13",
+    "review_note": "Docker manages bridge firewall rules; iptables and nftables backends have different forwarding behavior, and UFW alone does not describe all container traffic filtering."
   }
 }

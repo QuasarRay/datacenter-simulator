@@ -332,7 +332,8 @@
     "sources": [
       "CACHY",
       "CACHY-VM",
-      "CACHY-SCOPE"
+      "CACHY-SCOPE",
+      "DOCKER-FIREWALL"
     ],
     "evidence_type": "documentation mapping; implementation/acceptance stated in section"
   },

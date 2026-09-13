@@ -25,3 +25,7 @@ The shipped Navigator settings disable EEs so this chapter does not depend on ch
 
 [Navigator settings](https://docs.ansible.com/projects/navigator/settings/).
 
+
+## Build an inventory from a blank file
+
+On a practice branch, create `inventory/practice.yml` without copying `network.yml`. From `model-upstream.yml`, write all four host names, management addresses and the fabric/spines/leafs hierarchy. Add the strict network_cli/libssh group settings in an adjacent `group_vars/fabric.yml`. Run `ansible-inventory --graph`, `--list` and `--host spine1` against your new inventory, compare every address with the model, then run `show_version.yml -i inventory/practice.yml`. Acceptance requires exact role membership, the effective backend/trust settings, and four successful router responses. Remove one group and swap two addresses to demonstrate why graph inspection alone is insufficient.

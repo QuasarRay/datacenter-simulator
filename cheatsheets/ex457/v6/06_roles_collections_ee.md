@@ -38,3 +38,9 @@ After the local smoke test, tag, log in to your destination registry, push, reco
 
 
 [Navigator SSH-agent and project-mount FAQ](https://docs.ansible.com/projects/navigator/faq/).
+
+## Create a network automation role
+
+Run `ansible-galaxy role init roles/practice_verify` on a practice branch. Create a default for the expected FRR version prefix, write a task using `ansible.netcommon.cli_command` to collect `show version`, and assert the returned value against that variable. Create a play that imports the model and trust tasks before importing your role and always performs trust cleanup. Run it against the four routers, then override the expected version with a deliberately wrong value and require failure. Import and include your role in separate plays and explain the difference in `--list-tasks` output. Acceptance is a role you authored, with a default, real network I/O, an override and a demonstrated failure gate.
+
+[Creating roles](https://docs.ansible.com/projects/ansible-core/2.19/playbook_guide/playbooks_reuse_roles.html).

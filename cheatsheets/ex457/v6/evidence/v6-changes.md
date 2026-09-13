@@ -24,3 +24,7 @@ The original root `tests/datacenter_state.py` discarded the value returned by `a
 ## Limits that remain explicit
 
 Unsupported FRR routing processes, AFs and policies fail closed; this small grammar is not a general FRR parser. Backups restore this model's managed configuration, not arbitrary device state. Hashes detect accidental/tampered bytes against a trusted index; unsigned hashes do not authenticate an attacker-controlled index. Conditional storage needs a service that enforces `If-None-Match: *`. Real Controller, EE registry and host networking acceptance remain product-specific checks.
+
+## v5 improvement notes
+
+I001 is addressed by new blank-file inventory construction and network-role creation exercises in chapters 02 and 06, with explicit positive and negative acceptance. I002 is addressed by Docker backend-aware forwarding diagnostics in chapter 19, sourced to Docker's official firewall documentation. These two improvement notes are separate from the 103 historical finding IDs.

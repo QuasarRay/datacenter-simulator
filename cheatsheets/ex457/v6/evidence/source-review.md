@@ -462,3 +462,13 @@ Locator: watchfrr invocation.
 
 Review note: The upstream entrypoint runs watchfrr, without starting sshd; the v6 adapter explicitly starts sshd before entering this process.
 
+## DOCKER-FIREWALL
+
+[Docker packet filtering and firewalls](https://docs.docker.com/engine/network/packet-filtering-firewalls/)
+
+Authority: Docker maintainers. Version/scope: current official documentation; inspect installed daemon.
+
+Locator: Firewall backend; Docker on a router; Docker and ufw.
+
+Review note: Docker manages bridge firewall rules; iptables and nftables backends have different forwarding behavior, and UFW alone does not describe all container traffic filtering.
+
