@@ -4,6 +4,14 @@
 
 No finite pyATS or Hypothesis suite guarantees correctness of every project state, vendor release, kernel, Controller installation or exam task. v6 defines observable contracts, rejects the audited counterexamples, and makes missing live evidence visible. The [historical mapping](evidence/audit-history.md) accounts for all 103 available findings. The public blueprint remains 23 mapped objectives in eight families; mapping is content coverage, not an exam pass guarantee.
 
+## Official-document provenance gate
+
+`evidence/official-doc-audit.json` independently classifies all 42 evidence claims. A claim is not forced into a Red Hat or Ansible citation when it is actually a repository policy, runtime observation, FRR/Containerlab behavior or another third-party concern. For claims that are genuinely about Ansible or Red Hat products, `evidence/official-source-quotes.json` records the retrieved official URL, product/version scope, locator and a short direct quotation. `tools/documentation_contract.py` freezes the reviewed claim-to-source mapping and requires Red Hat authority for AAP/RHEL product claims.
+
+The audit deliberately separates **documented proposition** from **runtime oracle**. `evidence/runtime-doc-contracts.json` connects selected official Ansible propositions to named live pyATS observations. For example, Ansible documents the `config` subset for `frr_facts`, but its own page says the module was tested against FRR 6.0; the live FRR 10.7 test must therefore prove `ansible_net_config` is actually returned in this lab rather than treating the documentation as a compatibility guarantee.
+
+Hypothesis mutation tests fail if an official quote, locator, product version, approved domain, reviewed source mapping or required Red Hat authority is removed or substituted. These tests do not claim that Python can infer textual entailment; the semantic review is explicit in the checked audit, while the tests prevent a later edit from silently weakening its provenance.
+
 ## Property and stateful tests
 
 From `cheatsheets/ex457/v6`, install `requirements.txt`, `tests/requirements.txt` and the collections in `requirements.yml`, then run:
@@ -15,15 +23,17 @@ python tools/validate.py --full --manifest
 
 Hypothesis uses 150 examples per ordinary property where the strategy has sufficient distinct values, a deterministic CI profile, no timing deadline, and shrinking/reproduction blobs. The backup state machine uses 35 examples with up to 12 operations per example. These are settings, not a claimed count of distinct cases actually executed. Set `HYPOTHESIS_PROFILE=dev` for a shorter interactive run.
 
-Independent oracles derive endpoint adjacency and kernel address sets directly from the model. Mutation tests reject wrong address families, peer groups, out-of-scope routing statements, mixed valid/invalid ECMP hops, wrong egress, management gateway conflicts, duplicate ASNs, invalid router IDs, altered topology binds, swapped inventory addresses, malformed keys, permissive versions and incomplete evidence registries. Stateful tests create, verify, corrupt and attempt to reuse immutable backup sets. The state recorder must replace a prior success with a fresh failed run after an injected error.
+Independent oracles derive endpoint adjacency and kernel address sets directly from the model. Mutation tests reject wrong address families, peer groups, out-of-scope routing statements, mixed valid/invalid ECMP hops, wrong egress, management gateway conflicts, duplicate ASNs, invalid router IDs, altered topology binds, swapped inventory addresses, malformed keys, permissive versions, incomplete evidence registries and weakened official-document provenance. Stateful tests create, verify, corrupt and attempt to reuse immutable backup sets. The state recorder must replace a prior success with a fresh failed run after an injected error.
 
-The AWX test downloads a pinned upstream method, checks its SHA-256, and executes the method with real Jinja sandboxing and synthetic database fields. This checks `tower.filename` for AWX 24.6.1; it does not simulate a whole Controller deployment. The real Ansible bootstrap test runs network_cli variable evaluation and local trust tasks, ending before device I/O.
+The AWX test downloads a pinned upstream method, checks its SHA-256, and executes the method with real Jinja sandboxing and synthetic database fields. This checks `tower.filename` for AWX 24.6.1; it does not simulate a whole Controller deployment and does not establish the AAP 2.6 supported CaC collection. The real Ansible bootstrap test runs network_cli variable evaluation and local trust tasks, ending before device I/O.
 
 [Hypothesis stateful testing](https://hypothesis.readthedocs.io/en/latest/stateful.html).
 
 ## Live pyATS gate
 
-`tests/pyats_live.py` is destructive within the dedicated `ex457-v6` lab. Run it only after preparing the lab with an ephemeral client key, building the pinned adapter and deploying it. Missing tools or nodes cause failure. It checks unlocked SSH accounts, effective public-key policy, real Ansible/libssh positive and wrong-host-key connections, configuration convergence, independent Linux addresses, BGP/Zebra/kernel routes, all 12 sourced ping pairs, injected stale peer/address, complete ping loss, immutable private backups, restoration, actual integrated saved files, and lifecycle reload without reapplying configuration.
+`tests/pyats_live.py` is destructive within the dedicated `ex457-v6` lab. Run it only after preparing the lab with an ephemeral client key, building the pinned adapter and deploying it. Missing tools or nodes cause failure. It checks unlocked SSH accounts, effective public-key policy, real Ansible/libssh positive and wrong-host-key connections, configuration convergence, the documented FRR `config` facts path on live FRR 10.7, independent Linux addresses, BGP/Zebra/kernel routes, all 12 sourced ping pairs, injected stale peer/address, complete ping loss, immutable private backups, restoration, actual integrated saved files, and lifecycle reload without reapplying configuration.
+
+Four live observations are explicitly tied to official Ansible documentation contracts: network_cli host-key checking, `frr_facts` config gathering, `cli_config` configuration push and `cli_backup` backup behavior. The official docs define the mechanism; pyATS proves the selected playbook and pinned lab actually produce the expected observable state.
 
 The script explicitly turns the AEtest aggregate result into a process exit status. A deliberately failing subprocess regression checks this behavior. The pre-existing root pyATS script receives the same exit fix.
 
