@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PACK=ROOT/'cheatsheets/ex457/v6'
 ARTIFACTS=ROOT/'artifacts'
 FRR='quay.io/frrouting/frr@sha256:da3009abda75bd7cace6b2a9cbe28887cb2044ab1451103031340162704539fc'
-REQUIRED=['historical-counterexamples','property-regressions','release-contracts','docker-ready','legacy-deploy','legacy-pyats','legacy-destroy','v6-prepare','v6-image','v6-deploy','v6-pyats','v6-destroy']
+REQUIRED=['historical-counterexamples','property-regressions','release-contracts','dind-preparation','docker-ready','legacy-deploy','legacy-pyats','legacy-destroy','v6-prepare','v6-image','v6-deploy','v6-pyats','v6-destroy']
 
 
 def main():
@@ -40,6 +40,7 @@ def main():
         run('historical-counterexamples',[sys.executable,'tools/check_previous_release.py'])
         run('property-regressions',[sys.executable,'-m','pytest','-q','--junitxml='+str(ARTIFACTS/'pytest.xml')])
         run('release-contracts',[sys.executable,'tools/validate.py','--full','--manifest'])
+        run('dind-preparation',[sys.executable,str(ROOT/'ci/prepare_dind.py')])
         with (logs/'dockerd.log').open('w') as stream:
             daemon=subprocess.Popen(['dockerd','--host=unix:///var/run/docker.sock','--storage-driver=vfs'],stdout=stream,stderr=subprocess.STDOUT)
         for attempt in range(90):

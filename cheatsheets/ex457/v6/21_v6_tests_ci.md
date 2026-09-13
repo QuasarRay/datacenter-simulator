@@ -50,3 +50,7 @@ The artifact allowlist excludes client keys, host private keys, backup files and
 ## External acceptance
 
 An entitled EE registry, real AAP Controller, CachyOS host and rebootable RHEL VM are not provisioned by the disposable FRR pipeline. Their status is explicitly `NOT_RUN` until their chapter 20 acceptance is executed on the specified target. Local properties and Linux containers cannot prove RHEL NetworkManager persistence, AAP server schemas/RBAC or a registry pull from an execution node.
+
+## Nested Docker resource delegation
+
+The disposable Dagger runner moves its root cgroup processes into a child before enabling cgroup v2 subtree controllers, following [Moby's DinD initialization](https://github.com/moby/moby/blob/master/hack/dind). CPU and memory controllers must be available; missing delegation fails the gate. The original simulator's resource-limit tests stay enabled. This initialization is guarded for the Dagger runner and must not be invoked on a production host.

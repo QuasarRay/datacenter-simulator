@@ -33,6 +33,20 @@
       "status": "FAIL",
       "cause": "68 pytest cases passed; the new ZIP gate test found ansible-navigator.log in the local manifest even though Git ignores it. Release selection now excludes this generated runtime log.",
       "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34749132829,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749132829",
+      "commit": "1f69d526054959e34838da8e91c749393788b7a2",
+      "status": "FAIL",
+      "passed": [
+        "historical-counterexamples",
+        "property-regressions",
+        "release-contracts",
+        "docker-ready"
+      ],
+      "cause": "The published image pulled successfully; nested Docker could not start containers because cgroup v2 domain controllers were in an invalid state. Added explicit DinD subtree initialization; CPU/memory assertions remain required.",
+      "live_lab": "FAILED_AT_LEGACY_DEPLOY"
     }
   ]
 }

@@ -21,6 +21,7 @@ class DatacenterCi:
                 .with_env_variable('ANSIBLE_NOCOLOR','1')
                 .with_env_variable('PYTHONDONTWRITEBYTECODE','1')
                 .with_env_variable('HYPOTHESIS_PROFILE','ci')
+                .with_env_variable('EX457_DAGGER_RUNNER','1')
                 .with_env_variable('CI_RUN_ID',run_id)
                 .with_exec(['python','ci/run_ci.py'],insecure_root_capabilities=True))
 
