@@ -1,6 +1,6 @@
 # All available historical audit findings
 
-103 available historical findings: 32 v3 entries carried in v4, 48 v4 findings, 23 v5 findings. Original v3 audit and any earlier audits were not available. Regression coverage, source review and runtime acceptance are separate. Two newly discovered v6 integration defects are documented in v6-changes.md.
+103 available historical findings: 32 v3 entries carried in v4, 48 v4 findings, 23 v5 findings. Original v3 audit and any earlier audits were not available. Regression coverage, source review and runtime acceptance are separate. Confirmed v6 integration defects and a rejected SSH-startup suspicion are documented in v6-changes.md.
 
 | ID | Finding | Disposition | Tests | Remaining acceptance |
 |---|---|---|---|---|

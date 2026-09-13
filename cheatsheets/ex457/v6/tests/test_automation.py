@@ -118,3 +118,12 @@ def test_pyats_failure_has_nonzero_process_exit(tmp_path):
     probe.write_text(source+"if __name__=='__main__':"+block)
     result=subprocess.run([sys.executable,str(probe)],capture_output=True,text=True)
     assert result.returncode!=0 and 'deliberate regression probe' in result.stdout
+
+
+def test_simulator_profile_images_match_published_digest():
+    repository=ROOT.parents[2]
+    dc=yaml.safe_load((repository/'vars/datacenter.yml').read_text())['dc']
+    publication=json.loads((ROOT/'evidence/image-publication.json').read_text())['replacement']
+    expected=publication['repository']+'@'+publication['index_digest']
+    assert {dc['profiles'][n['role']]['image'] for n in dc['nodes'].values()}=={expected}
+    assert publication['entrypoint_sha256']=='57c192078ba6b8be0f43aee3f08bef43581d17d877a6b0ef145cfd4c87dcb8e5'

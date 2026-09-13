@@ -1,0 +1,19 @@
+{
+  "checked_on": "2026-09-13",
+  "unavailable_legacy_tag": {
+    "url": "https://hub.docker.com/v2/repositories/frrouting/frr/tags/v10.5.0",
+    "http_status": 404
+  },
+  "replacement": {
+    "repository": "quay.io/frrouting/frr",
+    "tag_locator": "containerlab-10.7.1",
+    "index_digest": "sha256:da3009abda75bd7cace6b2a9cbe28887cb2044ab1451103031340162704539fc",
+    "amd64_manifest": "sha256:33c878f82253b03c15c14c3f9cb57647b928336de40f022887145c52619176cb",
+    "manifest_url": "https://quay.io/v2/frrouting/frr/manifests/sha256:da3009abda75bd7cace6b2a9cbe28887cb2044ab1451103031340162704539fc",
+    "entrypoint_layer": "sha256:768205d23497ec256a38365bc7560675fe603ab763009ac1f87c5179c05f7e62",
+    "entrypoint_sha256": "57c192078ba6b8be0f43aee3f08bef43581d17d877a6b0ef145cfd4c87dcb8e5",
+    "entrypoint_path": "/usr/lib/frr/docker-start",
+    "entrypoint_review": "The containerlab flavor starts sshd and execs watchfrr; its script differs from the generic Alpine startup source."
+  },
+  "limit": "Registry metadata proves publication; image execution is a separate CI gate."
+}

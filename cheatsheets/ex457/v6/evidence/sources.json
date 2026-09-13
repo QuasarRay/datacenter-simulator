@@ -445,13 +445,13 @@
     "review_note": "The pinned implementation provides tower.filename; the real method is executed with synthetic model fields in a regression test."
   },
   "FRR-START-SOURCE": {
-    "title": "FRR 10.7.1 Alpine entrypoint",
-    "url": "https://github.com/FRRouting/frr/blob/frr-10.7.1/docker/alpine/docker-start",
-    "locator": "watchfrr invocation",
-    "authority": "FRRouting maintainers",
-    "version": "frr-10.7.1",
+    "title": "Published FRR Containerlab image startup layer",
+    "url": "https://quay.io/v2/frrouting/frr/blobs/sha256:768205d23497ec256a38365bc7560675fe603ab763009ac1f87c5179c05f7e62",
+    "locator": "usr/lib/frr/docker-start inside the verified OCI layer",
+    "authority": "FRRouting published Quay image",
+    "version": "containerlab-10.7.1; layer and file hashes in image-publication.json",
     "retrieved_on": "2026-09-13",
-    "review_note": "The upstream entrypoint runs watchfrr, without starting sshd; the v6 adapter explicitly starts sshd before entering this process."
+    "review_note": "The actual image starts sshd and then execs watchfrr. Its script replaces the generic Alpine entrypoint. Image execution remains a separate live gate."
   },
   "DOCKER-FIREWALL": {
     "title": "Docker packet filtering and firewalls",

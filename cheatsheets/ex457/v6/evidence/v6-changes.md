@@ -13,9 +13,9 @@ v6 preserves the v5 teaching sequence and fixes the audited implementation. See 
 | Controller | AWX 24.6.1 tower namespace, optional machine key unlock field, superuser prerequisite for new custom types, removal of extra workflow nodes and diagnostic edges, exact graph verification. |
 | Release evidence | Exact nonempty file manifest and claim registry; generated human closure tables match JSON; all 103 available historical entries mapped. |
 
-## V6-NEW-001 — SSH daemon was never started
+## Rejected suspicion — V6-NEW-001 (SSH startup)
 
-The inherited adapter called `sshd -t` but did not invoke the daemon. The pinned FRR [Alpine docker-start source](https://github.com/FRRouting/frr/blob/frr-10.7.1/docker/alpine/docker-start) starts watchfrr and does not start SSH. v6 explicitly starts `/usr/sbin/sshd` after its configuration test. The live Transport case requires successful real libssh access and a specific wrong-host-key rejection. This finding was not present in the supplied v5 audit.
+An initial source review examined the generic Alpine startup script and suspected missing sshd startup. Inspection of the **actual published Containerlab image** disproved that inference: its final layer replaces `/usr/lib/frr/docker-start` with a script that starts sshd and then watchfrr. The adapter keeps its original `sshd -t` and relies on the pinned flavor's startup; the temporarily added duplicate daemon start was removed. [Image publication and entrypoint digests](image-publication.json) record the inspected bytes. This is not counted as a confirmed defect. The live Transport case still requires real SSH success and a wrong-host-key rejection.
 
 ## V6-NEW-002 — pyATS failures returned process status zero
 
@@ -32,3 +32,7 @@ I001 is addressed by new blank-file inventory construction and network-role crea
 ## CI iteration — exact exported evidence
 
 The first hosted run showed that two separate Dagger calls could execute the graph twice even with the same run ID (different start timestamps appeared in the log). Actions now calls Dagger once and gates the exact exported `results.json`, JUnit and ZIP with `ci/check_results.py`. The checker also requires every mapped pytest regression to appear in the actual JUnit results, preventing a merely present test file from counting as execution evidence.
+
+## V6-NEW-003 — The original simulator used an unavailable image tag
+
+The Docker Hub tag endpoint for `frrouting/frr:v10.5.0` returned HTTP 404 during review. The original simulator's spine/leaf profiles now use the same published FRR 10.7.1 containerlab image digest as the v6 adapter base. Quay's manifest identifies an amd64 image and other supported architectures. The legacy pyATS deployment gate checks the requested image and live node state. The v6 vendored model keeps its original pinned historical bytes; its profile image fields are unused by the v6 adapter topology.

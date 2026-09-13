@@ -8,6 +8,23 @@
       "status": "FAIL",
       "cause": "Fresh checkout lacked .state parent for pytest basetemp; 58 passed and 9 fixture setup errors. Fixed by private state initialization in conftest before fixtures.",
       "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34748634627,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748634627",
+      "commit": "142b407fbc51f8df19abe2717170b17aeb666484",
+      "status": "STARTUP_FAILURE",
+      "cause": "GitHub reported an internal Actions error before assigning any job; annotation advised retry.",
+      "github_request_id": "BF23:198AB4:115E2F9D:10DFC682:6AA6645D",
+      "live_lab": "NOT_RUN"
+    },
+    {
+      "id": 34748754722,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34748754722",
+      "commit": "915750110ad9ca6b23451016e8efd13fe50c32bc",
+      "status": "QUEUED_AT_REVIEW",
+      "cause": "No runner job had been assigned at this checkpoint.",
+      "live_lab": "NOT_RUN"
     }
   ]
 }

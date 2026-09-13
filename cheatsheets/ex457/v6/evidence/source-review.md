@@ -454,13 +454,13 @@ Review note: The pinned implementation provides tower.filename; the real method 
 
 ## FRR-START-SOURCE
 
-[FRR 10.7.1 Alpine entrypoint](https://github.com/FRRouting/frr/blob/frr-10.7.1/docker/alpine/docker-start)
+[Published FRR Containerlab image startup layer](https://quay.io/v2/frrouting/frr/blobs/sha256:768205d23497ec256a38365bc7560675fe603ab763009ac1f87c5179c05f7e62)
 
-Authority: FRRouting maintainers. Version/scope: frr-10.7.1.
+Authority: FRRouting published Quay image. Version/scope: containerlab-10.7.1; layer and file hashes in image-publication.json.
 
-Locator: watchfrr invocation.
+Locator: usr/lib/frr/docker-start inside the verified OCI layer.
 
-Review note: The upstream entrypoint runs watchfrr, without starting sshd; the v6 adapter explicitly starts sshd before entering this process.
+Review note: The actual image starts sshd and then execs watchfrr. Its script replaces the generic Alpine entrypoint. Image execution remains a separate live gate.
 
 ## DOCKER-FIREWALL
 

@@ -3,7 +3,7 @@
   "scope": "local Python/Ansible and real loopback HTTPS; no local Docker or Controller",
   "pytest": {
     "status": "PASS",
-    "collected_cases": 68,
+    "collected_cases": 69,
     "log": "logs/pytest.log"
   },
   "validation": {
@@ -300,6 +300,12 @@
           ],
           "log": ".state/builder_definition.log"
         }
+      },
+      {
+        "check": "unsigned_manifest_integrity",
+        "status": "PASS",
+        "errors": [],
+        "detail": null
       },
       {
         "check": "docker_image_ssh",

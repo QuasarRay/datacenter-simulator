@@ -18,7 +18,7 @@ All rows start **NOT RUN** in this release. Save real outputs under `.state/runt
 | R10 durable backup | PUT, GET, checksum; recover downloaded backup | Matching remote bytes and successful recovery |
 | R11 host lifecycle | Reboot RHEL exercise VM | Persistent profile/route and management reachability |
 
-For R1 inspect with `sudo docker exec clab-ex457-v6-spine1 passwd -S ansible` and `sudo docker exec clab-ex457-v6-spine1 sshd -T`. Do not publish `/etc/shadow` or private key material. For R2 make a temporary public trust file for one host with a different key; use `EX457_KNOWN_HOSTS` only for the negative run. Restore the verified file for recovery.
+For R1 use the live pyATS account predicate, which reports only LOCKED/UNLOCKED without emitting a shadow entry, and inspect `sudo docker exec clab-ex457-v6-spine1 sshd -T`. Do not publish `/etc/shadow` or private key material. For R2 make a temporary public trust file for one host with a different key; use `EX457_KNOWN_HOSTS` only for the negative run. Restore the verified file for recovery.
 
 For R5, on the isolated container use its firewall or temporarily remove the destination loopback, run the data-plane gate expecting failure, then restore the intended state with the configure play. No release status is upgraded merely because a log file exists: review its commands, expected negative outcome, hashes and environment.
 

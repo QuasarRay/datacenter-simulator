@@ -64,8 +64,8 @@ class Transport(aetest.Testcase):
             policy=docker(node,'/usr/sbin/sshd','-T').stdout
             for directive in ['passwordauthentication no','kbdinteractiveauthentication no','pubkeyauthentication yes','permitrootlogin no']:
                 assert directive in policy
-            shadow=docker(node,'getent','shadow','ansible').stdout.split(':')[1]
-            assert not shadow.startswith(('!','*')), 'locked public-key account'
+            account=docker(node,'awk','-F:', '$1 == "ansible" { if ($2 ~ /^[!*]/) print "LOCKED"; else print "UNLOCKED" }','/etc/shadow').stdout.strip()
+            assert account == 'UNLOCKED', 'missing or locked public-key account'
             assert '10.7.1' in cli(node,'show version')
         play('show_version')  # full real network_cli bootstrap, no pre-seeded trust fact
         wrong=STATE/'wrong-hostkey';cmd(['ssh-keygen','-q','-t','ed25519','-N','','-f',wrong])
