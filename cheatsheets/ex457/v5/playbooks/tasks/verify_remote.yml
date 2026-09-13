@@ -1,0 +1,17 @@
+---
+- name: Read BGP path for exact remote prefix
+  ansible.netcommon.cli_command:
+    command: "show bgp ipv4 unicast {{ remote_node.loopback }} json"
+  register: bgp_route
+  changed_when: false
+- name: Require valid best BGP path through a modeled peer
+  ansible.builtin.assert:
+    that: bgp_route.stdout | fabric_bgp_ok(remote_node.loopback, fabric_intent)
+- name: Read Zebra route for exact remote prefix
+  ansible.netcommon.cli_command:
+    command: "show ip route {{ remote_node.loopback }} json"
+  register: zebra_route
+  changed_when: false
+- name: Require selected installed BGP route with a FIB nexthop
+  ansible.builtin.assert:
+    that: zebra_route.stdout | fabric_rib_ok(remote_node.loopback, fabric_intent)

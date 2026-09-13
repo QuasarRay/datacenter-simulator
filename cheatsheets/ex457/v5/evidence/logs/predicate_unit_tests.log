@@ -1,0 +1,43 @@
+test_address_interface_swap_fails (test_fabric.FabricTests.test_address_interface_swap_fails) ... ok
+test_already_converged_has_no_removals (test_fabric.FabricTests.test_already_converged_has_no_removals) ... ok
+test_bad_counts_fail (test_fabric.FabricTests.test_bad_counts_fail) ... ok
+test_bad_prefix_length (test_fabric.FabricTests.test_bad_prefix_length) ... ok
+test_different_link_subnets (test_fabric.FabricTests.test_different_link_subnets) ... ok
+test_disconnected_model (test_fabric.FabricTests.test_disconnected_model) ... ok
+test_duplicate_interface (test_fabric.FabricTests.test_duplicate_interface) ... ok
+test_duplicate_loopback (test_fabric.FabricTests.test_duplicate_loopback) ... ok
+test_duplicate_management (test_fabric.FabricTests.test_duplicate_management) ... ok
+test_duplicate_ping_summary_fails (test_fabric.FabricTests.test_duplicate_ping_summary_fails) ... ok
+test_exact_peers_pass (test_fabric.FabricTests.test_exact_peers_pass) ... ok
+test_extra_loopback_address_fails (test_fabric.FabricTests.test_extra_loopback_address_fails) ... ok
+test_extra_network_fails (test_fabric.FabricTests.test_extra_network_fails) ... ok
+test_extra_peer_any_state_fails (test_fabric.FabricTests.test_extra_peer_any_state_fails) ... ok
+test_four_router_model_and_template_roundtrip (test_fabric.FabricTests.test_four_router_model_and_template_roundtrip) ... ok
+test_idle_peer_fails (test_fabric.FabricTests.test_idle_peer_fails) ... ok
+test_integer_subclass_is_valid_but_boolean_asn_is_not (test_fabric.FabricTests.test_integer_subclass_is_valid_but_boolean_asn_is_not) ... ok
+test_invalid_path_fails (test_fabric.FabricTests.test_invalid_path_fails) ... ok
+test_management_overlap (test_fabric.FabricTests.test_management_overlap) ... ok
+test_missing_peer_fails (test_fabric.FabricTests.test_missing_peer_fails) ... ok
+test_missing_ping_summary_fails (test_fabric.FabricTests.test_missing_ping_summary_fails) ... ok
+test_missing_route_fails (test_fabric.FabricTests.test_missing_route_fails) ... ok
+test_missing_summary_schema_fails (test_fabric.FabricTests.test_missing_summary_schema_fails) ... ok
+test_netmask_normalized (test_fabric.FabricTests.test_netmask_normalized) ... ok
+test_nonbest_path_fails (test_fabric.FabricTests.test_nonbest_path_fails) ... ok
+test_nonempty_wrong_prefix_fails (test_fabric.FabricTests.test_nonempty_wrong_prefix_fails) ... ok
+test_nonfib_nexthop_fails (test_fabric.FabricTests.test_nonfib_nexthop_fails) ... ok
+test_packet_loss_truth_table (test_fabric.FabricTests.test_packet_loss_truth_table) ... ok
+test_reconciliation_removes_stale_state (test_fabric.FabricTests.test_reconciliation_removes_stale_state) ... ok
+test_selected_installed_route (test_fabric.FabricTests.test_selected_installed_route) ... ok
+test_strict_template_rejects_undefined_intent (test_fabric.FabricTests.test_strict_template_rejects_undefined_intent) ... ok
+test_uninstalled_route_fails (test_fabric.FabricTests.test_uninstalled_route_fails) ... ok
+test_unknown_address_suffix_fails_closed (test_fabric.FabricTests.test_unknown_address_suffix_fails_closed) ... ok
+test_unmodeled_nexthop_fails (test_fabric.FabricTests.test_unmodeled_nexthop_fails) ... ok
+test_valid_best_path (test_fabric.FabricTests.test_valid_best_path) ... ok
+test_wrong_asn_fails (test_fabric.FabricTests.test_wrong_asn_fails) ... ok
+test_wrong_router_id_fails (test_fabric.FabricTests.test_wrong_router_id_fails) ... ok
+test_zero_loss_passes (test_fabric.FabricTests.test_zero_loss_passes) ... ok
+
+----------------------------------------------------------------------
+Ran 38 tests in 0.249s
+
+OK

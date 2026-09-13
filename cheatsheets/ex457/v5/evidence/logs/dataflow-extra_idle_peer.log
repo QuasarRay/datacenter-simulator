@@ -1,0 +1,25 @@
+
+PLAY [Synthetic verifier dataflow extra_idle_peer] *****************************
+
+TASK [Validate the source of truth] ********************************************
+ok: [spine1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Derive intent including all remote nodes before any loop] ****************
+ok: [spine1]
+
+TASK [Wait for exact unfiltered peer set, state and remote ASNs] ***************
+FAILED - RETRYING: [spine1]: Wait for exact unfiltered peer set, state and remote ASNs (1 retries left).
+[ERROR]: Task failed: Action failed.
+Origin: /workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/.state/dataflow-gvhrkgxl/verify.yml:1:3
+
+1 - name: Wait for exact unfiltered peer set, state and remote ASNs
+    ^ column 3
+
+fatal: [spine1]: FAILED! => {"attempts": 1, "changed": false, "cmd": ["/workspace/scratch/dd1ed62d0423/.venv/bin/python", "/workspace/scratch/dd1ed62d0423/repo/cheatsheets/ex457/v5/tests/fixture_device.py", "spine1", "show bgp ipv4 unicast summary json", "extra_idle_peer"], "delta": "0:00:00.103222", "end": "2026-09-13 08:38:41.351339", "msg": "", "rc": 0, "start": "2026-09-13 08:38:41.248117", "stderr": "", "stderr_lines": [], "stdout": "{\"peers\": {\"10.0.0.1\": {\"state\": \"Established\", \"remoteAs\": 65101}, \"10.0.0.3\": {\"state\": \"Established\", \"remoteAs\": 65102}, \"192.0.2.99\": {\"state\": \"Idle\", \"remoteAs\": 65200}}}", "stdout_lines": ["{\"peers\": {\"10.0.0.1\": {\"state\": \"Established\", \"remoteAs\": 65101}, \"10.0.0.3\": {\"state\": \"Established\", \"remoteAs\": 65102}, \"192.0.2.99\": {\"state\": \"Idle\", \"remoteAs\": 65200}}}"]}
+
+PLAY RECAP *********************************************************************
+spine1                     : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

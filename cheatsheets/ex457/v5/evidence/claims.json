@@ -1,0 +1,388 @@
+[
+  {
+    "id": "C001",
+    "section": "01_lab_baseline.md#bootstrap",
+    "claim": "Bootstrap uses the pinned simulator model and an adapted FRR containerlab image; tool versions and subnet checks are pack prerequisites.",
+    "sources": [
+      "FRR-IMAGE",
+      "CLAB"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C002",
+    "section": "01_lab_baseline.md#build-and-deploy",
+    "claim": "Public-key-only SSH and explicit integrated-configuration loading are used in the adapter; live image behavior remains an acceptance gate.",
+    "sources": [
+      "FRR-SAVE",
+      "SSH"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C003",
+    "section": "01_lab_baseline.md#backend-trust",
+    "claim": "network_cli explicitly selects libssh, enables host-key checking, disables automatic trust and passes a dedicated libssh config file.",
+    "sources": [
+      "NETCLI",
+      "LIBSSH",
+      "LIBSSH-SRC"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C004",
+    "section": "02_inventory_navigator.md#inventory",
+    "claim": "Inventory groups target spines and leaves; group variables set transport behavior and the model supplies node intent.",
+    "sources": [
+      "INV",
+      "VARS"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C005",
+    "section": "02_inventory_navigator.md#host-mode-first",
+    "claim": "Navigator first runs with execution environments disabled; inventory and settings can be inspected independently.",
+    "sources": [
+      "NAV"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C006",
+    "section": "03_git_playbooks.md#development-exercise",
+    "claim": "Use VS Code and Ansible development tools to edit, validate and commit a change, then push and merge it through Git.",
+    "sources": [
+      "VSCODE",
+      "DEVTOOLS",
+      "GIT"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C007",
+    "section": "03_git_playbooks.md#playbook-pattern",
+    "claim": "Playbooks define ordered plays and tasks using module names, variables and explicit target hosts.",
+    "sources": [
+      "PLAY"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C008",
+    "section": "04_variables_facts_filters.md#data-model",
+    "claim": "Registered values and local filters derive and validate IPv4 fabric intent from the pinned model.",
+    "sources": [
+      "VARS",
+      "FILTER",
+      "MODEL"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C009",
+    "section": "04_variables_facts_filters.md#device-facts",
+    "claim": "frr_facts gathers supported configuration facts; use gather_subset config for this pinned collection.",
+    "sources": [
+      "FACTS"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C010",
+    "section": "05_task_control.md#control-flow",
+    "claim": "Loops, until retries, conditionals and block/rescue/always control task execution and cleanup.",
+    "sources": [
+      "LOOP",
+      "BLOCK"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C011",
+    "section": "05_task_control.md#negative-outcomes",
+    "claim": "Custom filters implement strict negative-case assertions; shipped tests establish their behavior, not live FRR JSON compatibility.",
+    "sources": [
+      "FILTER"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C012",
+    "section": "06_roles_collections_ee.md#reuse",
+    "claim": "Roles organize reusable tasks and defaults; imports are static and includes are dynamic. Collections provide versioned plugins.",
+    "sources": [
+      "PLAY",
+      "REUSE",
+      "FACTS"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C013",
+    "section": "06_roles_collections_ee.md#build-before-running",
+    "claim": "Builder v3 defines the EE; build it before Navigator use, expose the SSH agent and full project, then publish and verify the image digest.",
+    "sources": [
+      "NAV",
+      "BUILDER",
+      "AAP",
+      "NAV-FAQ"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C014",
+    "section": "07_network_automation.md#candidate-and-apply",
+    "claim": "cli_config applies model-derived interface addresses and BGP peers, router ID and advertisements.",
+    "sources": [
+      "CONFIG",
+      "FRR-BGP"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C015",
+    "section": "07_network_automation.md#ownership",
+    "claim": "The lab owns non-management IPv4 interface addresses and its BGP process; remove drift explicitly and protect management connectivity.",
+    "sources": [
+      "CONFIG",
+      "FRR-ZEBRA"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C016",
+    "section": "08_verification.md#state-contract",
+    "claim": "The verifier checks exact peers, configured interface ownership, valid best BGP paths and selected installed Zebra routes; kernel and ping gates are separate.",
+    "sources": [
+      "FRR-BGP",
+      "FRR-ZEBRA"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C017",
+    "section": "08_verification.md#schema-and-test-limits",
+    "claim": "Live JSON schemas must be captured before accepting compatibility. Synthetic tests prove only the stated assertion behavior.",
+    "sources": [
+      "FILTER"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C018",
+    "section": "09_drift_and_removal.md#inject-and-repair",
+    "claim": "Inject an extra neighbor, network or address; calculate explicit removals and reapply intended configuration.",
+    "sources": [
+      "CONFIG",
+      "FRR-BGP"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C019",
+    "section": "09_drift_and_removal.md#acceptance",
+    "claim": "After reconciliation, rerun control-plane, kernel-route and sourced-ping checks; record second-run idempotence.",
+    "sources": [
+      "FRR-ZEBRA"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C020",
+    "section": "10_backups_persistence.md#backup-and-consume-it",
+    "claim": "cli_backup exports configuration; restoration reads and validates the actual selected backup before restoring managed intent.",
+    "sources": [
+      "VARS",
+      "BACKUP"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C021",
+    "section": "10_backups_persistence.md#durable-controller-export",
+    "claim": "Controller backup uses an explicit HTTPS export service and injected credentials; PUT/GET checksum equality is a pack durability check.",
+    "sources": [
+      "BACKUP",
+      "CUSTOM"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C022",
+    "section": "10_backups_persistence.md#save-and-restart",
+    "claim": "FRR integrated configuration is saved and reread. Containerlab restores links; the pack restart wrapper explicitly invokes vtysh -b before verification.",
+    "sources": [
+      "FRR-SAVE",
+      "CLAB",
+      "RESTART"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C023",
+    "section": "11_controller.md#create-and-inspect",
+    "claim": "Controller setup creates credentials, project, inventory, execution environment and job templates from supplied site inputs.",
+    "sources": [
+      "CREDS",
+      "CUSTOM",
+      "PROJECT"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C024",
+    "section": "11_controller.md#workflow-gate",
+    "claim": "Workflow success edges gate Change and Verify; a diagnostic failure branch requires checking essential node outcomes as well as overall workflow status.",
+    "sources": [
+      "AAP",
+      "WORKFLOW"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C025",
+    "section": "12_controller_iac.md#prepare-site-inputs",
+    "claim": "Configuration as code uses rendered awx.awx inputs; local argument-spec checks do not establish AAP server-side API compatibility.",
+    "sources": [
+      "AAP",
+      "AWX-SRC"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C026",
+    "section": "12_controller_iac.md#acceptance",
+    "claim": "Validate project revision, injected trust, image pull, required workflow nodes and durable backups in the real Controller.",
+    "sources": [
+      "CUSTOM",
+      "PROJECT",
+      "WORKFLOW"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C027",
+    "section": "13_multivendor_transfer.md#preparation-scope",
+    "claim": "EX457 spans network automation; practice equivalent supported device modules and platform variables beyond this FRR simulator.",
+    "sources": [
+      "EXAM",
+      "NETCLI"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C028",
+    "section": "14_mock_exam_240min.md#schedule",
+    "claim": "The public exam duration informs a 240-minute mock; the phase allocation is this pack\u2019s proposed practice schedule.",
+    "sources": [
+      "EXAM"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C029",
+    "section": "15_targeted_drills.md#failure-practice",
+    "claim": "Pack-authored failure drills apply documented task, connection and workflow mechanisms; accept only observed rejection and recovery.",
+    "sources": [
+      "BLOCK",
+      "NETCLI",
+      "WORKFLOW"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C030",
+    "section": "16_speed_troubleshooting.md#work-from-the-first-failing-layer",
+    "claim": "Troubleshoot inventory, transport, device state and Controller outcomes in sequence; this ordering is a pack diagnostic procedure.",
+    "sources": [
+      "INV",
+      "NETCLI",
+      "LIBSSH",
+      "WORKFLOW"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C031",
+    "section": "17_version_compatibility.md#pins-and-boundaries",
+    "claim": "The public exam, community tooling, router runtime and host-networking versions have distinct compatibility boundaries.",
+    "sources": [
+      "EXAM",
+      "FACTS",
+      "AAP",
+      "RHEL-IP"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C032",
+    "section": "18_repo_migration_checklist.md#review-v5",
+    "claim": "The v5 model is verified against the pinned upstream Git blob; source, objective and audit registries accompany the implementation.",
+    "sources": [
+      "MODEL"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C033",
+    "section": "19_cachyos_rhel_networking.md#cachyos-baseline",
+    "claim": "CachyOS enables UFW by default; its libvirt forwarding example needs adaptation for a separate Containerlab subnet.",
+    "sources": [
+      "CACHY",
+      "CACHY-VM",
+      "CACHY-SCOPE"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C034",
+    "section": "19_cachyos_rhel_networking.md#rhel-address-and-routes",
+    "claim": "On a disposable RHEL 9 interface, use NetworkManager profiles for IPv4 addressing and static routes and verify activation and persistence.",
+    "sources": [
+      "RHEL-IP",
+      "RHEL-ROUTE"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C035",
+    "section": "19_cachyos_rhel_networking.md#rhel-bridge-exercise",
+    "claim": "On a spare RHEL 9 NIC, create a bridge and port profile with nmcli; keep layer-3 addressing on the bridge.",
+    "sources": [
+      "RHEL-BR"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C036",
+    "section": "20_runtime_release_gate.md#required-live-artifacts",
+    "claim": "Pack-defined live gates test SSH, state, forwarding, persistence, EE, Controller and RHEL behavior; citations alone cannot mark them passed.",
+    "sources": [
+      "NETCLI",
+      "FRR-SAVE",
+      "RESTART",
+      "SSH"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C037",
+    "section": "README.md#start-here",
+    "claim": "All 23 public AAP 2.6 EX457 leaf objectives are mapped to instruction, a practice exercise and acceptance evidence.",
+    "sources": [
+      "EXAM"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  },
+  {
+    "id": "C038",
+    "section": "README.md#what-v5-proves",
+    "claim": "The pack preserves the simulator\u2019s four-router topology and explicitly limits claims to routing and automation practice.",
+    "sources": [
+      "MODEL"
+    ],
+    "evidence_type": "documentation mapping; implementation/acceptance stated in section"
+  }
+]

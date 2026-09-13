@@ -1,0 +1,7 @@
+---
+ansible-navigator:
+  mode: stdout
+  execution-environment:
+    enabled: false
+  playbook-artifact:
+    enable: false

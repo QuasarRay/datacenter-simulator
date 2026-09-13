@@ -1,0 +1,66 @@
+---
+- name: Create and export reusable configuration backups
+  hosts: fabric
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - ../model-upstream.yml
+  pre_tasks:
+    - name: Derive model
+      ansible.builtin.import_tasks: tasks/model.yml
+    - name: Bootstrap strict libssh trust
+      ansible.builtin.import_tasks: tasks/trust.yml
+  tasks:
+    - name: Run network exercise
+      block:
+        - name: Require one run identifier from caller or Controller
+          ansible.builtin.set_fact:
+            backup_run_id: "{{ awx_job_id | default(run_id | default('')) | string }}"
+        - name: Validate run identifier
+          ansible.builtin.assert:
+            that: backup_run_id is match('^[A-Za-z0-9_-]+$')
+        - name: Locate local backup directory
+          ansible.builtin.set_fact:
+            backup_directory: "{{ playbook_dir }}/../.state/backups/{{ backup_run_id }}"
+        - name: Capture full running configuration
+          ansible.netcommon.cli_backup:
+            dir_path: "{{ backup_directory }}"
+            filename: "{{ inventory_hostname }}.cfg"
+          register: backup_result
+        - name: Require durable export for Controller jobs
+          ansible.builtin.assert:
+            that:
+              - backup_url | default('') is match('^https://')
+              - lookup('ansible.builtin.env', 'EX457_BACKUP_TOKEN') | length > 0
+          when: awx_job_id is defined
+        - name: Export and verify durable copy
+          when: backup_url is defined
+          block:
+            - name: Upload configuration to an operator-provided HTTPS object endpoint
+              ansible.builtin.uri:
+                url: "{{ backup_url }}/{{ backup_run_id }}/{{ inventory_hostname }}.cfg"
+                method: PUT
+                body: "{{ lookup('ansible.builtin.file', backup_directory + '/' + inventory_hostname + '.cfg', rstrip=false) }}"
+                headers:
+                  Authorization: "Bearer {{ lookup('ansible.builtin.env', 'EX457_BACKUP_TOKEN') }}"
+                status_code: [200, 201, 204]
+                validate_certs: true
+              delegate_to: localhost
+              no_log: true
+            - name: Read durable copy back
+              ansible.builtin.uri:
+                url: "{{ backup_url }}/{{ backup_run_id }}/{{ inventory_hostname }}.cfg"
+                method: GET
+                headers:
+                  Authorization: "Bearer {{ lookup('ansible.builtin.env', 'EX457_BACKUP_TOKEN') }}"
+                return_content: true
+                validate_certs: true
+              delegate_to: localhost
+              register: durable_copy
+              no_log: true
+            - name: Compare persisted bytes by checksum
+              ansible.builtin.assert:
+                that: (durable_copy.content | hash('sha256')) == (lookup('ansible.builtin.file', backup_directory + '/' + inventory_hostname + '.cfg', rstrip=false) | hash('sha256'))
+      always:
+        - name: Clean temporary trust configuration
+          ansible.builtin.include_tasks: tasks/cleanup_trust.yml

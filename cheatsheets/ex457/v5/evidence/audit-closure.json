@@ -1,0 +1,482 @@
+[
+  {
+    "id": "V4-001",
+    "severity": "CRITICAL",
+    "area": "FRR image",
+    "finding": "Alpine `ansible` account is created but never unlocked",
+    "status": "RUNTIME_GATED",
+    "remediation": "Unlock account, enforce public-key-only sshd policy",
+    "file": "lab/frr/Dockerfile",
+    "evidence": "R1/R2"
+  },
+  {
+    "id": "V4-002",
+    "severity": "CRITICAL",
+    "area": "Ansible SSH",
+    "finding": "Lab `known_hosts` is wired through OpenSSH args that do not define `network_cli` trust",
+    "status": "RUNTIME_GATED",
+    "remediation": "Pin libssh and pass its supported config_file with explicit trust",
+    "file": "playbooks/tasks/trust.yml",
+    "evidence": "R2/R9"
+  },
+  {
+    "id": "V4-003",
+    "severity": "CRITICAL",
+    "area": "Verification",
+    "finding": "`remote_nodes` is undefined in the shipped verifier",
+    "status": "CLOSED_STATIC",
+    "remediation": "Derive remote_nodes in shared model before route includes",
+    "file": "playbooks/tasks/model.yml",
+    "evidence": "Ansible dataflow good + undefined mutation"
+  },
+  {
+    "id": "V4-004",
+    "severity": "CRITICAL",
+    "area": "Verification",
+    "finding": "`0% packet loss` substring test also matches `100% packet loss`",
+    "status": "CLOSED_STATIC",
+    "remediation": "Parse complete ping counts/loss numerically, reject total and fractional loss",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Unit packet-loss truth table; R5 live still pending"
+  },
+  {
+    "id": "V4-005",
+    "severity": "HIGH",
+    "area": "SSH paths",
+    "finding": "Inventory points at `examples/lab/known_hosts`, while setup creates root `lab/known_hosts`",
+    "status": "CLOSED_STATIC",
+    "remediation": "One pack root and explicit trust path",
+    "file": "playbooks/tasks/trust.yml",
+    "evidence": "Path/structure checks"
+  },
+  {
+    "id": "V4-006",
+    "severity": "HIGH",
+    "area": "Controller",
+    "finding": "Controller path has no deterministic server-host-key trust mechanism",
+    "status": "RUNTIME_GATED",
+    "remediation": "Credential injects public trust file and path into EE",
+    "file": "controller/configure.yml",
+    "evidence": "R9"
+  },
+  {
+    "id": "V4-007",
+    "severity": "HIGH",
+    "area": "Verification",
+    "finding": "BGP route predicate only tests non-empty JSON, not the exact expected route/path",
+    "status": "CLOSED_STATIC",
+    "remediation": "Exact prefix, valid best path and modeled next hop required",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Unit BGP negatives; R3 schema capture pending"
+  },
+  {
+    "id": "V4-008",
+    "severity": "HIGH",
+    "area": "Verification",
+    "finding": "Address equality loses interface-to-address mapping",
+    "status": "CLOSED_STATIC",
+    "remediation": "Compare normalized interface-to-address mapping",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Unit swapped-interface and extra-loopback cases"
+  },
+  {
+    "id": "V4-009",
+    "severity": "HIGH",
+    "area": "Runnability",
+    "finding": "Referenced `playbooks/show_version.yml` is not shipped",
+    "status": "CLOSED_STATIC",
+    "remediation": "Ship complete show_version playbook",
+    "file": "playbooks/show_version.yml",
+    "evidence": "Ansible syntax"
+  },
+  {
+    "id": "V4-010",
+    "severity": "HIGH",
+    "area": "Runnability",
+    "finding": "Controller-referenced change/verify/diag playbooks are not shipped",
+    "status": "CLOSED_STATIC",
+    "remediation": "Ship all referenced Controller project playbooks",
+    "file": "controller/configure.yml",
+    "evidence": "Project-reference existence + Ansible syntax"
+  },
+  {
+    "id": "V4-011",
+    "severity": "HIGH",
+    "area": "Study order",
+    "finding": "Chapter 02 requires custom EE before chapter 06 builds it",
+    "status": "CLOSED_STATIC",
+    "remediation": "Navigator starts in host mode; build precedes EE run",
+    "file": "ansible-navigator.yml",
+    "evidence": "Navigator settings + chapter sequence"
+  },
+  {
+    "id": "V4-012",
+    "severity": "HIGH",
+    "area": "Paths",
+    "finding": "EE build instructions use root `ee/`, while ZIP only ships `examples/ee/`",
+    "status": "CLOSED_STATIC",
+    "remediation": "Real root ee directory and definition",
+    "file": "ee/execution-environment.yml",
+    "evidence": "Builder create"
+  },
+  {
+    "id": "V4-013",
+    "severity": "HIGH",
+    "area": "Paths",
+    "finding": "`lab/authorized_keys` copy occurs before root `lab/` is created",
+    "status": "CLOSED_STATIC",
+    "remediation": "prepare creates state directories before copying auth",
+    "file": "tools/labctl.py",
+    "evidence": "Preparation smoke test"
+  },
+  {
+    "id": "V4-014",
+    "severity": "HIGH",
+    "area": "Validator",
+    "finding": "Static checks do not detect undefined Ansible/Jinja variables",
+    "status": "CLOSED_STATIC",
+    "remediation": "Actual verifier task dataflow with undefined-variable mutation",
+    "file": "tools/check_dataflow.py",
+    "evidence": "Ansible fixture scenarios; not whole-language static proof"
+  },
+  {
+    "id": "V4-015",
+    "severity": "HIGH",
+    "area": "Validator",
+    "finding": "Verification check is fragment-based and missed the packet-loss false positive",
+    "status": "CLOSED_STATIC",
+    "remediation": "Behavior tests execute shared predicates with negatives",
+    "file": "tests/test_fabric.py",
+    "evidence": "Unit tests"
+  },
+  {
+    "id": "V4-016",
+    "severity": "HIGH",
+    "area": "Evidence",
+    "finding": "`manual_source_review` is hard-coded rather than derived",
+    "status": "CLOSED_STATIC",
+    "remediation": "No machine source-review PASS field; separate source record",
+    "file": "tools/render_evidence.py",
+    "evidence": "Evidence registry checks"
+  },
+  {
+    "id": "V4-017",
+    "severity": "HIGH",
+    "area": "Evidence",
+    "finding": "`reviewed: true` is self-asserted and machine-accepted without source content",
+    "status": "CLOSED_STATIC",
+    "remediation": "Replace reviewed flag with dated locator and review note",
+    "file": "evidence/sources.json",
+    "evidence": "Source record presence only; semantics manually reviewed"
+  },
+  {
+    "id": "V4-018",
+    "severity": "HIGH",
+    "area": "Provenance",
+    "finding": "Vendored repo snapshot is not cryptographically compared with the pinned GitHub blob",
+    "status": "CLOSED_STATIC",
+    "remediation": "Fetch pinned blob bytes and verify Git object hash",
+    "file": "model-upstream.yml",
+    "evidence": "Git blob identity in validation"
+  },
+  {
+    "id": "V4-019",
+    "severity": "HIGH",
+    "area": "Evidence mapping",
+    "finding": "Multi-vendor chapter is anchored to a claim that does not state the multi-vendor preparation fact",
+    "status": "CLOSED_STATIC",
+    "remediation": "Link multi-vendor preparation to the correct source section",
+    "file": "13_multivendor_transfer.md",
+    "evidence": "EXAM locator: Recommended Preparation"
+  },
+  {
+    "id": "V4-020",
+    "severity": "HIGH",
+    "area": "Validator",
+    "finding": "`repo_model_validation` status can remain PASS for some model-check failures",
+    "status": "CLOSED_STATIC",
+    "remediation": "Explicit per-component result buckets; duplicate/subnet mutations",
+    "file": "tools/validate.py",
+    "evidence": "Model unit tests and status aggregation"
+  },
+  {
+    "id": "V4-021",
+    "severity": "HIGH",
+    "area": "CaC validation",
+    "finding": "Bespoke assertions are not real `infra.aap_configuration` schema validation",
+    "status": "CLOSED_STATIC",
+    "remediation": "Replace role wrapper with direct pinned modules and actual argument-spec validation",
+    "file": "tools/check_module_args.py",
+    "evidence": "45 rendered cases; server-side/API gate R9"
+  },
+  {
+    "id": "V4-022",
+    "severity": "HIGH",
+    "area": "Closure",
+    "finding": "v3 route-verification defect is marked closed although v4 route/ping gates cannot run correctly",
+    "status": "CLOSED_STATIC",
+    "remediation": "Reopen runtime scope; predicate fixes have only static closure",
+    "file": "08_verification.md",
+    "evidence": "No CLOSED_RUNTIME claims"
+  },
+  {
+    "id": "V4-023",
+    "severity": "HIGH",
+    "area": "Closure",
+    "finding": "v3 host-trust defect is marked closed although `network_cli` does not consume the lab trust design",
+    "status": "RUNTIME_GATED",
+    "remediation": "Transport trust redesigned; no premature runtime closure",
+    "file": "01_lab_baseline.md",
+    "evidence": "R2/R9"
+  },
+  {
+    "id": "V4-024",
+    "severity": "HIGH",
+    "area": "Closure",
+    "finding": "\u201cexact address set\u201d is only flat value equality, not interface-scoped state",
+    "status": "CLOSED_STATIC",
+    "remediation": "Address placement retained in parser and predicate",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Unit and dataflow interface mutation"
+  },
+  {
+    "id": "V4-025",
+    "severity": "HIGH",
+    "area": "Persistence",
+    "finding": "Saved-state verification is prose, not a runnable verified implementation",
+    "status": "RUNTIME_GATED",
+    "remediation": "Read startup config and compare managed state after save",
+    "file": "playbooks/persist_fabric.yml",
+    "evidence": "R6"
+  },
+  {
+    "id": "V4-026",
+    "severity": "MEDIUM",
+    "area": "Recovery",
+    "finding": "Backup restore drill is prose and does not prove backup usability",
+    "status": "RUNTIME_GATED",
+    "remediation": "Consume actual backup bytes and restore their managed state",
+    "file": "playbooks/restore_fabric.yml",
+    "evidence": "R7/R10"
+  },
+  {
+    "id": "V4-027",
+    "severity": "MEDIUM",
+    "area": "FRR persistence",
+    "finding": "Restart config reload is insufficiently proven; upstream start script does not visibly invoke `vtysh -b`",
+    "status": "RUNTIME_GATED",
+    "remediation": "Deploy helper and restart wrapper wait for daemons and load integrated config",
+    "file": "lab/frr/ex457-load",
+    "evidence": "R6"
+  },
+  {
+    "id": "V4-028",
+    "severity": "MEDIUM",
+    "area": "EE build",
+    "finding": "Red Hat registry authentication prerequisite is omitted before using entitled base image",
+    "status": "CLOSED_STATIC",
+    "remediation": "Entitled base registry login precedes Builder",
+    "file": "06_roles_collections_ee.md",
+    "evidence": "Documented command ordering; R8 pull pending"
+  },
+  {
+    "id": "V4-029",
+    "severity": "MEDIUM",
+    "area": "SSH determinism",
+    "finding": "`network_cli` SSH backend is left on `auto`, so libssh/Paramiko behavior can change",
+    "status": "CLOSED_STATIC",
+    "remediation": "Pin network_cli backend to libssh",
+    "file": "inventory/group_vars/fabric.yml",
+    "evidence": "Inventory/settings/source inspection; R2 execution pending"
+  },
+  {
+    "id": "V4-030",
+    "severity": "MEDIUM",
+    "area": "Ansible vars",
+    "finding": "Suggestion to use `set_stats` for propagating `backup_run_id` is misleading",
+    "status": "CLOSED_STATIC",
+    "remediation": "Use explicit run_id or awx_job_id through set_fact",
+    "file": "playbooks/backup_fabric.yml",
+    "evidence": "Rendered module inputs; no set_stats propagation"
+  },
+  {
+    "id": "V4-031",
+    "severity": "MEDIUM",
+    "area": "Verification",
+    "finding": "Address regex only recognizes one exact FRR `ip address` line form",
+    "status": "CLOSED_STATIC",
+    "remediation": "Parse prefix/netmask and secondary forms; reject unknown suffixes",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Address grammar unit tests"
+  },
+  {
+    "id": "V4-032",
+    "severity": "MEDIUM",
+    "area": "Verification",
+    "finding": "BGP-table presence is not the same as forwarding-table installation",
+    "status": "RUNTIME_GATED",
+    "remediation": "Separate BGP, Zebra report, kernel table and probes",
+    "file": "tools/labctl.py",
+    "evidence": "R3/R5"
+  },
+  {
+    "id": "V4-033",
+    "severity": "MEDIUM",
+    "area": "Evidence versions",
+    "finding": "Several operational sources use moving `latest`/current docs",
+    "status": "ACCEPTED_LIMIT",
+    "remediation": "Versioned docs/pinned module sources where possible; moving pages dated",
+    "file": "evidence/sources.json",
+    "evidence": "Short source records are not full-page snapshots"
+  },
+  {
+    "id": "V4-034",
+    "severity": "MEDIUM",
+    "area": "FRR evidence",
+    "finding": "Containerlab-image tag construction/publication is weakly evidenced",
+    "status": "RUNTIME_GATED",
+    "remediation": "Require operator-inspected base digest; candidate tag not asserted",
+    "file": "tools/labctl.py",
+    "evidence": "R1 registry and version evidence"
+  },
+  {
+    "id": "V4-035",
+    "severity": "MEDIUM",
+    "area": "Evidence map",
+    "finding": "`00_content_to_sources.md` itself is not cross-validated",
+    "status": "CLOSED_STATIC",
+    "remediation": "Generate maps from registries and compare exact output",
+    "file": "tools/render_evidence.py",
+    "evidence": "Evidence table synchronization"
+  },
+  {
+    "id": "V4-036",
+    "severity": "MEDIUM",
+    "area": "Evidence granularity",
+    "finding": "File-level anchors remain coarse for files containing many independent claims",
+    "status": "CLOSED_STATIC",
+    "remediation": "Section-level claims, precise source locators and direct links",
+    "file": "evidence/claims.json",
+    "evidence": "Claim/link validation"
+  },
+  {
+    "id": "V4-037",
+    "severity": "MEDIUM",
+    "area": "Evidence taxonomy",
+    "finding": "\u201cOFFICIAL-REDHAT-COP\u201d can be mistaken for Red Hat product support",
+    "status": "CLOSED_STATIC",
+    "remediation": "Separate product docs from official upstream/community docs",
+    "file": "evidence/sources.json",
+    "evidence": "Authority taxonomy; no CoP product-support claim"
+  },
+  {
+    "id": "V4-038",
+    "severity": "MEDIUM",
+    "area": "Integrity",
+    "finding": "Manifest is unsigned; it proves self-consistency, not authenticity",
+    "status": "ACCEPTED_LIMIT",
+    "remediation": "Describe unsigned SHA-256 manifest as integrity only",
+    "file": "18_repo_migration_checklist.md",
+    "evidence": "Manifest verification, no authenticity claim"
+  },
+  {
+    "id": "V4-039",
+    "severity": "MEDIUM",
+    "area": "Static validation",
+    "finding": "No real Ansible module argument/spec or playbook syntax validation occurs",
+    "status": "CLOSED_STATIC",
+    "remediation": "Real Ansible syntax and pinned module argument specs",
+    "file": "tools/check_module_args.py",
+    "evidence": "Actual parser/spec results"
+  },
+  {
+    "id": "V4-040",
+    "severity": "MEDIUM",
+    "area": "Static validation",
+    "finding": "Dockerfile, Jinja, shell, and FRR commands are not built/linted/executed",
+    "status": "RUNTIME_GATED",
+    "remediation": "Shell parse, Jinja render and Builder definition checks; image and FRR commands gated",
+    "file": "lab/frr/Dockerfile",
+    "evidence": "R1/R3/R8"
+  },
+  {
+    "id": "V4-041",
+    "severity": "MEDIUM",
+    "area": "Runtime plan",
+    "finding": "Runtime plan inherits the undefined-`remote_nodes` and ping predicate defects",
+    "status": "CLOSED_STATIC",
+    "remediation": "Runtime gates use implemented derived variables and numeric ping parser",
+    "file": "20_runtime_release_gate.md",
+    "evidence": "Dataflow and unit cases"
+  },
+  {
+    "id": "V4-042",
+    "severity": "MEDIUM",
+    "area": "Controller backups",
+    "finding": "Durable backup storage is explained but not implemented in the integrated Controller exercise",
+    "status": "RUNTIME_GATED",
+    "remediation": "Implement HTTPS PUT/GET export and byte hash comparison",
+    "file": "playbooks/backup_fabric.yml",
+    "evidence": "R10"
+  },
+  {
+    "id": "V4-043",
+    "severity": "MEDIUM",
+    "area": "Portability",
+    "finding": "Stable host keys are machine-local, so Controller trust is not portable to another operator/host",
+    "status": "RUNTIME_GATED",
+    "remediation": "Export public host keys separately and inject portable trust credential",
+    "file": "controller/configure.yml",
+    "evidence": "R2/R9; never export host private keys"
+  },
+  {
+    "id": "V4-044",
+    "severity": "MEDIUM",
+    "area": "Preflight",
+    "finding": "No automated check verifies key/bind/trust files exist before deployment",
+    "status": "RUNTIME_GATED",
+    "remediation": "Preflight validates binds, key pairs, modes, trust, image and version",
+    "file": "tools/labctl.py",
+    "evidence": "Preparation smoke test; real runtime/image checks R1"
+  },
+  {
+    "id": "V4-045",
+    "severity": "LOW",
+    "area": "Run IDs",
+    "finding": "Timestamp fallback can vary across serial batches if neither `awx_job_id` nor explicit `run_id` exists",
+    "status": "CLOSED_STATIC",
+    "remediation": "No timestamp fallback; one caller/job run ID",
+    "file": "playbooks/backup_fabric.yml",
+    "evidence": "Run-ID source inspection"
+  },
+  {
+    "id": "V4-046",
+    "severity": "LOW",
+    "area": "Verification",
+    "finding": "Address normalization is textual; semantically equivalent forms are not normalized",
+    "status": "CLOSED_STATIC",
+    "remediation": "IPv4Interface normalization including dotted masks",
+    "file": "filter_plugins/fabric.py",
+    "evidence": "Unit normalization tests"
+  },
+  {
+    "id": "V4-047",
+    "severity": "LOW",
+    "area": "Evidence UX",
+    "finding": "Evidence anchors are IDs, not direct navigable links",
+    "status": "CLOSED_STATIC",
+    "remediation": "Clickable relative sections and direct official URLs",
+    "file": "evidence/content-to-sources.md",
+    "evidence": "Link/anchor validation"
+  },
+  {
+    "id": "V4-048",
+    "severity": "LOW",
+    "area": "Cleanup",
+    "finding": "Generated private keys/backups/trust artifacts have no complete cleanup/retention policy",
+    "status": "CLOSED_STATIC",
+    "remediation": "Ignore state/secrets; destroy retains identities; explicit retention/cleanup guidance",
+    "file": "10_backups_persistence.md",
+    "evidence": "Release secret/path exclusion checks"
+  }
+]

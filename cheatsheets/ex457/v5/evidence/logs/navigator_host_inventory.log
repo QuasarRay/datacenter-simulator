@@ -1,0 +1,71 @@
+{
+    "_meta": {
+        "hostvars": {
+            "leaf1": {
+                "ansible_connection": "ansible.netcommon.network_cli",
+                "ansible_host": "172.30.0.21",
+                "ansible_host_key_checking": true,
+                "ansible_libssh_config_file": "{{ ex457_ssh_config.path }}",
+                "ansible_libssh_host_key_checking": true,
+                "ansible_network_cli_ssh_type": "libssh",
+                "ansible_network_os": "frr.frr.frr",
+                "ansible_user": "ansible"
+            },
+            "leaf2": {
+                "ansible_connection": "ansible.netcommon.network_cli",
+                "ansible_host": "172.30.0.22",
+                "ansible_host_key_checking": true,
+                "ansible_libssh_config_file": "{{ ex457_ssh_config.path }}",
+                "ansible_libssh_host_key_checking": true,
+                "ansible_network_cli_ssh_type": "libssh",
+                "ansible_network_os": "frr.frr.frr",
+                "ansible_user": "ansible"
+            },
+            "spine1": {
+                "ansible_connection": "ansible.netcommon.network_cli",
+                "ansible_host": "172.30.0.11",
+                "ansible_host_key_checking": true,
+                "ansible_libssh_config_file": "{{ ex457_ssh_config.path }}",
+                "ansible_libssh_host_key_checking": true,
+                "ansible_network_cli_ssh_type": "libssh",
+                "ansible_network_os": "frr.frr.frr",
+                "ansible_user": "ansible"
+            },
+            "spine2": {
+                "ansible_connection": "ansible.netcommon.network_cli",
+                "ansible_host": "172.30.0.12",
+                "ansible_host_key_checking": true,
+                "ansible_libssh_config_file": "{{ ex457_ssh_config.path }}",
+                "ansible_libssh_host_key_checking": true,
+                "ansible_network_cli_ssh_type": "libssh",
+                "ansible_network_os": "frr.frr.frr",
+                "ansible_user": "ansible"
+            }
+        },
+        "profile": "inventory_legacy"
+    },
+    "all": {
+        "children": [
+            "ungrouped",
+            "fabric"
+        ]
+    },
+    "fabric": {
+        "children": [
+            "spines",
+            "leafs"
+        ]
+    },
+    "leafs": {
+        "hosts": [
+            "leaf1",
+            "leaf2"
+        ]
+    },
+    "spines": {
+        "hosts": [
+            "spine1",
+            "spine2"
+        ]
+    }
+}
