@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "103 available historical findings: 32 v3 entries carried in v4, 48 v4 findings, 23 v5 findings. Original v3 audit and any earlier audits were not available. Regression coverage, source review and runtime acceptance are separate. Confirmed v6 integration defects and a rejected SSH-startup suspicion are documented in v6-changes.md.",
+  "scope": "103 available historical findings: 32 v3 entries carried in v4, 48 v4 findings, 23 v5 findings. Original v3 audit and any earlier audits were not available. Regression coverage, source review and runtime acceptance are separate. Confirmed v6 integration defects and a rejected SSH-startup suspicion are documented in v6-changes.md. The table counts traceability entries, not 103 independent automated proofs. Structural document tests check mappings and links; they cannot prove official-source semantics or target-specific behavior.",
   "findings": [
     {
       "id": "V3-001",
@@ -8,7 +8,7 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/pyats_live.py::Convergence"
+        "tests/pyats_live.py::NegativeCases"
       ],
       "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
       "source": "v4/evidence/10_v3_audit_closure.md",
@@ -20,7 +20,7 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/pyats_live.py::Convergence"
+        "tests/pyats_live.py::NegativeCases"
       ],
       "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
       "source": "v4/evidence/10_v3_audit_closure.md",
@@ -32,9 +32,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_installed_collection_argument_specs"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The installed collection argument-spec test validates rendered module arguments and rejects an unknown-argument mutation; it does not validate a live AAP server schema.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -44,9 +44,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_controller_declared_dependencies"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The declaration test rejects missing EE, SCM and role-group dependencies; actual object creation, synchronization and permissions require Controller acceptance.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -80,6 +80,7 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
+        "tests/test_properties.py::test_generated_model_oracle",
         "tests/test_properties.py::test_invalid_model_rejected"
       ],
       "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
@@ -92,9 +93,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_controller_declared_dependencies"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The declaration test rejects missing EE, SCM and role-group dependencies; actual object creation, synchronization and permissions require Controller acceptance.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -224,9 +225,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_controller_declared_dependencies"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The declaration test rejects missing EE, SCM and role-group dependencies; actual object creation, synchronization and permissions require Controller acceptance.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -320,9 +321,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+        "tests/test_automation.py::test_installed_collection_argument_specs"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The installed collection argument-spec test validates rendered module arguments and rejects an unknown-argument mutation; it does not validate a live AAP server schema.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -368,9 +369,9 @@
       "severity": "INHERITED_UNRATED",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_controller_declared_dependencies"
       ],
-      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement.",
+      "acceptance": "Carried forward from v4 closure table; original v3 audit unavailable. Test mapping does not retroactively prove its original closure statement. The declaration test rejects missing EE, SCM and role-group dependencies; actual object creation, synchronization and permissions require Controller acceptance.",
       "source": "v4/evidence/10_v3_audit_closure.md",
       "source_sha256": "0de31179ff2f6616b9d0d39d74426c71d60a37ad86e95bbafd5c08ddf17373f5"
     },
@@ -638,9 +639,9 @@
       "severity": "HIGH",
       "status": "DOCUMENTED_BOUNDARY",
       "tests": [
-        "tests/test_automation.py::test_exact_controller_graph"
+        "tests/test_automation.py::test_installed_collection_argument_specs"
       ],
-      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable.",
+      "acceptance": "Automated structural/contract check only. Review linked official source semantics and chapter 20 external acceptance on the actual product/host where applicable. The installed collection argument-spec test validates rendered module arguments and rejects an unknown-argument mutation; it does not validate a live AAP server schema.",
       "source": "ex457_v4_adversarial_audit.zip",
       "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
     },
@@ -860,10 +861,9 @@
       "severity": "MEDIUM",
       "status": "REGRESSION_COVERED",
       "tests": [
-        "tests/test_automation.py::test_real_ansible_trust_bootstrap",
-        "tests/test_evidence.py::test_public_blueprint_exact_objectives"
+        "tests/test_automation.py::test_installed_collection_argument_specs"
       ],
-      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs.",
+      "acceptance": "Named automated regression; this is a finite contract, not proof for arbitrary inputs. The installed collection argument-spec test validates rendered module arguments and rejects an unknown-argument mutation; it does not validate a live AAP server schema.",
       "source": "ex457_v4_adversarial_audit.zip",
       "source_sha256": "4b5f863de83550e497bc1b5e69d0cbc86975a667d87850e1dfb296ded92c3d3d"
     },

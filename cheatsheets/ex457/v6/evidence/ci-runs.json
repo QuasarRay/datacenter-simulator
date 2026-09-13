@@ -47,6 +47,22 @@
       ],
       "cause": "The published image pulled successfully; nested Docker could not start containers because cgroup v2 domain controllers were in an invalid state. Added explicit DinD subtree initialization; CPU/memory assertions remain required.",
       "live_lab": "FAILED_AT_LEGACY_DEPLOY"
+    },
+    {
+      "id": 34749504898,
+      "url": "https://github.com/QuasarRay/datacenter-simulator/actions/runs/34749504898",
+      "commit": "3d1ac5542731a85cf3d2df93022bd31c6bdcc742",
+      "status": "FAIL",
+      "passed": [
+        "historical-counterexamples",
+        "property-regressions",
+        "release-contracts",
+        "dind-preparation",
+        "docker-ready",
+        "legacy-deploy"
+      ],
+      "cause": "All four legacy nodes and fabric links ran. Original pyATS incorrectly assumed NanoCpus and binary Mb units. Containerlab 0.79 source uses quota/period and go-humanize decimal MB. Corrected the oracle and added SI/IEC and CPU quota properties.",
+      "live_lab": "LEGACY_RESOURCES_REJECTED_BY_INCORRECT_ORACLE"
     }
   ]
 }

@@ -1,6 +1,7 @@
 import ast
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -127,3 +128,64 @@ def test_simulator_profile_images_match_published_digest():
     expected=publication['repository']+'@'+publication['index_digest']
     assert {dc['profiles'][n['role']]['image'] for n in dc['nodes'].values()}=={expected}
     assert publication['entrypoint_sha256']=='57c192078ba6b8be0f43aee3f08bef43581d17d877a6b0ef145cfd4c87dcb8e5'
+
+
+def controller_wiring(rows):
+    """Check declared dependencies; actual Controller API acceptance is separate."""
+    def one(module, name=None):
+        found=[r[module] for r in rows if module in r and (name is None or r[module].get('name')==name)]
+        assert len(found)==1,(module,name)
+        return found[0]
+    project=one('awx.awx.project')
+    credential=one('awx.awx.credential',project.get('credential'))
+    assert credential['credential_type']=='Source Control'
+    ee=one('awx.awx.execution_environment')
+    registry=one('awx.awx.credential',ee.get('credential'))
+    assert registry['credential_type']=='Container Registry'
+    job=one('awx.awx.job_template')
+    assert job.get('execution_environment')==ee['name']
+    assert job.get('project')==project['name']
+    parent=one('awx.awx.group','fabric')
+    assert set(parent['children'])=={'spines','leafs'}
+    connection=parent['variables']
+    assert connection['ansible_connection']=='ansible.netcommon.network_cli'
+    assert connection['ansible_network_os']=='frr.frr.frr'
+    assert connection['ansible_network_cli_ssh_type']=='libssh'
+    assert connection['ansible_host_key_checking'] is True and connection['ansible_libssh_host_key_checking'] is True
+    role_task=next(r for r in rows if r.get('awx.awx.group',{}).get('name')=='{{ item.group }}')
+    assert {(x['group'],x['role']) for x in role_task['loop']}=={('spines','spine'),('leafs','leaf')}
+
+
+@given(st.sampled_from(['missing_ee','job_without_ee','project_without_scm','missing_role_group','missing_connection_vars']))
+def test_controller_declared_dependencies(defect):
+    rows=tasks();controller_wiring(rows)
+    if defect=='missing_ee':rows=[r for r in rows if 'awx.awx.execution_environment' not in r]
+    elif defect=='job_without_ee':next(r['awx.awx.job_template'] for r in rows if 'awx.awx.job_template' in r).pop('execution_environment')
+    elif defect=='project_without_scm':next(r['awx.awx.project'] for r in rows if 'awx.awx.project' in r).pop('credential')
+    elif defect=='missing_role_group':next(r for r in rows if r.get('awx.awx.group',{}).get('name')=='{{ item.group }}')['loop'].pop()
+    else:next(r['awx.awx.group'] for r in rows if r.get('awx.awx.group',{}).get('name')=='fabric').pop('variables')
+    with pytest.raises((AssertionError,KeyError,StopIteration)):controller_wiring(rows)
+
+
+def test_installed_collection_argument_specs():
+    run=subprocess.run([sys.executable,'tools/check_module_args.py'],cwd=ROOT,text=True,capture_output=True)
+    assert run.returncode==0,run.stdout+run.stderr
+    report=json.loads(run.stdout)
+    assert report['status']=='PASS'
+
+
+@given(st.integers(1,2048),st.sampled_from(['k','m','g']),st.booleans())
+def test_simulator_resource_units_and_quota(number,unit,binary):
+    from fractions import Fraction
+    file=ROOT.parents[2]/'tests/datacenter_state.py'
+    spec=importlib.util.spec_from_file_location('ex457_root_state',file)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    power={'k':1,'m':2,'g':3}[unit]
+    suffix=unit+('i' if binary else '')+'b'
+    expected=number*(1024 if binary else 1000)**power
+    assert module.parse_memory(str(number)+suffix.upper())==expected
+    assert module.parse_memory('256Mb')==256000000
+    assert module.parse_memory('256MiB')==268435456
+    assert module.cpu_limit({'NanoCpus':0,'CpuQuota':number*25000,'CpuPeriod':100000})==Fraction(number,4)
+    for bad in [{},{'CpuQuota':-1,'CpuPeriod':100000},{'CpuQuota':50000,'CpuPeriod':0}]:
+        with pytest.raises(ValueError):module.cpu_limit(bad)

@@ -6,6 +6,8 @@ import ipaddress
 import json
 import re
 import subprocess
+from decimal import Decimal
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -40,29 +42,38 @@ def parse_memory(value: str) -> int:
     if not match:
         raise ValueError(f"Unsupported memory value: {value}")
 
-    number = float(match.group(1))
+    number = Decimal(match.group(1))
     unit = match.group(2).lower()
     factors = {
         "": 1,
         "b": 1,
-        "k": 1024,
-        "kb": 1024,
+        "k": 1000,
+        "kb": 1000,
         "ki": 1024,
         "kib": 1024,
-        "m": 1024**2,
-        "mb": 1024**2,
+        "m": 1000**2,
+        "mb": 1000**2,
         "mi": 1024**2,
         "mib": 1024**2,
-        "g": 1024**3,
-        "gb": 1024**3,
+        "g": 1000**3,
+        "gb": 1000**3,
         "gi": 1024**3,
         "gib": 1024**3,
-        "t": 1024**4,
-        "tb": 1024**4,
+        "t": 1000**4,
+        "tb": 1000**4,
         "ti": 1024**4,
         "tib": 1024**4,
     }
     return int(number * factors[unit])
+
+
+def cpu_limit(host_config: dict[str, Any]) -> Fraction:
+    """Containerlab 0.79 Docker runtime uses CPUQuota/CPUPeriod, not NanoCpus."""
+    quota = int(host_config.get("CpuQuota") or 0)
+    period = int(host_config.get("CpuPeriod") or 0)
+    if quota <= 0 or period <= 0:
+        raise ValueError("Missing or unlimited CPU quota/period")
+    return Fraction(quota, period)
 
 
 def interface_addresses(container: str, interface: str) -> set[str]:
@@ -144,11 +155,15 @@ class NodeStateMatchesIntent(aetest.Testcase):
                     f"expected={node['mgmt_ip']}"
                 )
 
-            expected_cpu = int(float(profile["cpu"]) * 1_000_000_000)
-            actual_cpu = int(state["HostConfig"].get("NanoCpus") or 0)
-            if actual_cpu != expected_cpu:
+            expected_cpu = Fraction(str(profile["cpu"]))
+            try:
+                actual_cpu = cpu_limit(state["HostConfig"])
+            except ValueError as error:
+                failures.append(f"{node_name}: {error}")
+                actual_cpu = None
+            if actual_cpu is not None and actual_cpu != expected_cpu:
                 failures.append(
-                    f"{node_name}: NanoCPUs={actual_cpu} expected={expected_cpu}"
+                    f"{node_name}: CPU quota/period={actual_cpu} expected={expected_cpu}"
                 )
 
             expected_memory = parse_memory(str(profile["memory"]))

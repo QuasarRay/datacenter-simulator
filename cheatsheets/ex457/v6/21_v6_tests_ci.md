@@ -34,9 +34,10 @@ The script explicitly turns the AEtest aggregate result into a process exit stat
 Run from the **repository root**, or the ZIP's `ex457-v6-project` root:
 
 ```bash
-dagger -m ci call artifacts --source=. --run-id="local-$(date +%s)" export --path=artifacts
+ex457_ci_run_id="local-$(date +%s)"
+dagger -m ci call artifacts --source=. --run-id="$ex457_ci_run_id" export --path=artifacts
 # Check the exact exported run without invoking the lab again.
-python3 ci/check_results.py --run-id=REPLACE_WITH_SAME_RUN_ID
+python3 ci/check_results.py --run-id="$ex457_ci_run_id"
 ```
 
 Dagger engine 0.21.8 installs the pinned Ansible and test dependencies, deploys/tests/destroys the original simulator, then builds the FRR 10.7.1 adapter and runs the v6 lab. Both labs use overlapping management space, so they run sequentially. Nested Docker requires a Docker-capable Linux host and Dagger's privileged execution option. The default CI runs on disposable GitHub-hosted Ubuntu 24.04 runners, with a read-only repository token and action commit pins. It does not use `pull_request_target` or expose a real Controller to untrusted pull requests.

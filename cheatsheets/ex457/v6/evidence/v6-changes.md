@@ -36,3 +36,7 @@ The first hosted run showed that two separate Dagger calls could execute the gra
 ## V6-NEW-003 — The original simulator used an unavailable image tag
 
 The Docker Hub tag endpoint for `frrouting/frr:v10.5.0` returned HTTP 404 during review. The original simulator's spine/leaf profiles now use the same published FRR 10.7.1 containerlab image digest as the v6 adapter base. Quay's manifest identifies an amd64 image and other supported architectures. The legacy pyATS deployment gate checks the requested image and live node state. The v6 vendored model keeps its original pinned historical bytes; its profile image fields are unused by the v6 adapter topology.
+
+## V6-NEW-004 — Legacy resource assertions used the wrong units and Docker fields
+
+Hosted run 34749504898 deployed all four original nodes and passed interface checks, but the old test treated `256Mb` as 268435456 bytes and required `NanoCpus=500000000`. [Containerlab 0.79.0 Docker runtime](https://github.com/srl-labs/containerlab/blob/v0.79.0/runtime/docker/docker.go) sets CPU quota/period and uses `humanize.ParseBytes`. Its pinned [go-humanize 1.0.1 parser](https://github.com/dustin/go-humanize/blob/v1.0.1/bytes.go) distinguishes decimal MB from binary MiB. The test now checks the actual quota/period ratio, rejects missing or unlimited quotas, and interprets SI/IEC units correctly. Hypothesis exercises both unit families and generated quotas. Resource limits were not removed.
