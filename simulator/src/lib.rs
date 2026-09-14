@@ -5,15 +5,15 @@ pub mod api;
 pub mod collective;
 pub mod command;
 pub mod fabric;
-pub mod manifest;
-pub mod model;
-pub mod topology;
 #[cfg(feature = "linux")]
 pub mod linux;
-#[cfg(feature = "rdma")]
-pub mod rdma;
+pub mod manifest;
+pub mod model;
 #[cfg(feature = "nccl")]
 pub mod nccl_backend;
+#[cfg(feature = "rdma")]
+pub mod rdma;
+pub mod topology;
 
 pub use api::Simulator;
 pub use model::{Error, Result, Simulation};

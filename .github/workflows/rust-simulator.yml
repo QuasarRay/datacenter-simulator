@@ -26,6 +26,8 @@ jobs:
         run: |
           cargo +stable fmt --package datacenter-simulator
           git diff --no-color -- src tests examples
+          cargo +stable generate-lockfile
+          cat Cargo.lock
       - name: Portable contracts and property tests
         working-directory: simulator
         run: cargo +stable test --all-targets
@@ -34,7 +36,7 @@ jobs:
         run: cargo +stable run -- run examples/gpu-spine-leaf.json
       - name: Rust lint
         working-directory: simulator
-        run: cargo +stable clippy --all-targets
+        run: cargo +stable clippy --all-targets -- -D warnings
   native:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -58,3 +60,14 @@ jobs:
       - name: Real namespaces TCP delivery partition and recovery
         working-directory: simulator
         run: sudo timeout 90 ./target/debug/examples/linux_fabric
+      - name: SoftRoCE send and receive
+        working-directory: simulator
+        run: |
+          sudo modprobe rdma_rxe
+          sudo ip link add sim-rxe type veth peer name sim-peer
+          trap 'sudo rdma link delete sim_rxe; sudo ip link delete sim-rxe' EXIT
+          sudo ip addr add 192.0.2.1/24 dev sim-rxe
+          sudo ip link set sim-rxe up
+          sudo ip link set sim-peer up
+          sudo rdma link add sim_rxe type rxe netdev sim-rxe
+          timeout 15 ./target/debug/examples/rdma_loopback

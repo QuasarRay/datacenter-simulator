@@ -1,6 +1,6 @@
-use std::collections::{BTreeMap, BTreeSet};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -28,10 +28,17 @@ pub enum Error {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum State { Inactive, Active }
+pub enum State {
+    Inactive,
+    Active,
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
-pub enum Role { #[default] Host, Switch }
+pub enum Role {
+    #[default]
+    Host,
+    Switch,
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum InterfaceType {
     #[default]
@@ -44,14 +51,26 @@ pub enum InterfaceType {
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub struct Resources { pub cpu: u32, pub memory: u64, pub storage: u64 }
+pub struct Resources {
+    pub cpu: u32,
+    pub memory: u64,
+    pub storage: u64,
+}
 impl Default for Resources {
-    fn default() -> Self { Self { cpu: 2, memory: 1024, storage: 10 } }
+    fn default() -> Self {
+        Self {
+            cpu: 2,
+            memory: 1024,
+            storage: 10,
+        }
+    }
 }
 impl Resources {
     pub fn validate(&self) -> Result<()> {
         if self.cpu == 0 || self.memory == 0 || self.storage == 0 {
-            return Err(Error::Invalid("cpu, memory MiB, and storage GB must be positive".into()));
+            return Err(Error::Invalid(
+                "cpu, memory MiB, and storage GB must be positive".into(),
+            ));
         }
         Ok(())
     }
@@ -69,15 +88,24 @@ pub struct NodeSpec {
     #[serde(default)]
     pub labels: BTreeMap<String, serde_json::Value>,
 }
-fn default_image() -> String { "generic/ubuntu2204".into() }
+fn default_image() -> String {
+    "generic/ubuntu2204".into()
+}
 impl NodeSpec {
     pub fn host(name: &str) -> Self {
-        Self { name: name.into(), image: default_image(), role: Role::Host, resources: Resources::default(), labels: BTreeMap::new() }
+        Self {
+            name: name.into(),
+            image: default_image(),
+            role: Role::Host,
+            resources: Resources::default(),
+            labels: BTreeMap::new(),
+        }
     }
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct Node {
-    pub id: String, pub simulation: String,
+    pub id: String,
+    pub simulation: String,
     #[serde(flatten)]
     pub spec: NodeSpec,
     pub state: State,
@@ -89,8 +117,11 @@ pub struct Node {
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct Interface {
-    pub id: String, pub node: String, pub name: String,
-    pub interface_type: InterfaceType, pub mac_address: String,
+    pub id: String,
+    pub node: String,
+    pub name: String,
+    pub interface_type: InterfaceType,
+    pub mac_address: String,
     pub connection: Option<String>,
     pub split_parent: Option<String>,
     pub split_children: Vec<String>,
@@ -103,35 +134,68 @@ pub struct LinkSpec {
     #[serde(default = "yes")]
     pub up: bool,
 }
-fn yes() -> bool { true }
+fn yes() -> bool {
+    true
+}
 impl Default for LinkSpec {
-    fn default() -> Self { Self { bandwidth_bps: 100_000_000_000, latency_ns: 1000, up: true } }
+    fn default() -> Self {
+        Self {
+            bandwidth_bps: 100_000_000_000,
+            latency_ns: 1000,
+            up: true,
+        }
+    }
 }
 impl LinkSpec {
     pub fn validate(&self) -> Result<()> {
         if self.bandwidth_bps == 0 || self.latency_ns > 1_000_000_000_000 {
-            return Err(Error::Invalid("link needs positive bandwidth and latency <= 1000 seconds".into()));
+            return Err(Error::Invalid(
+                "link needs positive bandwidth and latency <= 1000 seconds".into(),
+            ));
         }
         Ok(())
     }
 }
 #[derive(Debug, Clone, Serialize)]
-pub struct Link { pub id: String, pub interfaces: [String; 2], #[serde(flatten)] pub spec: LinkSpec }
-#[derive(Debug, Clone, Serialize)]
-pub struct HistoryEntry {
-    pub object_id: String, pub model: String, pub created: DateTime<Utc>,
-    pub actor: String, pub description: String, pub severity: String, pub labels: Vec<String>,
+pub struct Link {
+    pub id: String,
+    pub interfaces: [String; 2],
+    #[serde(flatten)]
+    pub spec: LinkSpec,
 }
 #[derive(Debug, Clone, Serialize)]
-pub struct HistoryFilters { pub actors: BTreeSet<String>, pub severities: BTreeSet<String>, pub labels: BTreeSet<String> }
+pub struct HistoryEntry {
+    pub object_id: String,
+    pub model: String,
+    pub created: DateTime<Utc>,
+    pub actor: String,
+    pub description: String,
+    pub severity: String,
+    pub labels: Vec<String>,
+}
+#[derive(Debug, Clone, Serialize)]
+pub struct HistoryFilters {
+    pub actors: BTreeSet<String>,
+    pub severities: BTreeSet<String>,
+    pub labels: BTreeSet<String>,
+}
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum ServiceType { SSH, HTTPS, HTTP, OTHER }
+pub enum ServiceType {
+    SSH,
+    HTTPS,
+    HTTP,
+    OTHER,
+}
 #[derive(Debug, Clone, Serialize)]
 pub struct Service {
-    pub id: String, pub name: String, pub interface: String, pub node_port: u16,
+    pub id: String,
+    pub name: String,
+    pub interface: String,
+    pub node_port: u16,
     pub service_type: ServiceType,
     // A local service descriptor is not a published NVIDIA Air tunnel.
-    pub worker_port: Option<u16>, pub worker_fqdn: Option<String>,
+    pub worker_port: Option<u16>,
+    pub worker_fqdn: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "executor", rename_all = "lowercase", deny_unknown_fields)]
@@ -142,14 +206,23 @@ pub enum InstructionData {
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct Instruction {
-    pub id: String, pub node: String, pub data: InstructionData,
-    pub run_again_on_rebuild: bool, pub state: String,
+    pub id: String,
+    pub node: String,
+    pub data: InstructionData,
+    pub run_again_on_rebuild: bool,
+    pub state: String,
 }
 #[derive(Debug, Clone, Default, Serialize)]
-pub struct NodeRuntime { pub hostname: String, pub files: BTreeMap<String, String> }
+pub struct NodeRuntime {
+    pub hostname: String,
+    pub files: BTreeMap<String, String>,
+}
 #[derive(Debug, Clone, Serialize)]
 pub struct Checkpoint {
-    pub id: String, pub name: String, pub favorite: bool, pub state: String,
+    pub id: String,
+    pub name: String,
+    pub favorite: bool,
+    pub state: String,
     pub created: DateTime<Utc>,
     #[serde(skip)]
     pub(crate) runtime: BTreeMap<String, NodeRuntime>,
@@ -180,49 +253,108 @@ pub struct Simulation {
     pub(crate) available: BTreeMap<(String, String), u64>,
 }
 pub(crate) fn name(value: &str) -> Result<()> {
-    if value.is_empty() || value.len() > 63 || !value.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_') {
-        return Err(Error::Invalid(format!("name must contain 1..63 ASCII letters, digits, hyphens or underscores: {value}")));
+    if value.is_empty()
+        || value.len() > 63
+        || !value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    {
+        return Err(Error::Invalid(format!(
+            "name must contain 1..63 ASCII letters, digits, hyphens or underscores: {value}"
+        )));
     }
     Ok(())
 }
 impl Simulation {
-    pub fn id(&self) -> &str { &self.id }
-    pub fn name(&self) -> &str { &self.name }
-    pub fn state(&self) -> State { self.state }
-    pub fn clock_ns(&self) -> u64 { self.clock_ns }
-    pub fn nodes(&self) -> impl Iterator<Item = &Node> { self.nodes.values() }
-    pub fn interfaces(&self) -> impl Iterator<Item = &Interface> { self.interfaces.values() }
-    pub fn links(&self) -> impl Iterator<Item = &Link> { self.links.values() }
-    pub fn services(&self) -> impl Iterator<Item = &Service> { self.services.values() }
-    pub fn instructions(&self) -> impl Iterator<Item = &Instruction> { self.instructions.values() }
-    pub fn checkpoints(&self) -> impl Iterator<Item = &Checkpoint> { self.checkpoints.values() }
-    pub fn history(&self) -> &[HistoryEntry] { &self.history }
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn state(&self) -> State {
+        self.state
+    }
+    pub fn clock_ns(&self) -> u64 {
+        self.clock_ns
+    }
+    pub fn nodes(&self) -> impl Iterator<Item = &Node> {
+        self.nodes.values()
+    }
+    pub fn interfaces(&self) -> impl Iterator<Item = &Interface> {
+        self.interfaces.values()
+    }
+    pub fn links(&self) -> impl Iterator<Item = &Link> {
+        self.links.values()
+    }
+    pub fn services(&self) -> impl Iterator<Item = &Service> {
+        self.services.values()
+    }
+    pub fn instructions(&self) -> impl Iterator<Item = &Instruction> {
+        self.instructions.values()
+    }
+    pub fn checkpoints(&self) -> impl Iterator<Item = &Checkpoint> {
+        self.checkpoints.values()
+    }
+    pub fn history(&self) -> &[HistoryEntry] {
+        &self.history
+    }
     pub fn history_filters(&self) -> HistoryFilters {
-        HistoryFilters { actors: self.history.iter().map(|e|e.actor.clone()).collect(), severities: self.history.iter().map(|e|e.severity.clone()).collect(), labels: self.history.iter().flat_map(|e|e.labels.clone()).collect() }
+        HistoryFilters {
+            actors: self.history.iter().map(|e| e.actor.clone()).collect(),
+            severities: self.history.iter().map(|e| e.severity.clone()).collect(),
+            labels: self.history.iter().flat_map(|e| e.labels.clone()).collect(),
+        }
     }
-    pub fn node(&self, id: &str) -> Result<&Node> { self.nodes.get(id).ok_or_else(||Error::NotFound(id.into())) }
+    pub fn node(&self, id: &str) -> Result<&Node> {
+        self.nodes.get(id).ok_or_else(|| Error::NotFound(id.into()))
+    }
     pub fn node_named(&self, name: &str) -> Result<&Node> {
-        self.nodes.values().find(|n|n.spec.name == name).ok_or_else(||Error::NotFound(name.into()))
+        self.nodes
+            .values()
+            .find(|n| n.spec.name == name)
+            .ok_or_else(|| Error::NotFound(name.into()))
     }
-    pub fn interface(&self, id: &str) -> Result<&Interface> { self.interfaces.get(id).ok_or_else(||Error::NotFound(id.into())) }
+    pub fn interface(&self, id: &str) -> Result<&Interface> {
+        self.interfaces
+            .get(id)
+            .ok_or_else(|| Error::NotFound(id.into()))
+    }
     pub fn interface_named(&self, node: &str, name: &str) -> Result<&Interface> {
         self.node(node)?;
-        self.interfaces.values().find(|i|i.node==node && i.name==name).ok_or_else(||Error::NotFound(format!("{node}:{name}")))
+        self.interfaces
+            .values()
+            .find(|i| i.node == node && i.name == name)
+            .ok_or_else(|| Error::NotFound(format!("{node}:{name}")))
     }
     pub fn runtime(&self, node: &str) -> Result<&NodeRuntime> {
         self.node(node)?;
-        self.runtime.get(node).ok_or_else(||Error::State("node has no runtime".into()))
+        self.runtime
+            .get(node)
+            .ok_or_else(|| Error::State("node has no runtime".into()))
     }
     pub(crate) fn inactive(&self) -> Result<()> {
-        if self.state != State::Inactive { return Err(Error::State("topology edits require INACTIVE".into())); }
+        if self.state != State::Inactive {
+            return Err(Error::State("topology edits require INACTIVE".into()));
+        }
         Ok(())
     }
     pub(crate) fn active(&self) -> Result<()> {
-        if self.state != State::Active { return Err(Error::State("operation requires ACTIVE".into())); }
+        if self.state != State::Active {
+            return Err(Error::State("operation requires ACTIVE".into()));
+        }
         Ok(())
     }
     pub(crate) fn event(&mut self, description: &str) {
         self.modified = Utc::now();
-        self.history.push(HistoryEntry { object_id: self.id.clone(), model: "simulation".into(), created: self.modified, actor: "local".into(), description: description.into(), severity: "INFO".into(), labels: vec!["simulator".into()] });
+        self.history.push(HistoryEntry {
+            object_id: self.id.clone(),
+            model: "simulation".into(),
+            created: self.modified,
+            actor: "local".into(),
+            description: description.into(),
+            severity: "INFO".into(),
+            labels: vec!["simulator".into()],
+        });
     }
 }
