@@ -53,7 +53,7 @@ impl Simulation {
         if bytes > 16 * 1024 * 1024 {
             return Err(Error::Invalid("transfer exceeds 16 MiB".into()));
         }
-        let mut graph = DiGraph::<String, (String, u64)>::new();
+        let mut graph = DiGraph::<String, (String, u128)>::new();
         let mut index: BTreeMap<&str, NodeIndex> = BTreeMap::new();
         let mut ordered_nodes: Vec<_> = self
             .nodes
@@ -102,11 +102,11 @@ impl Simulation {
                 if let (Some(&x), Some(&y)) =
                     (index.get(from.node.as_str()), index.get(to.node.as_str()))
                 {
-                    graph.add_edge(x, y, (link.id.clone(), cost));
+                    graph.add_edge(x, y, (link.id.clone(), u128::from(cost)));
                 }
             }
         }
-        let (_, nodes) = astar(&graph, start, |n| n == goal, |e| e.weight().1, |_| 0u64)
+        let (_, nodes) = astar(&graph, start, |n| n == goal, |e| e.weight().1, |_| 0u128)
             .ok_or_else(|| Error::NoRoute(source.into(), destination.into()))?;
         // Match the lowest-cost parallel edge used by the path algorithm.
         nodes

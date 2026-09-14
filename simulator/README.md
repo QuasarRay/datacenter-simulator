@@ -71,7 +71,7 @@ This is a local datacenter simulator, not a replacement for the entire NVIDIA ho
 
 ZTP and cloud-init content can be stored and exported, but starting with executable guest configuration returns Unsupported because neither the portable model nor network namespaces provide a guest OS/filesystem. Shell instructions also return Unsupported. Service resources are immutable descriptors; no NVIDIA Air external tunnel or worker port is fabricated. Image names and image metadata identify profiles rather than booting an operating system.
 
-Portable resource budgets are descriptive totals, not CPU/RAM/storage enforcement. Timing is a topology/serialization model, not calibrated NVIDIA hardware performance. Linux tests establish connectivity and isolation, not nanosecond accuracy. SDK REST paths, authentication, legacy aliases, HTTP pagination, and hosted organization/publishing/training workflows are outside the local Rust contract.
+Portable operations cap node count at 4096, a transfer at 16 MiB, aggregate collective buffers at 64 MiB, and a collective trace at 65,536 transfers/hops. Requests exceeding a limit return an error. Portable resource budgets are descriptive totals, not CPU/RAM/storage enforcement. Timing is a topology/serialization model, not calibrated NVIDIA hardware performance. Linux tests establish connectivity and isolation, not nanosecond accuracy. SDK REST paths, authentication, legacy aliases, HTTP pagination, and hosted organization/publishing/training workflows are outside the local Rust contract.
 
 ## Reproducibility and validation
 

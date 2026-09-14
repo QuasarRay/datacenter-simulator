@@ -63,6 +63,7 @@ jobs:
         if: always() && steps.native_build.outcome == 'success'
         working-directory: simulator
         run: |
+          sudo apt-get install -y "linux-modules-extra-$(uname -r)"
           sudo modprobe rdma_rxe
           sudo ip link add sim-rxe type veth peer name sim-peer
           trap 'sudo rdma link delete sim_rxe; sudo ip link delete sim-rxe' EXIT

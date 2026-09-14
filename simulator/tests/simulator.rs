@@ -451,3 +451,35 @@ proptest! {
         prop_assert_eq!(f.bytes(sim,&src).unwrap(),&[1,1,1,1]);
     }
 }
+
+#[test]
+fn unrepresentable_path_duration_returns_error_without_clock_mutation() {
+    let mut api = Simulator::new();
+    let id = api.create("slow").unwrap().id().to_string();
+    let sim = api.get_mut(&id).unwrap();
+    let mut nodes = Vec::new();
+    for i in 0..142 {
+        let mut node = NodeSpec::host(&format!("n{i}"));
+        node.role = Role::Switch;
+        nodes.push(sim.create_node(node).unwrap());
+    }
+    for pair in nodes.windows(2) {
+        let a = sim.create_interface(&pair[0], "out", InterfaceType::Data).unwrap();
+        let b = sim.create_interface(&pair[1], "in", InterfaceType::Data).unwrap();
+        sim.create_link(
+            [&a, &b],
+            LinkSpec {
+                bandwidth_bps: 1,
+                latency_ns: 0,
+                up: true,
+            },
+        )
+        .unwrap();
+    }
+    sim.start(None).unwrap();
+    assert!(matches!(
+        sim.transfer(&nodes[0], &nodes[141], 16 * 1024 * 1024),
+        Err(Error::Invalid(_))
+    ));
+    assert_eq!(sim.clock_ns(), 0);
+}

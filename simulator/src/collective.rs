@@ -35,6 +35,16 @@ pub struct CollectiveResult {
     pub started_ns: u64,
     pub completed_ns: u64,
 }
+// Bound trace storage independently of the input/output buffer limits.
+const MAX_TRACE_ITEMS: usize = 65_536;
+fn record(traces: &mut Vec<Transmission>, hops: &mut usize, trace: Transmission) -> Result<()> {
+    *hops += trace.hops.len();
+    if traces.len() >= MAX_TRACE_ITEMS || *hops > MAX_TRACE_ITEMS {
+        return Err(Error::Invalid("collective trace budget exceeded".into()));
+    }
+    traces.push(trace);
+    Ok(())
+}
 fn reduce(a: f64, b: f64, op: Reduction) -> f64 {
     match op {
         Reduction::Sum | Reduction::Average => a + b,
@@ -88,10 +98,14 @@ impl Simulation {
     ) -> Result<CollectiveResult> {
         let count = validate(self, ranks, inputs)?;
         let n = ranks.len();
+        if 2 * (n - 1) * n.min(count) > MAX_TRACE_ITEMS {
+            return Err(Error::Invalid("collective trace budget exceeded".into()));
+        }
         let started = self.clock_ns;
         let mut staged = self.clone();
         let mut data = inputs.to_vec();
         let mut traces = Vec::new();
+        let mut hops = 0;
         let chunks: Vec<_> = (0..n)
             .map(|i| (count * i / n, count * (i + 1) / n))
             .collect();
@@ -114,7 +128,7 @@ impl Simulation {
                     round_time,
                 )?;
                 end = end.max(transfer.completed_ns);
-                traces.push(transfer);
+                record(&mut traces, &mut hops, transfer)?;
                 for i in begin..finish {
                     data[next][i] = reduce(previous[next][i], previous[rank][i], op);
                     if !data[next][i].is_finite() {
@@ -149,7 +163,7 @@ impl Simulation {
                     round_time,
                 )?;
                 end = end.max(transfer.completed_ns);
-                traces.push(transfer);
+                record(&mut traces, &mut hops, transfer)?;
                 data[next][begin..finish].copy_from_slice(&previous[rank][begin..finish]);
             }
             round_time = end;
@@ -190,11 +204,12 @@ impl Simulation {
         let start = self.clock_ns;
         let mut end = start;
         let mut transfers = Vec::new();
+        let mut hops = 0;
         for (rank, node) in ranks.iter().enumerate() {
             if rank != root {
                 let t = staged.schedule_transfer(&ranks[root], node, input.len() * 8, start)?;
                 end = end.max(t.completed_ns);
-                transfers.push(t);
+                record(&mut transfers, &mut hops, t)?;
             }
         }
         staged.clock_ns = end;
@@ -225,7 +240,12 @@ impl Simulation {
         let start = self.clock_ns;
         let mut time = start;
         let mut transfers = Vec::new();
-        for _round in 0..ranks.len() - 1 {
+        let mut hops = 0;
+        let rounds = if count == 0 { 0 } else { ranks.len() - 1 };
+        if ranks.len() * rounds > MAX_TRACE_ITEMS {
+            return Err(Error::Invalid("collective trace budget exceeded".into()));
+        }
+        for _round in 0..rounds {
             let mut end = time;
             for rank in 0..ranks.len() {
                 let t = staged.schedule_transfer(
@@ -235,7 +255,7 @@ impl Simulation {
                     time,
                 )?;
                 end = end.max(t.completed_ns);
-                transfers.push(t);
+                record(&mut transfers, &mut hops, t)?;
             }
             time = end;
         }
