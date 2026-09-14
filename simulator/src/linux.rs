@@ -244,6 +244,8 @@ impl LinuxFabric {
                         &from.name,
                         "proto",
                         "186",
+                        "src",
+                        &self.loopbacks[source].to_string(),
                     ]),
                 )?;
             }

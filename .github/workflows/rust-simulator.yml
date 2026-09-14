@@ -20,22 +20,21 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - name: Rust toolchain
-        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
-      - name: Format source and record diff
+        run: rustup toolchain install 1.98.0 --profile minimal --component rustfmt,clippy
+      - name: Check formatting
         working-directory: simulator
         run: |
-          cargo +stable fmt --package datacenter-simulator
-          git diff --no-color -- src tests examples
+          cargo +1.98.0 fmt --package datacenter-simulator --check
 
       - name: Portable contracts and property tests
         working-directory: simulator
-        run: cargo +stable test --locked --all-targets
+        run: cargo +1.98.0 test --locked --all-targets
       - name: Runnable GPU datacenter scenario
         working-directory: simulator
-        run: cargo +stable run --locked -- run examples/gpu-spine-leaf.json
+        run: cargo +1.98.0 run --locked -- run examples/gpu-spine-leaf.json
       - name: Rust lint
         working-directory: simulator
-        run: cargo +stable clippy --locked --all-targets -- -D warnings
+        run: cargo +1.98.0 clippy --locked --all-targets -- -D warnings
   native:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -45,21 +44,23 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - name: Rust toolchain
-        run: rustup toolchain install stable --profile minimal
+        run: rustup toolchain install 1.98.0 --profile minimal
       - name: Native dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y nftables iproute2 iputils-ping clang libclang-dev cmake pkg-config libibverbs-dev librdmacm-dev libnl-3-dev libnl-route-3-dev libudev-dev
       - name: Compile all integrations including NCCL ABI without linking CUDA
         working-directory: simulator
-        run: cargo +stable check --locked --all-targets --features linux,rdma,nccl-check
+        run: cargo +1.98.0 check --locked --all-targets --features linux,rdma,nccl-check
       - name: Build Linux and RDMA executables
+        id: native_build
         working-directory: simulator
-        run: cargo +stable build --locked --examples --features linux,rdma
+        run: cargo +1.98.0 build --locked --examples --features linux,rdma
       - name: Real namespaces TCP delivery partition and recovery
         working-directory: simulator
         run: sudo timeout 90 ./target/debug/examples/linux_fabric
       - name: SoftRoCE send and receive
+        if: always() && steps.native_build.outcome == 'success'
         working-directory: simulator
         run: |
           sudo modprobe rdma_rxe
@@ -69,4 +70,4 @@ jobs:
           sudo ip link set sim-rxe up
           sudo ip link set sim-peer up
           sudo rdma link add sim_rxe type rxe netdev sim-rxe
-          timeout 15 ./target/debug/examples/rdma_loopback
+          sudo timeout 15 ./target/debug/examples/rdma_loopback
