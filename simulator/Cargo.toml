@@ -1,0 +1,41 @@
+[package]
+name = "datacenter-simulator"
+version = "0.1.0"
+edition = "2024"
+license = "RPL-1.5"
+description = "Rust datacenter simulation using the NVIDIA Air SDK as a behavioral blueprint"
+publish = false
+
+[workspace]
+exclude = ["vendor/nccl", "vendor/patchbay", "vendor/petgraph", "vendor/rust-ibverbs"]
+
+[features]
+default = []
+linux = ["dep:patchbay", "dep:tokio", "dep:anyhow"]
+rdma = ["dep:ibverbs", "dep:anyhow"]
+nccl = ["dep:nccl"]
+nccl-check = ["nccl", "nccl/no-link"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+petgraph = { path = "vendor/petgraph/crates/petgraph", default-features = false, features = ["std"] }
+patchbay = { path = "vendor/patchbay/patchbay", optional = true }
+ibverbs = { path = "vendor/rust-ibverbs/ibverbs", optional = true }
+nccl = { path = "vendor/nccl/bindings/rust/nccl", optional = true }
+anyhow = { version = "1", optional = true }
+tokio = { version = "1", features = ["rt", "macros", "time", "net", "io-util", "process"], optional = true }
+
+[dev-dependencies]
+proptest = "1"
+
+[[example]]
+name = "linux_fabric"
+required-features = ["linux"]
+
+[[example]]
+name = "rdma_loopback"
+required-features = ["rdma"]

@@ -1,0 +1,71 @@
+{
+  "format": "JSON",
+  "name": "gpu-spine-leaf",
+  "ztp": null,
+  "content": {
+    "nodes": {
+      "spine": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10
+      },
+      "leaf1": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10
+      },
+      "leaf2": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10
+      },
+      "gpu1": {
+        "os": "generic/ubuntu2204",
+        "role": "host",
+        "cpu": 8,
+        "memory": 16384,
+        "storage": 100
+      },
+      "gpu2": {
+        "os": "generic/ubuntu2204",
+        "role": "host",
+        "cpu": 8,
+        "memory": 16384,
+        "storage": 100
+      }
+    },
+    "links": [
+      {
+        "endpoints": [
+          "gpu1:eth1",
+          "leaf1:swp1"
+        ]
+      },
+      {
+        "endpoints": [
+          "leaf1:swp2",
+          "spine:swp1"
+        ]
+      },
+      {
+        "endpoints": [
+          "spine:swp2",
+          "leaf2:swp2"
+        ]
+      },
+      {
+        "endpoints": [
+          "leaf2:swp1",
+          "gpu2:eth1"
+        ]
+      }
+    ],
+    "oob": false
+  }
+}

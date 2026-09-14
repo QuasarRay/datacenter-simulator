@@ -1,0 +1,12 @@
+[submodule "simulator/vendor/nccl"]
+	path = simulator/vendor/nccl
+	url = https://github.com/QuasarRay/nccl.git
+[submodule "simulator/vendor/rust-ibverbs"]
+	path = simulator/vendor/rust-ibverbs
+	url = https://github.com/QuasarRay/rust-ibverbs.git
+[submodule "simulator/vendor/patchbay"]
+	path = simulator/vendor/patchbay
+	url = https://github.com/QuasarRay/patchbay.git
+[submodule "simulator/vendor/petgraph"]
+	path = simulator/vendor/petgraph
+	url = https://github.com/QuasarRay/petgraph.git

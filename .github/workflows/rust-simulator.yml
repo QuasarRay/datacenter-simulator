@@ -1,0 +1,60 @@
+name: rust-simulator
+on:
+  pull_request:
+    paths: ['simulator/**', '.gitmodules', '.github/workflows/rust-simulator.yml']
+  push:
+    branches: [main, codex/rust-air-simulator]
+    paths: ['simulator/**', '.gitmodules', '.github/workflows/rust-simulator.yml']
+permissions:
+  contents: read
+concurrency:
+  group: rust-simulator-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  portable:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+      - name: Format source and record diff
+        working-directory: simulator
+        run: |
+          cargo +stable fmt --package datacenter-simulator
+          git diff --no-color -- src tests examples
+      - name: Portable contracts and property tests
+        working-directory: simulator
+        run: cargo +stable test --all-targets
+      - name: Runnable GPU datacenter scenario
+        working-directory: simulator
+        run: cargo +stable run -- run examples/gpu-spine-leaf.json
+      - name: Rust lint
+        working-directory: simulator
+        run: cargo +stable clippy --all-targets
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nftables iproute2 iputils-ping clang libclang-dev cmake pkg-config libibverbs-dev librdmacm-dev libnl-3-dev libnl-route-3-dev libudev-dev
+      - name: Compile all integrations including NCCL ABI without linking CUDA
+        working-directory: simulator
+        run: cargo +stable check --all-targets --features linux,rdma,nccl-check
+      - name: Build Linux and RDMA executables
+        working-directory: simulator
+        run: cargo +stable build --examples --features linux,rdma
+      - name: Real namespaces TCP delivery partition and recovery
+        working-directory: simulator
+        run: sudo timeout 90 ./target/debug/examples/linux_fabric
