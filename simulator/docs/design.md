@@ -38,7 +38,9 @@ The portable ring algorithm follows the reduce-scatter/all-gather phases of [the
 | Memory corruption, stale registrations or unauthorized remote writes | verbs range, key, domain, queue exhaustion and generation tests; 96 generated invalid ranges |
 | Real Linux data path or hidden bypass | TCP payload, partition failure and link recovery in linux_fabric |
 | Native API drift | compile linux + rdma + nccl-check against pinned source revisions |
-| Actual RDMA work submission | SoftRoCE loopback job with checked receive payload |
+| Actual RDMA work submission | Manual rdma-runtime workflow on a configured RDMA runner; not executed successfully in this environment |
 | Existing project regression | separate Dagger/Containerlab/EX457 CI on the pull request |
 
-No finite test suite guarantees complete correctness. Native CUDA runtime execution, real RNIC hardware, large-scale performance and timing calibration need hardware validation beyond these checks.
+No finite test suite guarantees complete correctness. The hosted Azure kernel omits SoftRoCE even in its matching extra module package. Linux networking and native adapter compilation are required hosted CI gates; actual RDMA execution is a separate explicit hardware gate, with no unavailable-device success path.
+
+Native CUDA runtime execution, actual RDMA/SoftRoCE execution, real RNIC hardware, large-scale performance and timing calibration need hardware validation beyond these checks.

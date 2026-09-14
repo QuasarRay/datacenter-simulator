@@ -464,8 +464,12 @@ fn unrepresentable_path_duration_returns_error_without_clock_mutation() {
         nodes.push(sim.create_node(node).unwrap());
     }
     for pair in nodes.windows(2) {
-        let a = sim.create_interface(&pair[0], "out", InterfaceType::Data).unwrap();
-        let b = sim.create_interface(&pair[1], "in", InterfaceType::Data).unwrap();
+        let a = sim
+            .create_interface(&pair[0], "out", InterfaceType::Data)
+            .unwrap();
+        let b = sim
+            .create_interface(&pair[1], "in", InterfaceType::Data)
+            .unwrap();
         sim.create_link(
             [&a, &b],
             LinkSpec {
