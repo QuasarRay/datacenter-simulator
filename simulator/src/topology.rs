@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: RPL-1.5
+// Rust simulator extension of QuasarRay/datacenter-simulator.
+// Unless explicitly acquired and licensed from Licensor under another license,
+// the contents of this file are subject to the Reciprocal Public License
+// ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You
+// may not copy or use this file in either source code or executable form,
+// except in compliance with the terms and conditions of the RPL.
+// All software distributed under the RPL is provided strictly on an "AS IS"
+// basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR
+// HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+// ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
+// language governing rights and limitations.
+
 use crate::model::*;
 use petgraph::{
     algo::astar,
@@ -41,7 +55,11 @@ impl Simulation {
         }
         let mut graph = DiGraph::<String, (String, u64)>::new();
         let mut index: BTreeMap<&str, NodeIndex> = BTreeMap::new();
-        let mut ordered_nodes:Vec<_> = self.nodes.values().filter(|n| n.state == State::Active).collect();
+        let mut ordered_nodes: Vec<_> = self
+            .nodes
+            .values()
+            .filter(|n| n.state == State::Active)
+            .collect();
         ordered_nodes.sort_by_key(|n| &n.spec.name);
         for n in ordered_nodes {
             index.insert(&n.id, graph.add_node(n.id.clone()));

@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: RPL-1.5
+// Rust simulator extension of QuasarRay/datacenter-simulator.
+// Unless explicitly acquired and licensed from Licensor under another license,
+// the contents of this file are subject to the Reciprocal Public License
+// ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You
+// may not copy or use this file in either source code or executable form,
+// except in compliance with the terms and conditions of the RPL.
+// All software distributed under the RPL is provided strictly on an "AS IS"
+// basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR
+// HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+// ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
+// language governing rights and limitations.
+
 use datacenter_simulator::{
     Simulation, Simulator,
     collective::Reduction,
@@ -147,7 +161,10 @@ fn partition_does_not_use_oob_as_a_shortcut() {
     sim.shutdown(false).unwrap();
     sim.set_auto_oob(true, true).unwrap();
     sim.start(None).unwrap();
-    let condition = LinkSpec { up: false, ..LinkSpec::default() };
+    let condition = LinkSpec {
+        up: false,
+        ..LinkSpec::default()
+    };
     sim.set_link(&links[0], condition).unwrap();
     assert!(matches!(
         sim.transfer(&ranks[0], &ranks[1], 10),
@@ -208,7 +225,10 @@ fn parallel_links_and_fault_rerouting() {
         .unwrap();
     sim.start(None).unwrap();
     assert_eq!(sim.route(&ranks[0], &ranks[1], 1000).unwrap()[0], links[0]);
-    let off = LinkSpec { up: false, ..LinkSpec::default() };
+    let off = LinkSpec {
+        up: false,
+        ..LinkSpec::default()
+    };
     sim.set_link(&links[0], off).unwrap();
     assert_eq!(sim.route(&ranks[0], &ranks[1], 1000).unwrap()[0], parallel);
 }
@@ -216,7 +236,10 @@ fn parallel_links_and_fault_rerouting() {
 fn collective_failure_does_not_commit_partial_traffic() {
     let (mut api, id, ranks, links) = star(3);
     let sim = api.get_mut(&id).unwrap();
-    let mut off = LinkSpec { up: false, ..LinkSpec::default() };
+    let mut off = LinkSpec {
+        up: false,
+        ..LinkSpec::default()
+    };
     sim.set_link(&links[2], off).unwrap();
     let before = snapshot(sim);
     assert!(

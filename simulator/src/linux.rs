@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: RPL-1.5
+// Rust simulator extension of QuasarRay/datacenter-simulator.
+// Unless explicitly acquired and licensed from Licensor under another license,
+// the contents of this file are subject to the Reciprocal Public License
+// ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You
+// may not copy or use this file in either source code or executable form,
+// except in compliance with the terms and conditions of the RPL.
+// All software distributed under the RPL is provided strictly on an "AS IS"
+// basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR
+// HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+// ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
+// language governing rights and limitations.
+
 //! Real kernel topology: one patchbay device namespace per simulated node,
 //! one isolated bridge per physical link, and petgraph-derived static routes.
 //! Link routers have their IX interfaces disabled, preventing hidden shortcuts.
@@ -37,8 +51,8 @@ impl LinuxFabric {
         if simulation.state() != State::Active {
             bail!("start the model before building its Linux topology");
         }
-        if simulation.links().count() > 8192 {
-            bail!("Linux backend supports at most 8192 links");
+        if simulation.links().count() > 240 {
+            bail!("Linux backend supports at most 240 links");
         }
         if simulation
             .interfaces()
@@ -52,15 +66,16 @@ impl LinuxFabric {
         let mut routers = BTreeMap::new();
         let mut addresses = BTreeMap::new();
         for (index, link) in simulation.links().enumerate() {
-            // Unique /29 with two endpoints and a bridge address, no shared transit fabric.
-            let base = u32::from(Ipv4Addr::new(10, 64, 0, 0)) + (index as u32) * 8;
-            let subnet = format!("{}/29", Ipv4Addr::from(base));
+            // Unique /24 with two endpoints and a bridge address, no shared transit fabric.
+            let base = u32::from(Ipv4Addr::new(10, 64, 0, 0)) + (index as u32) * 256;
+            let subnet = format!("{}/24", Ipv4Addr::from(base));
             let router = lab
                 .add_router(&format!("wire{index}"))
                 .preset(RouterPreset::PublicV4)
                 .downstream_cidr(subnet.parse()?)
                 .build()
-                .await.with_context(||format!("create link bridge {index} ({subnet})"))?;
+                .await
+                .with_context(|| format!("create link bridge {index} ({subnet})"))?;
             for (end, interface) in link.interfaces.iter().enumerate() {
                 addresses.insert(interface.clone(), Ipv4Addr::from(base + 2 + end as u32));
             }
@@ -81,7 +96,7 @@ impl LinuxFabric {
                     let ip = addresses[&interface.id];
 
                     let mut c = IfaceConfig::routed(routers[&link.id].id())
-                        .addr(format!("{ip}/29").parse()?);
+                        .addr(format!("{ip}/24").parse()?);
                     if !link.spec.up {
                         c = c.down();
                     }
@@ -95,7 +110,10 @@ impl LinuxFabric {
             if !attached {
                 builder = builder.iface("sim0", IfaceConfig::dummy());
             }
-            let dev = builder.build().await.with_context(||format!("create node {}",node.spec.name))?;
+            let dev = builder
+                .build()
+                .await
+                .with_context(|| format!("create node {}", node.spec.name))?;
             command(&dev, "ip", &args(&["route", "flush", "default"]))?;
             command(
                 &dev,

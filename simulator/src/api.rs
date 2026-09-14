@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: RPL-1.5
+// Rust simulator extension of QuasarRay/datacenter-simulator.
+// Unless explicitly acquired and licensed from Licensor under another license,
+// the contents of this file are subject to the Reciprocal Public License
+// ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You
+// may not copy or use this file in either source code or executable form,
+// except in compliance with the terms and conditions of the RPL.
+// All software distributed under the RPL is provided strictly on an "AS IS"
+// basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR
+// HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+// ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
+// language governing rights and limitations.
+
 use crate::{id, model::*};
 use chrono::{DateTime, Utc};
 use std::collections::{BTreeMap, BTreeSet};
@@ -106,7 +120,9 @@ impl Simulator {
         let cloned = self.import(manifest, false)?;
         if let Some(saved) = saved {
             let sim = self.get_mut(&cloned)?;
-            for instruction in sim.instructions.values_mut() { instruction.state = "COMPLETE".into(); }
+            for instruction in sim.instructions.values_mut() {
+                instruction.state = "COMPLETE".into();
+            }
             for n in sim.nodes.values() {
                 if let Some(value) = saved.get(&n.spec.name) {
                     sim.runtime.insert(n.id.clone(), value.clone());
@@ -165,7 +181,9 @@ impl Simulation {
         sleep_at: Option<DateTime<Utc>>,
         expires_at: Option<DateTime<Utc>>,
     ) -> Result<()> {
-        if let (Some(s), Some(e)) = (sleep_at, expires_at) && s > e {
+        if let (Some(s), Some(e)) = (sleep_at, expires_at)
+            && s > e
+        {
             return Err(Error::Invalid("sleep_at is later than expires_at".into()));
         }
         self.sleep_at = sleep_at;

@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: RPL-1.5
+// Rust simulator extension of QuasarRay/datacenter-simulator.
+// Unless explicitly acquired and licensed from Licensor under another license,
+// the contents of this file are subject to the Reciprocal Public License
+// ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You
+// may not copy or use this file in either source code or executable form,
+// except in compliance with the terms and conditions of the RPL.
+// All software distributed under the RPL is provided strictly on an "AS IS"
+// basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR
+// HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+// ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
+// language governing rights and limitations.
+
 //! Portable semantic and traffic models for NCCL collectives.
 //! Ring all-reduce uses reduce-scatter followed by all-gather, grounded in
 //! vendor/nccl/src/device/all_reduce.h. Timings are model estimates, not CUDA benchmarks.
@@ -159,9 +173,16 @@ impl Simulation {
         if root >= ranks.len() {
             return Err(Error::Invalid("root rank is out of range".into()));
         }
-        if ranks.len() > 4096 || input.len() > 2 * 1024 * 1024
-            || ranks.len().checked_mul(input.len()).is_none_or(|v|v>8*1024*1024) {
-            return Err(Error::Invalid("broadcast exceeds rank or memory limits".into()));
+        if ranks.len() > 4096
+            || input.len() > 2 * 1024 * 1024
+            || ranks
+                .len()
+                .checked_mul(input.len())
+                .is_none_or(|v| v > 8 * 1024 * 1024)
+        {
+            return Err(Error::Invalid(
+                "broadcast exceeds rank or memory limits".into(),
+            ));
         }
         let inputs = vec![input.to_vec(); ranks.len()];
         validate(self, ranks, &inputs)?;

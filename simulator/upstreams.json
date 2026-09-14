@@ -1,0 +1,28 @@
+{
+  "specification": {
+    "repository": "https://github.com/QuasarRay/nv-air-sdk",
+    "revision": "0a9ce86a6195e26c5522640d895a1adba9449cbd"
+  },
+  "implementation": {
+    "nccl": {
+      "repository": "https://github.com/QuasarRay/nccl",
+      "revision": "16b55c792f902080c38820c9c2bd766337909da3",
+      "path": "vendor/nccl"
+    },
+    "rust-ibverbs": {
+      "repository": "https://github.com/QuasarRay/rust-ibverbs",
+      "revision": "48f5b1d4c737a233669cb3e2fbaefad605780dad",
+      "path": "vendor/rust-ibverbs"
+    },
+    "patchbay": {
+      "repository": "https://github.com/QuasarRay/patchbay",
+      "revision": "4ccaa15398b692715d8d4325c3497ce5de700ebb",
+      "path": "vendor/patchbay"
+    },
+    "petgraph": {
+      "repository": "https://github.com/QuasarRay/petgraph",
+      "revision": "a4d94bd2c39ac198c22682b2dcb1ff21583d0db0",
+      "path": "vendor/petgraph"
+    }
+  }
+}
