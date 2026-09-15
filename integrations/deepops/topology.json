@@ -1,0 +1,97 @@
+{
+  "format": "JSON",
+  "name": "deepops-slurm",
+  "ztp": null,
+  "content": {
+    "nodes": {
+      "provisioner": {
+        "os": "model/provisioner",
+        "role": "host",
+        "cpu": 1,
+        "memory": 512,
+        "storage": 8
+      },
+      "controller": {
+        "os": "generic/ubuntu2204",
+        "role": "host",
+        "cpu": 4,
+        "memory": 4096,
+        "storage": 60
+      },
+      "gpu1": {
+        "os": "generic/ubuntu2204",
+        "role": "host",
+        "cpu": 4,
+        "memory": 8192,
+        "storage": 100
+      },
+      "gpu2": {
+        "os": "generic/ubuntu2204",
+        "role": "host",
+        "cpu": 4,
+        "memory": 8192,
+        "storage": 100
+      },
+      "leaf1": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 1,
+        "memory": 512,
+        "storage": 8
+      },
+      "leaf2": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 1,
+        "memory": 512,
+        "storage": 8
+      },
+      "spine": {
+        "os": "model/switch",
+        "role": "switch",
+        "cpu": 1,
+        "memory": 512,
+        "storage": 8
+      }
+    },
+    "links": [
+      {
+        "endpoints": [
+          "provisioner:eth1",
+          "leaf1:swp1"
+        ]
+      },
+      {
+        "endpoints": [
+          "controller:eth1",
+          "leaf1:swp2"
+        ]
+      },
+      {
+        "endpoints": [
+          "gpu1:eth1",
+          "leaf1:swp3"
+        ]
+      },
+      {
+        "endpoints": [
+          "leaf1:swp4",
+          "spine:swp1"
+        ]
+      },
+      {
+        "endpoints": [
+          "spine:swp2",
+          "leaf2:swp2"
+        ]
+      },
+      {
+        "endpoints": [
+          "leaf2:swp1",
+          "gpu2:eth1"
+        ]
+      }
+    ],
+    "oob": false
+  }
+}

@@ -10,3 +10,9 @@
 [submodule "simulator/vendor/petgraph"]
 	path = simulator/vendor/petgraph
 	url = https://github.com/QuasarRay/petgraph.git
+[submodule "integrations/deepops/upstream"]
+	path = integrations/deepops/upstream
+	url = https://github.com/NVIDIA/deepops.git
+[submodule "simulator/vendor/nccl-tests"]
+	path = simulator/vendor/nccl-tests
+	url = https://github.com/NVIDIA/nccl-tests.git

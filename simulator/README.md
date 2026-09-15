@@ -79,3 +79,11 @@ The manual [NCCL runtime workflow](../.github/workflows/nccl-runtime.yml) builds
 ```
 
 CPU-only compile/contract tests do not establish CUDA execution. The hardware gate fails if prerequisites are absent; it does not report skipped devices as success. Actual CUDA execution requires a configured GPU runner. The separate [RDMA runtime workflow](../.github/workflows/rdma-runtime.yml) similarly requires a real RDMA or SoftRoCE device. These runtime gates remain distinct from hosted CI. Kernel timing and physical GPU execution are not calibrated datacenter performance predictions.
+
+## DeepOps Slurm guests and upstream NCCL tests
+
+The optional `vm` feature boots full Linux guests on the modeled fabric and
+supervises the pinned NVIDIA DeepOps deployment and native MPI nccl-tests.
+See [the DeepOps integration guide](../integrations/deepops/README.md) for
+hardware requirements, configuration, report validation, and the separate
+CPU VM smoke and GPU deployment workflows. No Rust–Python FFI is introduced.

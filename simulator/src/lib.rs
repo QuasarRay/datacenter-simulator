@@ -20,6 +20,9 @@ pub mod collective;
 pub mod command;
 #[cfg(feature = "nccl")]
 mod cuda;
+pub mod deepops;
+#[cfg(feature = "vm")]
+pub mod deepops_runtime;
 pub mod fabric;
 #[cfg(feature = "linux")]
 pub mod linux;
@@ -32,6 +35,8 @@ pub mod nccl_worker;
 #[cfg(feature = "rdma")]
 pub mod rdma;
 pub mod topology;
+#[cfg(feature = "vm")]
+pub mod vm;
 
 pub use api::Simulator;
 pub use model::{Error, Result, Simulation};

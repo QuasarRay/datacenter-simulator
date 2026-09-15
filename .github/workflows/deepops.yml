@@ -1,0 +1,113 @@
+name: deepops
+on:
+  pull_request:
+    paths: ['simulator/**', 'integrations/deepops/**', '.gitmodules', '.github/workflows/deepops.yml']
+  push:
+    branches: [main, codex/deepops-nccl-tests]
+    paths: ['simulator/**', 'integrations/deepops/**', '.gitmodules', '.github/workflows/deepops.yml']
+permissions:
+  contents: read
+concurrency:
+  group: deepops-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  upstream:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: DeepOps own validation and firmware tests
+        working-directory: integrations/deepops/upstream
+        run: |
+          python3 -m unittest discover -s scripts/validation/tests -v
+          python3 -m unittest discover -s roles/nvidia-dgx-firmware/tests -v
+      - name: DeepOps own setup test
+        working-directory: integrations/deepops/upstream
+        run: |
+          ./scripts/setup.sh </dev/null
+          /opt/deepops/env/bin/ansible --version
+          /opt/deepops/env/bin/python3 -c 'from packaging.version import Version; print(Version("1.0"))'
+      - name: Syntax check the deployment and benchmark playbooks
+        working-directory: integrations/deepops/upstream
+        run: |
+          source /opt/deepops/env/bin/activate
+          ansible-playbook --syntax-check -i config/inventory -l slurm-cluster playbooks/slurm-cluster.yml
+          ansible-playbook --syntax-check -i config/inventory ../prepare-nccl.yml
+      - name: DeepOps own role lint
+        working-directory: integrations/deepops/upstream
+        run: |
+          source /opt/deepops/env/bin/activate
+          ./scripts/deepops/ansible-lint-roles.sh
+  molecule:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [facts, openmpi, nhc]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install upstream Molecule test dependencies
+        run: |
+          python3 -m venv /tmp/deepops-molecule
+          source /tmp/deepops-molecule/bin/activate
+          pip install ansible==10.7.0 passlib molecule 'molecule-plugins[docker]' docker
+          cd integrations/deepops/upstream/roles
+          ansible-galaxy role install --force -r requirements.yml
+          ansible-galaxy collection install --force -r requirements.yml
+      - name: Run the unmodified upstream role scenario
+        working-directory: integrations/deepops/upstream/roles/${{ matrix.role }}
+        env:
+          ANSIBLE_ROLES_PATH: ${{ github.workspace }}/integrations/deepops/upstream/roles/galaxy:${{ github.workspace }}/integrations/deepops/upstream/roles
+        run: |
+          source /tmp/deepops-molecule/bin/activate
+          molecule test
+  vm-fabric:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install VM and namespace tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils cloud-image-utils nftables iproute2 iputils-ping
+          rustup toolchain install 1.98.0 --profile minimal --component clippy
+      - name: Build and lint the Rust VM adapter
+        working-directory: simulator
+        run: |
+          cargo +1.98.0 clippy --locked --all-targets --features vm -- -D warnings
+          cargo +1.98.0 build --locked --features vm
+      - name: Prepare checksum-verified Ubuntu cloud image and CPU-only smoke config
+        run: |
+          mkdir -p /tmp/deepops-smoke
+          curl --fail --retry 3 -L https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img -o /tmp/deepops-smoke/ubuntu.img
+          curl --fail --retry 3 -L https://cloud-images.ubuntu.com/releases/jammy/release/SHA256SUMS -o /tmp/deepops-smoke/SHA256SUMS
+          digest=$(awk '$2 ~ /ubuntu-22.04-server-cloudimg-amd64.img$/ {print $1}' /tmp/deepops-smoke/SHA256SUMS)
+          test "${#digest}" -eq 64
+          jq '.content.nodes |= with_entries(if .value.role == "host" then .value.cpu = 1 | .value.memory = 768 | .value.storage = 8 else . end)' integrations/deepops/topology.json > /tmp/deepops-smoke/topology.json
+          jq --arg repo "$PWD" --arg digest "$digest" '.repository=$repo | .manifest="/tmp/deepops-smoke/topology.json" | .image="/tmp/deepops-smoke/ubuntu.img" | .image_sha256=$digest | .state_dir="/tmp/deepops-smoke/state" | .vfio={} | .boot_timeout_secs=900 | .timeout_secs=300' integrations/deepops/config.example.json > /tmp/deepops-smoke/config.json
+      - name: Boot real guests and prove filesystem isolation, fabric partition and recovery
+        run: sudo timeout 1200 simulator/target/debug/datacenter-simulator deepops-vm-smoke /tmp/deepops-smoke/config.json
+      - name: Collect VM diagnostics
+        if: always()
+        run: |
+          mkdir -p /tmp/deepops-evidence
+          if sudo test -d /tmp/deepops-smoke/state; then
+            sudo find /tmp/deepops-smoke/state -type f \( -name '*.log' -o -name result.json \) -exec cp --parents '{}' /tmp/deepops-evidence/ \;
+            sudo chmod -R a+rX /tmp/deepops-evidence
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deepops-vm-fabric
+          path: /tmp/deepops-evidence
+          if-no-files-found: warn

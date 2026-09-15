@@ -27,11 +27,11 @@ pub struct LinuxFabric {
     // Devices and routers hold lab references; all handles are dropped together.
     devices: BTreeMap<String, Device>,
     loopbacks: BTreeMap<String, Ipv4Addr>,
-    addresses: BTreeMap<String, Ipv4Addr>,
+    pub(crate) addresses: BTreeMap<String, Ipv4Addr>,
     pub(crate) simulation: Simulation,
     _lab: Lab,
 }
-fn command(device: &Device, program: &str, args: &[String]) -> Result<()> {
+pub(crate) fn command(device: &Device, program: &str, args: &[String]) -> Result<()> {
     let program = program.to_owned();
     let args = args.to_vec();
     device.run_sync(move || {
@@ -42,7 +42,7 @@ fn command(device: &Device, program: &str, args: &[String]) -> Result<()> {
         Ok(())
     })
 }
-fn args(values: &[&str]) -> Vec<String> {
+pub(crate) fn args(values: &[&str]) -> Vec<String> {
     values.iter().map(|s| s.to_string()).collect()
 }
 impl LinuxFabric {
