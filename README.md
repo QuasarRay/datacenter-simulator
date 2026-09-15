@@ -1,6 +1,8 @@
 # Datacenter simulator
 
-A Containerlab spine/leaf routing model driven by Ansible.
+A Rust datacenter simulator with a Containerlab/Ansible network automation lab.
+
+The [Rust simulator](simulator/README.md) implements local NVIDIA Air-inspired lifecycle and topology APIs, GPU collective traffic, a checked software NIC model, real Linux namespace networking, and native NCCL/RDMA adapters. See its [API coverage and execution boundaries](simulator/docs/api-coverage.md) and build instructions.
 
 The [EX457 cheatsheet v6](cheatsheets/ex457/v6/README.md) contains the current study pack, runnable automation, a mapping to all 23 public exam objectives, official documentation references and dispositions for all 103 available historical audit findings.
 

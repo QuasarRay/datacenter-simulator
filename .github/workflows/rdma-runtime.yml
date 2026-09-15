@@ -1,0 +1,23 @@
+name: rdma-runtime
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rdma:
+    # A configured RNIC or SoftRoCE device and native build dependencies are required.
+    runs-on: [self-hosted, linux, rdma]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Build native RDMA example
+        working-directory: simulator
+        run: cargo +1.98.0 build --locked --example rdma_loopback --features rdma
+      - name: Require real RDMA send and receive
+        working-directory: simulator
+        run: timeout 15 ./target/debug/examples/rdma_loopback
