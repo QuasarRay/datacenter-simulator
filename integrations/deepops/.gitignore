@@ -1,0 +1,4 @@
+/run-state/
+/config.json
+/*.img
+/SHA256SUMS*

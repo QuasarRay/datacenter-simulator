@@ -1,0 +1,55 @@
+name: deepops-gpu
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Absolute path to a runner-local DeepOps config with dedicated, pre-bound VFIO GPUs
+        required: true
+        type: string
+permissions:
+  contents: read
+# Serializes this workflow's ownership of the dedicated hardware. Never run on PR events.
+concurrency:
+  group: deepops-dedicated-gpus
+  cancel-in-progress: false
+jobs:
+  slurm-nccl:
+    runs-on: [self-hosted, linux, deepops, gpu]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install the pinned DeepOps provisioning environment
+        run: integrations/deepops/setup.sh
+      - name: Build Rust orchestration
+        working-directory: simulator
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          cargo +1.98.0 build --locked --features vm
+      - name: Resolve this checkout and a unique state directory
+        env:
+          SITE_CONFIG: ${{ inputs.config }}
+        run: |
+          test -f "$SITE_CONFIG"
+          jq --arg repo "$PWD" --arg base "$(dirname "$(realpath "$SITE_CONFIG")")" --arg state "$RUNNER_TEMP/deepops-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" '.repository=$repo | .state_dir=$state | .manifest |= (if startswith("/") then . else $base+"/"+. end) | .image |= (if startswith("/") then . else $base+"/"+. end) | .ansible_bin |= (if startswith("/") then . else $base+"/"+. end)' "$SITE_CONFIG" > "$RUNNER_TEMP/deepops-run.json"
+          simulator/target/debug/datacenter-simulator deepops-plan "$RUNNER_TEMP/deepops-run.json"
+      - name: Deploy DeepOps and require its validator plus every NCCL correctness test
+        run: sudo prlimit --memlock=unlimited:unlimited timeout 13800 simulator/target/debug/datacenter-simulator deepops-run "$RUNNER_TEMP/deepops-run.json"
+      - name: Collect reports and guest boot logs
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/deepops-evidence"
+          state="$RUNNER_TEMP/deepops-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if sudo test -d "$state/reports"; then
+            sudo cp -r "$state/reports" "$RUNNER_TEMP/deepops-evidence/"
+            sudo find "$state/guests" -type f -name '*.log' -exec cp --parents '{}' "$RUNNER_TEMP/deepops-evidence/" \;
+            sudo chmod -R a+rX "$RUNNER_TEMP/deepops-evidence"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deepops-slurm-nccl-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deepops-evidence
+          if-no-files-found: warn

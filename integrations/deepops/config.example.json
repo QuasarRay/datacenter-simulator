@@ -1,0 +1,24 @@
+{
+  "repository": "../..",
+  "manifest": "topology.json",
+  "image": "ubuntu-22.04-server-cloudimg-amd64.img",
+  "image_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "state_dir": "run-state",
+  "ansible_bin": "/opt/deepops/env/bin",
+  "provisioner": "provisioner",
+  "controller": "controller",
+  "compute": [
+    "gpu1",
+    "gpu2"
+  ],
+  "vfio": {
+    "gpu1": [
+      "0000:41:00.0"
+    ],
+    "gpu2": [
+      "0000:81:00.0"
+    ]
+  },
+  "timeout_secs": 10800,
+  "boot_timeout_secs": 600
+}

@@ -24,5 +24,17 @@
       "revision": "a4d94bd2c39ac198c22682b2dcb1ff21583d0db0",
       "path": "vendor/petgraph"
     }
+  },
+  "integration": {
+    "deepops": {
+      "repository": "https://github.com/NVIDIA/deepops",
+      "revision": "dc80499ea34b3f36563ed039421076de15071517",
+      "path": "../integrations/deepops/upstream"
+    },
+    "nccl-tests": {
+      "repository": "https://github.com/NVIDIA/nccl-tests",
+      "revision": "b4d5beebca8a76cf01335f724d154b9b9d394d96",
+      "path": "vendor/nccl-tests"
+    }
   }
 }

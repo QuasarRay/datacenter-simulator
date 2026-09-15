@@ -1,0 +1,72 @@
+---
+- name: Build the pinned native NCCL library and upstream MPI tests in GPU guests
+  hosts: slurm-node
+  become: true
+  tasks:
+    - name: Install native build tools
+      ansible.builtin.apt:
+        name: [build-essential, git]
+        state: present
+        update_cache: true
+    - name: Create source and report directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: deepops
+        group: deepops
+        mode: '0755'
+      loop:
+        - /opt/simulator
+        - /opt/simulator/nccl
+        - /opt/simulator/nccl-tests
+        - /var/tmp/simulator-nccl
+    - name: Install exact archived NCCL source
+      ansible.builtin.unarchive:
+        src: "{{ simulator_nccl_archive }}"
+        dest: /opt/simulator/nccl
+    - name: Install exact archived nccl-tests source
+      ansible.builtin.unarchive:
+        src: "{{ simulator_nccl_tests_archive }}"
+        dest: /opt/simulator/nccl-tests
+    - name: Build native NCCL
+      ansible.builtin.command:
+        argv: [make, '-j2', src.build, 'CUDA_HOME=/usr/local/cuda']
+        chdir: /opt/simulator/nccl
+      async: 3600
+      poll: 15
+      changed_when: true
+    - name: Build upstream host collective tests with MPI
+      ansible.builtin.command:
+        argv:
+          - make
+          - '-j2'
+          - 'MPI=1'
+          - 'MPI_HOME=/usr/local'
+          - 'CUDA_HOME=/usr/local/cuda'
+          - 'NCCL_HOME=/opt/simulator/nccl/build'
+        chdir: /opt/simulator/nccl-tests
+      async: 1800
+      poll: 15
+      changed_when: true
+    - name: Install the fabric-constrained test executable wrapper
+      ansible.builtin.copy:
+        src: files/nccl-rank.sh
+        dest: /opt/simulator/nccl-rank
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Save source provenance in the guest
+      ansible.builtin.copy:
+        content: "{{ simulator_source_revisions | to_nice_json }}\n"
+        dest: /opt/simulator/sources.json
+        mode: '0644'
+
+- name: Install the unmodified DeepOps Slurm validator
+  hosts: slurm-master
+  become: true
+  tasks:
+    - name: Copy the pinned upstream validator
+      ansible.builtin.copy:
+        src: upstream/scripts/validation/validate_slurm.py
+        dest: /usr/local/bin/deepops-validate-slurm
+        mode: '0755'

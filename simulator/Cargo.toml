@@ -12,6 +12,7 @@ exclude = ["vendor/nccl", "vendor/patchbay", "vendor/petgraph", "vendor/rust-ibv
 [features]
 default = []
 linux = ["dep:patchbay", "dep:tokio", "dep:anyhow"]
+vm = ["linux", "dep:libc"]
 rdma = ["dep:ibverbs", "dep:anyhow"]
 nccl = ["dep:nccl", "dep:libloading", "linux"]
 nccl-check = ["nccl", "nccl/no-link"]
@@ -30,6 +31,8 @@ anyhow = { version = "1", optional = true }
 tokio = { version = "1", features = ["rt", "macros", "time", "net", "io-util", "process"], optional = true }
 
 libloading = { version = "0.8", optional = true }
+
+libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
 proptest = "1"

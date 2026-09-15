@@ -22,6 +22,28 @@ use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| {
+        matches!(
+            arg.as_str(),
+            "deepops-plan" | "deepops-run" | "deepops-vm-smoke"
+        )
+    }) {
+        if args.len() != 2 {
+            return Err("expected a DeepOps JSON config path".into());
+        }
+        let config =
+            datacenter_simulator::deepops::DeepOpsConfig::read(std::path::Path::new(&args[1]))?;
+        if args[0] == "deepops-plan" {
+            let (_, plan) = config.plan()?;
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+            return Ok(());
+        }
+        #[cfg(feature = "vm")]
+        return datacenter_simulator::deepops_runtime::run(config, args[0] == "deepops-vm-smoke")
+            .map_err(Into::into);
+        #[cfg(not(feature = "vm"))]
+        return Err("DeepOps execution requires --features vm".into());
+    }
     #[cfg(all(feature = "nccl", not(feature = "nccl-check")))]
     {
         if args.first().map(String::as_str) == Some("__nccl_rank") {
@@ -88,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {
             return Err(
-                "usage: datacenter-simulator [json | run manifest.json [--devices 0,1,...]]".into(),
+                "usage: datacenter-simulator [json | run manifest.json [--devices 0,1,...] | deepops-plan config.json | deepops-run config.json | deepops-vm-smoke config.json]".into(),
             );
         }
     }
