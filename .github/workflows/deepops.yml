@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: deepops-${{ github.ref }}-${{ github.sha }}
+  group: deepops-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   upstream:

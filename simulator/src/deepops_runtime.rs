@@ -111,6 +111,7 @@ fn stage_deepops(config: &DeepOpsConfig) -> Result<()> {
     fs::create_dir(staged.join("upstream/submodules"))?;
     for entry in [
         "README.md",
+        "LICENSE",
         "scripts",
         "playbooks",
         "roles",

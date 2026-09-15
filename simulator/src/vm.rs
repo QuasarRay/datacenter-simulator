@@ -45,7 +45,7 @@ pub(crate) fn checked(program: &str, args: &[&str]) -> Result<String> {
 pub(crate) fn path(path: &Path) -> Result<&str> {
     let value = path.to_str().context("path must be UTF-8")?;
     ensure!(
-        !value.contains(['\n', '\r', ',', '%', '\'', '"', ' ']),
+        !value.chars().any(char::is_whitespace) && !value.contains([',', '%', '\'', '"', ':']),
         "paths must not contain whitespace or QEMU/Ansible option delimiters: {value}"
     );
     Ok(value)
