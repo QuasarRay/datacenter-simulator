@@ -16,7 +16,9 @@ export NCCL_DEBUG=INFO NCCL_DEBUG_FILE=/dev/stderr
 export OMPI_MCA_btl_tcp_if_include=simnccl OMPI_MCA_oob_tcp_if_include=simnccl
 args=(-g 1 -t 1 -b 256 -e 1M -f 2 -n 5 -w 1 -c 1 -d double -T 60)
 case "$collective" in all_reduce|reduce|reduce_scatter) args+=(-o all);; esac
-case "$collective" in broadcast|reduce|scatter|gather) args+=(-r all);; esac
+
+# The pinned parser uses strtol for -r: -1 iterates every root.
+case "$collective" in broadcast|reduce|scatter|gather) args+=(-r -1);; esac
 # With no shared filesystem, rank zero writes here on its own VM. The runner
 # locates that report by checking every compute guest after srun completes.
 exec "/opt/simulator/nccl-tests/build/${collective}_perf" "${args[@]}" -J "/var/tmp/simulator-nccl/${collective}.json"

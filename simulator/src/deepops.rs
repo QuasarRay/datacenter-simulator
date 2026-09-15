@@ -264,6 +264,12 @@ pub fn validate_slurm(value: &Value, compute: &[String]) -> Result<()> {
         || value["gpu_job_ran"] != true
         || value["nodes_unavailable"] != 0
         || names != expected
+        || value["nodes"].as_array().is_none_or(|nodes| {
+            nodes.len() != compute.len()
+                || nodes
+                    .iter()
+                    .any(|n| n["gpus_configured"].as_u64().unwrap_or(0) == 0)
+        })
         || value["gpus_configured"].as_u64().unwrap_or(0) < compute.len() as u64
     {
         return Err(Error::State(format!(
@@ -338,6 +344,27 @@ pub fn validate_nccl(value: &Value, collective: &str, compute: &[String]) -> Res
     let rows = value["results"].as_array().ok_or_else(fail)?;
     if rows.is_empty() {
         return Err(fail());
+    }
+    if ["all_reduce", "reduce", "reduce_scatter"].contains(&collective) {
+        let operations: BTreeSet<_> = rows
+            .iter()
+            .filter_map(|row| row["redop"].as_str())
+            .collect();
+        if ["sum", "prod", "min", "max", "avg", "mulsum"]
+            .iter()
+            .any(|op| !operations.contains(op))
+        {
+            return Err(fail());
+        }
+    }
+    if ["broadcast", "reduce", "scatter", "gather"].contains(&collective) {
+        let roots: BTreeSet<u64> = rows
+            .iter()
+            .filter_map(|row| row["root"].as_str()?.trim().parse().ok())
+            .collect();
+        if roots != (0..compute.len() as u64).collect() {
+            return Err(fail());
+        }
     }
     let mut nonzero = false;
     for row in rows {

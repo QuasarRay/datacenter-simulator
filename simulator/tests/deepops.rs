@@ -25,11 +25,12 @@ fn config() -> DeepOpsConfig {
 }
 fn report() -> Value {
     // JSON v4 schema from pinned nccl-tests/src/util.cu, including string booleans.
+    let rows: Vec<_> = ["sum", "prod", "min", "max", "avg", "mulsum"].iter().map(|op| json!({"redop":op,"size":256,"out_of_place":{"nwrong":0.0,"time":32.0},"in_place":{"nwrong":0.0,"time":30.0}})).collect();
     json!({"version":4,"nccl_version":23102,"end_time":"2026-09-15T00:00:00",
         "args":["/opt/simulator/nccl-tests/build/all_reduce_perf","-c","1"],
         "env":["NCCL_NET=Socket","NCCL_NET_PLUGIN=none","NCCL_SOCKET_IFNAME==simnccl","NCCL_IB_DISABLE=1","NCCL_P2P_DISABLE=1","NCCL_SHM_DISABLE=1","OMPI_MCA_btl_tcp_if_include=simnccl","OMPI_MCA_oob_tcp_if_include=simnccl"],
         "config":{"validation":1,"ngpus":1,"nthreads":1,"devices":[{"rank":0,"hostname":"gpu1","device_info":"NVIDIA GPU"},{"rank":1,"hostname":"gpu2","device_info":"NVIDIA GPU"}]},
-        "results":[{"size":256,"out_of_place":{"nwrong":0.0,"time":32.0},"in_place":{"nwrong":0.0,"time":30.0}}],
+        "results":rows,
         "out_of_bounds":{"count":0,"okay":"true"},"errors":[""]})
 }
 #[test]
@@ -111,11 +112,27 @@ fn nccl_rejects_single_host_and_fabric_bypass() {
 #[test]
 fn slurm_requires_a_real_gpu_job_and_every_compute_node() {
     let compute = config().compute;
-    let mut r = json!({"ok":true,"gpu_job_ran":true,"gpu_job_ok":true,"nodes_unavailable":0,"gpus_configured":2,"nodes":[{"name":"gpu1"},{"name":"gpu2"}]});
+    let mut r = json!({"ok":true,"gpu_job_ran":true,"gpu_job_ok":true,"nodes_unavailable":0,"gpus_configured":2,"nodes":[{"name":"gpu1","gpus_configured":1},{"name":"gpu2","gpus_configured":1}]});
     validate_slurm(&r, &compute).unwrap();
     r["gpu_job_ran"] = json!(false);
     assert!(validate_slurm(&r, &compute).is_err());
     r["gpu_job_ran"] = json!(true);
     r["nodes"][1]["name"] = json!("another-cluster");
     assert!(validate_slurm(&r, &compute).is_err());
+}
+
+#[test]
+fn root_and_reduction_coverage_cannot_be_silently_skipped() {
+    let compute = config().compute;
+    let mut r = report();
+    r["results"].as_array_mut().unwrap().pop();
+    assert!(validate_nccl(&r, "all_reduce", &compute).is_err());
+    let mut r = report();
+    r["args"][0] = json!("/opt/simulator/nccl-tests/build/broadcast_perf");
+    for row in r["results"].as_array_mut().unwrap() {
+        row["root"] = json!("     0");
+    }
+    assert!(validate_nccl(&r, "broadcast", &compute).is_err());
+    r["results"][1]["root"] = json!("     1");
+    validate_nccl(&r, "broadcast", &compute).unwrap();
 }

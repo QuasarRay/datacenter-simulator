@@ -483,16 +483,21 @@ impl VmLab {
         }
         let from = self.plan.guests[1].clone();
         let to = self.plan.guests[2].clone();
-        let ping = ["ping", "-I", "simnccl", "-n", "-c", "2", "-W", "2"];
+        // Select the routable source address. Binding ping to the dummy device
+        // would force packets onto that device instead of the physical route.
+        let source = from.address.to_string();
+        let ping = ["ping", "-I", &source, "-n", "-c", "2", "-W", "2"];
         let ip = to.address.to_string();
         let mut argv = ping.to_vec();
         argv.push(&ip);
+        let delivered = self
+            .ssh(config, &from, &argv, Duration::from_secs(10))
+            .await?;
         ensure!(
-            self.ssh(config, &from, &argv, Duration::from_secs(10))
-                .await?
-                .status
-                .success(),
-            "guest fabric ping failed"
+            delivered.status.success(),
+            "guest fabric ping failed: {} {}",
+            String::from_utf8_lossy(&delivered.stdout),
+            String::from_utf8_lossy(&delivered.stderr)
         );
         let links: Vec<_> = self
             .fabric
