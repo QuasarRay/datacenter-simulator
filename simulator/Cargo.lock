@@ -203,6 +203,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "ibverbs",
+ "libloading",
  "nccl",
  "patchbay",
  "petgraph",

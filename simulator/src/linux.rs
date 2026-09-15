@@ -15,20 +15,20 @@
 //! Real kernel topology: one patchbay device namespace per simulated node,
 //! one isolated bridge per physical link, and petgraph-derived static routes.
 //! Link routers have their IX interfaces disabled, preventing hidden shortcuts.
-use crate::{
-    model::{InterfaceType, Role, Simulation, State},
-    topology::Transmission,
-};
+use crate::model::{InterfaceType, Role, Simulation, State};
 use anyhow::{Context, Result, anyhow, bail};
 use patchbay::{Device, IfaceConfig, Lab, RouterPreset};
 use std::{collections::BTreeMap, net::Ipv4Addr, process::Command, time::Duration};
+
+/// Dedicated routable endpoint selected by native NCCL Socket transport.
+pub const NCCL_INTERFACE: &str = "simnccl";
 
 pub struct LinuxFabric {
     // Devices and routers hold lab references; all handles are dropped together.
     devices: BTreeMap<String, Device>,
     loopbacks: BTreeMap<String, Ipv4Addr>,
     addresses: BTreeMap<String, Ipv4Addr>,
-    simulation: Simulation,
+    pub(crate) simulation: Simulation,
     _lab: Lab,
 }
 fn command(device: &Device, program: &str, args: &[String]) -> Result<()> {
@@ -62,6 +62,9 @@ impl LinuxFabric {
                 "Linux backend supports unsplit data interfaces; OOB/PCIe stay in the portable model"
             );
         }
+        if simulation.interfaces().any(|i| i.name == NCCL_INTERFACE) {
+            bail!("simnccl is reserved for the NCCL network endpoint");
+        }
         let lab = Lab::new().await.context("create patchbay lab")?;
         let mut routers = BTreeMap::new();
         let mut addresses = BTreeMap::new();
@@ -86,7 +89,9 @@ impl LinuxFabric {
         let mut nodes: Vec<_> = simulation.nodes().collect();
         nodes.sort_by_key(|n| &n.spec.name);
         for (index, node) in nodes.into_iter().enumerate() {
-            let mut builder = lab.add_device(&node.spec.name);
+            let mut builder = lab
+                .add_device(&node.spec.name)
+                .iface(NCCL_INTERFACE, IfaceConfig::dummy());
             let mut attached = false;
             for interface in simulation.interfaces().filter(|i| i.node == node.id) {
                 let link = simulation
@@ -180,7 +185,7 @@ impl LinuxFabric {
             command(
                 &dev,
                 "ip",
-                &args(&["address", "add", &format!("{ip}/32"), "dev", "lo"]),
+                &args(&["address", "add", &format!("{ip}/32"), "dev", NCCL_INTERFACE]),
             )?;
             loopbacks.insert(node.id.clone(), ip);
             devices.insert(node.id.clone(), dev);
@@ -299,13 +304,5 @@ impl LinuxFabric {
         spec.up = up;
         self.simulation.set_link(link_id, spec)?;
         self.configure_routes()
-    }
-    pub fn estimated_transfer(
-        &mut self,
-        source: &str,
-        destination: &str,
-        bytes: usize,
-    ) -> Result<Transmission> {
-        Ok(self.simulation.transfer(source, destination, bytes)?)
     }
 }

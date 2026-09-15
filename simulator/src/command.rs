@@ -13,7 +13,12 @@
 // language governing rights and limitations.
 
 //! A JSON-lines Rust command interface; the Python SDK is not loaded or invoked.
-use crate::{Simulator, collective::Reduction, manifest::Manifest, model::*};
+use crate::{
+    Simulator,
+    collective::{Collective, NcclOptions, Reduction},
+    manifest::Manifest,
+    model::*,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 #[derive(Debug, Deserialize)]
@@ -190,23 +195,31 @@ pub enum Command {
     },
     AllReduce {
         simulation: String,
+        #[serde(default)]
+        execution: NcclOptions,
         ranks: Vec<String>,
         inputs: Vec<Vec<f64>>,
         reduction: Reduction,
     },
     Broadcast {
         simulation: String,
+        #[serde(default)]
+        execution: NcclOptions,
         ranks: Vec<String>,
         root: usize,
         input: Vec<f64>,
     },
     AllGather {
         simulation: String,
+        #[serde(default)]
+        execution: NcclOptions,
         ranks: Vec<String>,
         inputs: Vec<Vec<f64>>,
     },
     ReduceScatter {
         simulation: String,
+        #[serde(default)]
+        execution: NcclOptions,
         ranks: Vec<String>,
         inputs: Vec<Vec<f64>>,
         reduction: Reduction,
@@ -440,30 +453,44 @@ impl Simulator {
                 ranks,
                 inputs,
                 reduction,
-            } => value(
-                self.get_mut(&simulation)?
-                    .all_reduce(&ranks, &inputs, reduction)?,
-            ),
+                execution,
+            } => value(self.get(&simulation)?.collective(
+                &ranks,
+                &Collective::AllReduce { inputs, reduction },
+                &execution,
+            )?),
             Command::Broadcast {
                 simulation,
                 ranks,
                 root,
                 input,
-            } => value(self.get_mut(&simulation)?.broadcast(&ranks, root, &input)?),
+                execution,
+            } => value(self.get(&simulation)?.collective(
+                &ranks,
+                &Collective::Broadcast { root, input },
+                &execution,
+            )?),
             Command::AllGather {
                 simulation,
                 ranks,
                 inputs,
-            } => value(self.get_mut(&simulation)?.all_gather(&ranks, &inputs)?),
+                execution,
+            } => value(self.get(&simulation)?.collective(
+                &ranks,
+                &Collective::AllGather { inputs },
+                &execution,
+            )?),
             Command::ReduceScatter {
                 simulation,
                 ranks,
                 inputs,
                 reduction,
-            } => value(
-                self.get_mut(&simulation)?
-                    .reduce_scatter(&ranks, &inputs, reduction)?,
-            ),
+                execution,
+            } => value(self.get(&simulation)?.collective(
+                &ranks,
+                &Collective::ReduceScatter { inputs, reduction },
+                &execution,
+            )?),
         }
     }
     pub fn respond(&mut self, line: &str) -> Value {

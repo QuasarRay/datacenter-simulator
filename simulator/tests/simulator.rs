@@ -233,26 +233,23 @@ fn parallel_links_and_fault_rerouting() {
     assert_eq!(sim.route(&ranks[0], &ranks[1], 1000).unwrap()[0], parallel);
 }
 #[test]
-fn collective_failure_does_not_commit_partial_traffic() {
+fn disconnected_collective_is_rejected_without_mutation() {
     let (mut api, id, ranks, links) = star(3);
     let sim = api.get_mut(&id).unwrap();
-    let mut off = LinkSpec {
-        up: false,
-        ..LinkSpec::default()
-    };
-    sim.set_link(&links[2], off).unwrap();
+    sim.set_link(
+        &links[2],
+        LinkSpec {
+            up: false,
+            ..LinkSpec::default()
+        },
+    )
+    .unwrap();
     let before = snapshot(sim);
-    assert!(
-        sim.all_reduce(&ranks, &vec![vec![1.0; 7]; 3], Reduction::Sum)
-            .is_err()
-    );
+    assert!(matches!(
+        sim.all_reduce(&ranks, &vec![vec![1.0; 7]; 3], Reduction::Sum),
+        Err(Error::NoRoute(..))
+    ));
     assert_eq!(snapshot(sim), before);
-    off.up = true;
-    sim.set_link(&links[2], off).unwrap();
-    let result = sim
-        .all_reduce(&ranks, &vec![vec![1.0; 7]; 3], Reduction::Sum)
-        .unwrap();
-    assert_eq!(result.started_ns, 0);
 }
 #[test]
 fn checkpoints_capture_guest_state_and_clone_has_fresh_ids() {
@@ -372,26 +369,118 @@ fn verbs_queue_limits_and_cross_domain_access_are_checked() {
     f.poll(sim, &b).unwrap();
     f.send(sim, &a, &src, 0..4, 2).unwrap();
 }
+#[cfg(any(not(feature = "nccl"), feature = "nccl-check"))]
 #[test]
-fn remaining_collectives_have_rank_ordered_outputs() {
-    let (mut api, id, ranks, _) = star(3);
-    let sim = api.get_mut(&id).unwrap();
-    assert_eq!(
-        sim.broadcast(&ranks, 1, &[4.0]).unwrap().outputs,
-        vec![vec![4.0]; 3]
+fn every_collective_requires_native_execution_including_empty_and_single_rank() {
+    let (api, id, ranks, _) = star(2);
+    let sim = api.get(&id).unwrap();
+    let before = snapshot(sim);
+    for result in [
+        sim.all_reduce(&ranks, &[vec![1.0], vec![2.0]], Reduction::Sum),
+        sim.broadcast(&ranks, 1, &[4.0]),
+        sim.all_gather(&ranks, &[vec![1.0], vec![2.0]]),
+        sim.reduce_scatter(&ranks, &[vec![1.0, 2.0], vec![3.0, 4.0]], Reduction::Sum),
+        sim.all_reduce(&ranks[..1], &[vec![]], Reduction::Sum),
+        sim.all_gather(&ranks, &[vec![], vec![]]),
+    ] {
+        assert!(matches!(result, Err(Error::Unsupported(_))));
+    }
+    assert_eq!(snapshot(sim), before);
+}
+#[test]
+fn collective_shapes_and_device_placement_are_validated_before_execution() {
+    use datacenter_simulator::collective::{Collective, NcclOptions};
+    assert!(
+        Collective::AllGather {
+            inputs: vec![vec![1.0], vec![]]
+        }
+        .shape(2)
+        .is_err()
     );
-    assert_eq!(
-        sim.all_gather(&ranks, &[vec![1.0], vec![2.0], vec![3.0]])
-            .unwrap()
-            .outputs,
-        vec![vec![1.0, 2.0, 3.0]; 3]
+    assert!(
+        Collective::ReduceScatter {
+            inputs: vec![vec![1.0; 3]; 2],
+            reduction: Reduction::Sum
+        }
+        .shape(2)
+        .is_err()
     );
-    assert_eq!(
-        sim.reduce_scatter(&ranks, &vec![vec![1.0, 2.0, 3.0]; 3], Reduction::Sum)
-            .unwrap()
-            .outputs,
-        vec![vec![3.0], vec![6.0], vec![9.0]]
+    assert!(
+        Collective::Broadcast {
+            root: 2,
+            input: vec![1.0]
+        }
+        .shape(2)
+        .is_err()
     );
+    assert!(
+        Collective::AllReduce {
+            inputs: vec![vec![f64::NAN]],
+            reduction: Reduction::Sum
+        }
+        .shape(1)
+        .is_err()
+    );
+    assert!(
+        Collective::AllGather {
+            inputs: vec![vec![1.0; 1_048_577]; 3]
+        }
+        .shape(3)
+        .is_err()
+    );
+    for devices in [vec![0, 0], vec![-1, 1], vec![0]] {
+        assert!(
+            NcclOptions {
+                devices,
+                ..NcclOptions::default()
+            }
+            .devices_for(2)
+            .is_err()
+        );
+    }
+    assert!(
+        NcclOptions {
+            timeout_secs: 0,
+            ..NcclOptions::default()
+        }
+        .devices_for(2)
+        .is_err()
+    );
+}
+#[cfg(any(not(feature = "nccl"), feature = "nccl-check"))]
+#[test]
+fn json_collectives_never_return_cpu_results() {
+    let (mut api, id, ranks, _) = star(2);
+    for fields in [
+        serde_json::json!({"operation":"all_reduce", "inputs":[[1.0],[2.0]],"reduction":"sum"}),
+        serde_json::json!({"operation":"broadcast", "root":1,"input":[4.0]}),
+        serde_json::json!({"operation":"all_gather", "inputs":[[1.0],[2.0]]}),
+        serde_json::json!({"operation":"reduce_scatter", "inputs":[[1.0,2.0],[3.0,4.0]],"reduction":"sum"}),
+    ] {
+        let mut command = fields;
+        command["simulation"] = id.clone().into();
+        command["ranks"] = serde_json::to_value(&ranks).unwrap();
+        let response = api.respond(&command.to_string());
+        assert_eq!(response["ok"], false);
+        assert!(
+            response["error"]
+                .as_str()
+                .unwrap()
+                .contains("native --features nccl")
+        );
+        assert!(response.get("result").is_none());
+    }
+}
+#[cfg(any(not(feature = "nccl"), feature = "nccl-check"))]
+#[test]
+fn scenario_cli_fails_without_native_nccl() {
+    let result = std::process::Command::new(env!("CARGO_BIN_EXE_datacenter-simulator"))
+        .args(["run", "examples/gpu-spine-leaf.json"])
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(String::from_utf8_lossy(&result.stderr).contains("native --features nccl"));
+    assert!(result.stdout.is_empty());
 }
 #[test]
 fn schedules_shutdown_and_expire_only_the_due_simulations() {
@@ -429,19 +518,6 @@ fn json_commands_reject_unknown_fields_and_preserve_session() {
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(96))]
-    #[test]
-    fn ring_matches_independent_scalar_oracle(n in 1usize..9, count in 0usize..33, values in prop::collection::vec(-10i32..10,264)) {
-        let (mut api,id,ranks,_)=star(n);let sim=api.get_mut(&id).unwrap();
-        let inputs:Vec<Vec<f64>>=(0..n).map(|r|(0..count).map(|i|values[r*count+i] as f64).collect()).collect();
-        for op in [Reduction::Sum,Reduction::Min,Reduction::Max,Reduction::Product,Reduction::Average] {
-            let expected:Vec<_>=(0..count).map(|i|{
-                let column:Vec<_>=inputs.iter().map(|v|v[i]).collect();
-                match op {Reduction::Sum=>column.iter().sum(),Reduction::Average=>column.iter().sum::<f64>()/n as f64,Reduction::Min=>column.into_iter().fold(f64::INFINITY,f64::min),Reduction::Max=>column.into_iter().fold(f64::NEG_INFINITY,f64::max),Reduction::Product=>column.iter().product()}
-            }).collect();
-            let result=sim.all_reduce(&ranks,&inputs,op).unwrap();
-            for output in result.outputs {prop_assert_eq!(output,&expected[..]);}
-        }
-    }
     #[test]
     fn invalid_verbs_range_never_changes_memory(end in 5usize..usize::MAX) {
         let (mut api,id,ranks,_)=star(2);let sim=api.get_mut(&id).unwrap();let mut f=Fabric::new(sim,1).unwrap();

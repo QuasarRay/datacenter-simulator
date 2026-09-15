@@ -1,0 +1,36 @@
+name: nccl-runtime
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nccl:
+    # Explicit hardware gate: two CUDA GPUs, CUDA toolkit, namespace privileges,
+    # ip/tc/nft/sysctl/ping and Rust native build dependencies must be installed.
+    runs-on: [self-hosted, linux, nccl]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Build the pinned NCCL implementation
+        working-directory: simulator
+        run: |
+          nvidia-smi
+          nvcc --version
+          make -C vendor/nccl -j2 src.build
+      - name: Build native Rust execution and hardware checks
+        working-directory: simulator
+        env:
+          NCCL_LIB_DIR: ${{ github.workspace }}/simulator/vendor/nccl/build/lib
+        run: cargo +1.98.0 build --locked --features nccl --bin datacenter-simulator --example nccl_runtime
+      - name: Require real NCCL over the namespace fabric
+        working-directory: simulator
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/simulator/vendor/nccl/build/lib
+        run: |
+          timeout 240 ./target/debug/examples/nccl_runtime "$PWD/target/debug/datacenter-simulator"
+          timeout 90 ./target/debug/datacenter-simulator run examples/gpu-spine-leaf.json --devices 0,1
