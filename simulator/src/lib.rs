@@ -18,6 +18,8 @@
 pub mod api;
 pub mod collective;
 pub mod command;
+#[cfg(feature = "nccl")]
+mod cuda;
 pub mod fabric;
 #[cfg(feature = "linux")]
 pub mod linux;
@@ -25,6 +27,8 @@ pub mod manifest;
 pub mod model;
 #[cfg(feature = "nccl")]
 pub mod nccl_backend;
+#[cfg(feature = "nccl")]
+pub mod nccl_worker;
 #[cfg(feature = "rdma")]
 pub mod rdma;
 pub mod topology;

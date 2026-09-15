@@ -12,10 +12,9 @@
 // ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
 // language governing rights and limitations.
 
-//! Portable semantic and traffic models for NCCL collectives.
-//! Ring all-reduce uses reduce-scatter followed by all-gather, grounded in
-//! vendor/nccl/src/device/all_reduce.h. Timings are model estimates, not CUDA benchmarks.
-use crate::{model::*, topology::Transmission};
+//! Collective requests are executed exclusively by native NCCL.
+//! This module validates shapes and placement; it contains no collective arithmetic.
+use crate::model::{Error, Result, Role, Simulation};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
@@ -28,270 +27,243 @@ pub enum Reduction {
     Max,
     Average,
 }
-#[derive(Debug, Clone, Serialize)]
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Collective {
+    AllReduce {
+        inputs: Vec<Vec<f64>>,
+        reduction: Reduction,
+    },
+    Broadcast {
+        root: usize,
+        input: Vec<f64>,
+    },
+    AllGather {
+        inputs: Vec<Vec<f64>>,
+    },
+    ReduceScatter {
+        inputs: Vec<Vec<f64>>,
+        reduction: Reduction,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct NcclOptions {
+    /// CUDA ordinals visible to this process, in rank order. Empty selects 0..nranks.
+    pub devices: Vec<i32>,
+    /// Deadline for worker startup, bootstrap, collective execution and shutdown.
+    pub timeout_secs: u64,
+}
+impl Default for NcclOptions {
+    fn default() -> Self {
+        Self {
+            devices: Vec::new(),
+            timeout_secs: 60,
+        }
+    }
+}
+impl NcclOptions {
+    pub fn devices_for(&self, ranks: usize) -> Result<Vec<i32>> {
+        if ranks == 0 || ranks > 4096 || !(1..=3600).contains(&self.timeout_secs) {
+            return Err(Error::Invalid(
+                "NCCL requires 1..=4096 ranks and a 1..=3600 second timeout".into(),
+            ));
+        }
+        let devices = if self.devices.is_empty() {
+            (0..ranks as i32).collect()
+        } else {
+            self.devices.clone()
+        };
+        if devices.len() != ranks
+            || devices.iter().any(|d| *d < 0)
+            || devices.iter().collect::<BTreeSet<_>>().len() != ranks
+        {
+            return Err(Error::Invalid(
+                "assign one distinct CUDA device per NCCL rank".into(),
+            ));
+        }
+        Ok(devices)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RankTraffic {
+    pub node: String,
+    /// Kernel interface counters including NCCL bootstrap and collective traffic.
+    pub tx_bytes: u64,
+    pub rx_bytes: u64,
+}
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CollectiveResult {
+    pub backend: String,
+    pub transport: String,
+    pub nccl_version: i32,
     pub outputs: Vec<Vec<f64>>,
-    pub transfers: Vec<Transmission>,
-    pub started_ns: u64,
-    pub completed_ns: u64,
+    /// Wall time including worker startup, bootstrap and teardown; never virtual time.
+    pub elapsed_ns: u64,
+    /// Per-rank wall time from submission through CUDA stream synchronization.
+    pub rank_elapsed_ns: Vec<u64>,
+    pub network: Vec<RankTraffic>,
 }
-// Bound trace storage independently of the input/output buffer limits.
-const MAX_TRACE_ITEMS: usize = 65_536;
-fn record(traces: &mut Vec<Transmission>, hops: &mut usize, trace: Transmission) -> Result<()> {
-    *hops += trace.hops.len();
-    if traces.len() >= MAX_TRACE_ITEMS || *hops > MAX_TRACE_ITEMS {
-        return Err(Error::Invalid("collective trace budget exceeded".into()));
-    }
-    traces.push(trace);
-    Ok(())
-}
-fn reduce(a: f64, b: f64, op: Reduction) -> f64 {
-    match op {
-        Reduction::Sum | Reduction::Average => a + b,
-        Reduction::Product => a * b,
-        Reduction::Min => a.min(b),
-        Reduction::Max => a.max(b),
-    }
-}
-fn validate(sim: &Simulation, ranks: &[String], inputs: &[Vec<f64>]) -> Result<usize> {
-    sim.active()?;
-    if ranks.is_empty() || ranks.len() != inputs.len() || ranks.len() > 4096 {
-        return Err(Error::Invalid(
-            "one buffer is required per rank, with 1..4096 ranks".into(),
-        ));
-    }
-    if ranks.iter().collect::<BTreeSet<_>>().len() != ranks.len() {
-        return Err(Error::Invalid("duplicate ranks".into()));
-    }
-    let size = inputs[0].len();
-    if size > 2 * 1024 * 1024
-        || inputs
-            .iter()
-            .any(|v| v.len() != size || v.iter().any(|x| !x.is_finite()))
-    {
-        return Err(Error::Invalid(
-            "collective needs equal finite buffers <= 16 MiB per rank".into(),
-        ));
-    }
-    if ranks
-        .len()
-        .checked_mul(size)
-        .is_none_or(|v| v > 8 * 1024 * 1024)
-    {
-        return Err(Error::Invalid(
-            "collective aggregate buffer exceeds 64 MiB".into(),
-        ));
-    }
-    for rank in ranks {
-        if sim.node(rank)?.spec.role != Role::Host {
-            return Err(Error::Invalid("collective ranks must be hosts".into()));
+
+impl Collective {
+    /// Return per-rank input and output element counts, using checked allocation bounds.
+    pub fn shape(&self, nranks: usize) -> Result<(usize, usize)> {
+        if nranks == 0 || nranks > 4096 {
+            return Err(Error::Invalid("invalid NCCL rank count".into()));
         }
-    }
-    Ok(size)
-}
-impl Simulation {
-    pub fn all_reduce(
-        &mut self,
-        ranks: &[String],
-        inputs: &[Vec<f64>],
-        op: Reduction,
-    ) -> Result<CollectiveResult> {
-        let count = validate(self, ranks, inputs)?;
-        let n = ranks.len();
-        if 2 * (n - 1) * n.min(count) > MAX_TRACE_ITEMS {
-            return Err(Error::Invalid("collective trace budget exceeded".into()));
-        }
-        let started = self.clock_ns;
-        let mut staged = self.clone();
-        let mut data = inputs.to_vec();
-        let mut traces = Vec::new();
-        let mut hops = 0;
-        let chunks: Vec<_> = (0..n)
-            .map(|i| (count * i / n, count * (i + 1) / n))
-            .collect();
-        let mut round_time = started;
-        // Each round snapshots all sends before applying receives, preserving concurrency.
-        for round in 0..n - 1 {
-            let previous = data.clone();
-            let mut end = round_time;
-            for rank in 0..n {
-                let chunk = (rank + n - round - 1) % n;
-                let (begin, finish) = chunks[chunk];
-                let next = (rank + 1) % n;
-                if begin == finish {
-                    continue;
+        let count = match self {
+            Self::Broadcast { root, input } => {
+                if *root >= nranks {
+                    return Err(Error::Invalid("broadcast root is out of range".into()));
                 }
-                let transfer = staged.schedule_transfer(
-                    &ranks[rank],
-                    &ranks[next],
-                    (finish - begin) * 8,
-                    round_time,
-                )?;
-                end = end.max(transfer.completed_ns);
-                record(&mut traces, &mut hops, transfer)?;
-                for i in begin..finish {
-                    data[next][i] = reduce(previous[next][i], previous[rank][i], op);
-                    if !data[next][i].is_finite() {
-                        return Err(Error::Invalid("reduction overflow".into()));
+                check_buffer(input)?;
+                input.len()
+            }
+            Self::AllReduce { inputs, .. }
+            | Self::AllGather { inputs }
+            | Self::ReduceScatter { inputs, .. } => {
+                if inputs.len() != nranks {
+                    return Err(Error::Invalid(
+                        "one input buffer per rank is required".into(),
+                    ));
+                }
+                let count = inputs[0].len();
+                for input in inputs {
+                    check_buffer(input)?;
+                    if input.len() != count {
+                        return Err(Error::Invalid("NCCL requires equal input counts".into()));
                     }
                 }
+                count
             }
-            round_time = end;
-        }
-        if matches!(op, Reduction::Average) {
-            for rank in 0..n {
-                let (a, b) = chunks[rank];
-                for element in &mut data[rank][a..b] {
-                    *element /= n as f64;
+        };
+        let output = match self {
+            Self::AllGather { .. } => count.checked_mul(nranks).ok_or_else(memory_limit)?,
+            Self::ReduceScatter { .. } => {
+                if !count.is_multiple_of(nranks) {
+                    return Err(Error::Invalid(
+                        "reduce-scatter input count must be divisible by rank count".into(),
+                    ));
                 }
+                count / nranks
+            }
+            _ => count,
+        };
+        for size in [count, output] {
+            if size
+                .checked_mul(nranks)
+                .and_then(|v| v.checked_mul(8))
+                .is_none_or(|v| v > 64 * 1024 * 1024)
+            {
+                return Err(memory_limit());
             }
         }
-        for round in 0..n - 1 {
-            let previous = data.clone();
-            let mut end = round_time;
-            for rank in 0..n {
-                let chunk = (rank + n - round) % n;
-                let (begin, finish) = chunks[chunk];
-                let next = (rank + 1) % n;
-                if begin == finish {
-                    continue;
-                }
-                let transfer = staged.schedule_transfer(
-                    &ranks[rank],
-                    &ranks[next],
-                    (finish - begin) * 8,
-                    round_time,
-                )?;
-                end = end.max(transfer.completed_ns);
-                record(&mut traces, &mut hops, transfer)?;
-                data[next][begin..finish].copy_from_slice(&previous[rank][begin..finish]);
-            }
-            round_time = end;
+        Ok((count, output))
+    }
+    pub(crate) fn validate(&self, sim: &Simulation, ranks: &[String]) -> Result<()> {
+        sim.active()?;
+        self.shape(ranks.len())?;
+        if ranks.iter().collect::<BTreeSet<_>>().len() != ranks.len() {
+            return Err(Error::Invalid("duplicate NCCL rank nodes".into()));
         }
-        staged.clock_ns = round_time;
-        staged.event("ring all-reduce completed");
-        *self = staged;
-        Ok(CollectiveResult {
-            outputs: data,
-            transfers: traces,
-            started_ns: started,
-            completed_ns: round_time,
-        })
+        for node in ranks {
+            if sim.node(node)?.spec.role != Role::Host {
+                return Err(Error::Invalid("NCCL ranks must be hosts".into()));
+            }
+            for peer in ranks {
+                sim.route(node, peer, 0)?;
+            }
+        }
+        Ok(())
+    }
+}
+fn memory_limit() -> Error {
+    Error::Invalid("NCCL aggregate input/output exceeds 64 MiB".into())
+}
+fn check_buffer(input: &[f64]) -> Result<()> {
+    if input.len() > 16 * 1024 * 1024 / 8 || input.iter().any(|v| !v.is_finite()) {
+        return Err(Error::Invalid(
+            "NCCL inputs must be finite and at most 16 MiB per rank".into(),
+        ));
+    }
+    Ok(())
+}
+
+impl Simulation {
+    /// Execute NCCL over a fresh Linux fabric. Initialize patchbay before starting threads.
+    /// Async callers should use LinuxFabric::collective on their existing lab.
+    pub fn collective(
+        &self,
+        ranks: &[String],
+        request: &Collective,
+        options: &NcclOptions,
+    ) -> Result<CollectiveResult> {
+        request.validate(self, ranks)?;
+        options.devices_for(ranks.len())?;
+        #[cfg(all(feature = "nccl", not(feature = "nccl-check")))]
+        {
+            crate::nccl_backend::execute(self, ranks, request, options)
+        }
+        #[cfg(any(not(feature = "nccl"), feature = "nccl-check"))]
+        {
+            Err(Error::Unsupported("collectives require a native --features nccl build, CUDA GPUs and libnccl; nccl-check cannot execute collectives".into()))
+        }
+    }
+    pub fn all_reduce(
+        &self,
+        ranks: &[String],
+        inputs: &[Vec<f64>],
+        reduction: Reduction,
+    ) -> Result<CollectiveResult> {
+        self.collective(
+            ranks,
+            &Collective::AllReduce {
+                inputs: inputs.to_vec(),
+                reduction,
+            },
+            &NcclOptions::default(),
+        )
     }
     pub fn broadcast(
-        &mut self,
+        &self,
         ranks: &[String],
         root: usize,
         input: &[f64],
     ) -> Result<CollectiveResult> {
-        if root >= ranks.len() {
-            return Err(Error::Invalid("root rank is out of range".into()));
-        }
-        if ranks.len() > 4096
-            || input.len() > 2 * 1024 * 1024
-            || ranks
-                .len()
-                .checked_mul(input.len())
-                .is_none_or(|v| v > 8 * 1024 * 1024)
-        {
-            return Err(Error::Invalid(
-                "broadcast exceeds rank or memory limits".into(),
-            ));
-        }
-        let inputs = vec![input.to_vec(); ranks.len()];
-        validate(self, ranks, &inputs)?;
-        let mut staged = self.clone();
-        let start = self.clock_ns;
-        let mut end = start;
-        let mut transfers = Vec::new();
-        let mut hops = 0;
-        for (rank, node) in ranks.iter().enumerate() {
-            if rank != root {
-                let t = staged.schedule_transfer(&ranks[root], node, input.len() * 8, start)?;
-                end = end.max(t.completed_ns);
-                record(&mut transfers, &mut hops, t)?;
-            }
-        }
-        staged.clock_ns = end;
-        staged.event("broadcast completed");
-        *self = staged;
-        Ok(CollectiveResult {
-            outputs: inputs,
-            transfers,
-            started_ns: start,
-            completed_ns: end,
-        })
+        self.collective(
+            ranks,
+            &Collective::Broadcast {
+                root,
+                input: input.to_vec(),
+            },
+            &NcclOptions::default(),
+        )
     }
-    pub fn all_gather(
-        &mut self,
-        ranks: &[String],
-        inputs: &[Vec<f64>],
-    ) -> Result<CollectiveResult> {
-        let count = validate(self, ranks, inputs)?;
-        if ranks
-            .len()
-            .checked_mul(ranks.len())
-            .and_then(|v| v.checked_mul(count))
-            .is_none_or(|v| v > 8 * 1024 * 1024)
-        {
-            return Err(Error::Invalid("all-gather output exceeds 64 MiB".into()));
-        }
-        let mut staged = self.clone();
-        let start = self.clock_ns;
-        let mut time = start;
-        let mut transfers = Vec::new();
-        let mut hops = 0;
-        let rounds = if count == 0 { 0 } else { ranks.len() - 1 };
-        if ranks.len() * rounds > MAX_TRACE_ITEMS {
-            return Err(Error::Invalid("collective trace budget exceeded".into()));
-        }
-        for _round in 0..rounds {
-            let mut end = time;
-            for rank in 0..ranks.len() {
-                let t = staged.schedule_transfer(
-                    &ranks[rank],
-                    &ranks[(rank + 1) % ranks.len()],
-                    count * 8,
-                    time,
-                )?;
-                end = end.max(t.completed_ns);
-                record(&mut transfers, &mut hops, t)?;
-            }
-            time = end;
-        }
-        let gathered: Vec<_> = inputs.iter().flatten().copied().collect();
-        staged.clock_ns = time;
-        staged.event("all-gather completed");
-        *self = staged;
-        Ok(CollectiveResult {
-            outputs: vec![gathered; ranks.len()],
-            transfers,
-            started_ns: start,
-            completed_ns: time,
-        })
+    pub fn all_gather(&self, ranks: &[String], inputs: &[Vec<f64>]) -> Result<CollectiveResult> {
+        self.collective(
+            ranks,
+            &Collective::AllGather {
+                inputs: inputs.to_vec(),
+            },
+            &NcclOptions::default(),
+        )
     }
     pub fn reduce_scatter(
-        &mut self,
+        &self,
         ranks: &[String],
         inputs: &[Vec<f64>],
-        op: Reduction,
+        reduction: Reduction,
     ) -> Result<CollectiveResult> {
-        let count = validate(self, ranks, inputs)?;
-        if count % ranks.len() != 0 {
-            return Err(Error::Invalid(
-                "reduce-scatter input must divide equally across ranks".into(),
-            ));
-        }
-        // This implementation deliberately exposes the full all-reduce traffic cost:
-        // a correct semantic composition, not a claim of NCCL's optimized schedule.
-        let mut result = self.all_reduce(ranks, inputs, op)?;
-        let chunk = count / ranks.len();
-        result.outputs = result
-            .outputs
-            .into_iter()
-            .enumerate()
-            .map(|(i, v)| v[i * chunk..(i + 1) * chunk].to_vec())
-            .collect();
-        Ok(result)
+        self.collective(
+            ranks,
+            &Collective::ReduceScatter {
+                inputs: inputs.to_vec(),
+                reduction,
+            },
+            &NcclOptions::default(),
+        )
     }
 }

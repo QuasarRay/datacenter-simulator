@@ -12,13 +12,26 @@
 // ENJOYMENT, OR NON-INFRINGEMENT. See ../license.md for the RPL's specific
 // language governing rights and limitations.
 
-use datacenter_simulator::{Simulator, collective::Reduction, manifest::Manifest, model::Role};
+use datacenter_simulator::{
+    Simulator,
+    collective::{Collective, NcclOptions, Reduction},
+    manifest::Manifest,
+    model::Role,
+};
 use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    #[cfg(all(feature = "nccl", not(feature = "nccl-check")))]
+    {
+        if args.first().map(String::as_str) == Some("__nccl_rank") {
+            return datacenter_simulator::nccl_worker::run(&args[1..]).map_err(Into::into);
+        }
+        // Namespace initialization must happen before patchbay/Tokio/CUDA threads.
+        patchbay::init_userns()?;
+    }
     match args.first().map(String::as_str) {
-        Some("run") if args.len() == 2 => {
+        Some("run") if args.len() == 2 || args.len() == 4 => {
             let mut api = Simulator::new();
             let id = api.import(Manifest::read(&args[1])?, true)?;
             let sim = api.get_mut(&id)?;
@@ -30,12 +43,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ranks.sort();
             let ids: Vec<_> = ranks.iter().map(|(_, id)| id.clone()).collect();
             let inputs: Vec<_> = (1..=ids.len()).map(|i| vec![i as f64; 8]).collect();
-            let result = sim.all_reduce(&ids, &inputs, Reduction::Sum)?;
+            let mut options = NcclOptions::default();
+            if args.len() == 4 {
+                if args[2] != "--devices" {
+                    return Err("expected --devices 0,1,...".into());
+                }
+                options.devices = args[3]
+                    .split(',')
+                    .map(str::parse)
+                    .collect::<Result<_, _>>()?;
+            }
+            let result = sim.collective(
+                &ids,
+                &Collective::AllReduce {
+                    inputs,
+                    reduction: Reduction::Sum,
+                },
+                &options,
+            )?;
             println!(
                 "{}",
-                serde_json::to_string_pretty(
-                    &serde_json::json!({"backend":"portable","ranks":ranks,"result":result})
-                )?
+                serde_json::to_string_pretty(&serde_json::json!({"ranks":ranks,"result":result}))?
             );
         }
         None | Some("json") => {
@@ -58,7 +86,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 out.flush()?;
             }
         }
-        _ => return Err("usage: datacenter-simulator [json | run manifest.json]".into()),
+        _ => {
+            return Err(
+                "usage: datacenter-simulator [json | run manifest.json [--devices 0,1,...]]".into(),
+            );
+        }
     }
     Ok(())
 }

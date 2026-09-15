@@ -43,4 +43,4 @@ The SDK repository does not contain the hosted topology parser's full schema. Th
 | client authentication, retries, HTTP pagination and deprecated v2 aliases | No Python client or HTTP server compatibility layer; local typed Rust API and JSON commands |
 | DOT import/parse, VM boot/reset, guest ZTP, shell/file deployment to an OS, public service forwarding | JSON topology supported; virtual state and real network namespaces implemented; remaining guest/hosted operations unavailable |
 
-NCCL, software verbs, timing traces and Linux link faults extend the SDK's topology/lifecycle blueprint with executable data-plane behavior; the Air SDK itself does not specify these GPU/NIC algorithms.
+Native NCCL collectives and Linux link faults extend the SDK topology/lifecycle blueprint with real protocol execution. Analytical topology/verbs models are separate APIs and are never NCCL substitutes. The Air SDK itself does not specify collective algorithms; the pinned NCCL implementation executes them.

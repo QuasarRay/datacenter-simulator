@@ -1,80 +1,81 @@
 # Rust datacenter simulator
 
-A local Rust library and executable implementing datacenter behavior from the [NVIDIA Air SDK specification snapshot](https://github.com/QuasarRay/nv-air-sdk/tree/0a9ce86a6195e26c5522640d895a1adba9449cbd). It includes a portable traffic/NIC model, real Linux namespace topology, and native NCCL and RDMA adapters.
+A Rust datacenter control plane based on the [NVIDIA Air SDK specification snapshot](https://github.com/QuasarRay/nv-air-sdk/tree/0a9ce86a6195e26c5522640d895a1adba9449cbd), with a patchbay Linux network fabric and native NCCL execution. The Python API is a specification only: there is no Python runtime or Rust–Python bridge.
 
-The Python SDK supplies API concepts and payload requirements. There is no Python runtime, PyO3, Cython, embedding, or Rust–Python bridge in this implementation. Native NCCL and libibverbs retain their existing C ABI behind the requested Rust libraries.
+**Every collective executes NCCL.** All-reduce, broadcast, all-gather and reduce-scatter invoke the pinned project's native Rust bindings and CUDA kernels. There is no CPU collective, emulated ring, software-verbs substitute, or automatic fallback. A build without native NCCL returns `Unsupported`, including for empty buffers and single-rank requests.
 
-## Build and run
-
-From the repository root:
+## Control plane and CPU-only validation
 
 ```sh
 git submodule update --init --recursive
 cd simulator
 cargo test --locked --all-targets
-cargo run --locked -- run examples/gpu-spine-leaf.json
+cargo run --locked -- json
 ```
 
-The example creates two GPU host models attached through two leaves and a spine, starts the simulation, and runs ring all-reduce. Output contains the actual reduced buffers and a timestamped transfer trace. The portable mode needs no CUDA, RNIC, root privileges, or network namespaces.
+The JSON-lines session accepts commands such as `{"operation":"create","name":"my-datacenter"}` and `{"operation":"list"}`. [Command](src/command.rs) is the full command reference. The local [Simulator](src/api.rs) and [Simulation](src/model.rs) APIs manage lifecycle, nodes, interfaces, links, configuration, services and checkpoints. Export/import preserves topology; sessions and runtime checkpoints remain in memory.
 
-For a persistent in-process control session, run `cargo run --locked -- json`. Each input line is a command; each output is a JSON success/result or error. Use returned resource IDs in subsequent commands:
+Default builds provide these control-plane operations and explicitly labeled topology/NIC models. They cannot run GPU scenarios. `cargo run -- run examples/gpu-spine-leaf.json` without `--features nccl` exits with an error and no fabricated result.
 
-```json
-{"operation":"create","name":"my-datacenter"}
-{"operation":"list"}
-```
+## Run actual NCCL through the fabric
 
-The Rust [Command enum](src/command.rs) is the command reference. [Simulator](src/api.rs), [Simulation](src/model.rs), and [Fabric](src/fabric.rs) also expose typed library APIs. The session is in memory; export a manifest for persistent topology storage and import it into another session. Runtime checkpoints are in-memory snapshots.
-
-## Execution modes
-
-| Mode | Implementation | Executes | Requirements |
-|---|---|---|---|
-| Portable (default) | petgraph + Rust traffic, collective, and verbs models | Reduction arithmetic, routing, directed-link queuing, registered-buffer copies, work completions, lifecycle and configuration state | Rust |
-| Linux (`linux`) | patchbay devices and isolated link bridges; petgraph routes | Kernel TCP/UDP/IP and real packet forwarding in namespaces; link faults and recovery | Linux, namespace privileges, `ip`, `tc`, `nft`, `sysctl`, `ping` |
-| RDMA (`rdma`) | rust-ibverbs | Actual RC queue pair, MR registration, send/receive and CQ polling with a deadline | libibverbs, clang, cmake, RDMA device or SoftRoCE |
-| NCCL (`nccl`) | NCCL Rust bindings | Native communicator setup, all-reduce and broadcast on application-owned CUDA buffers | Matching libnccl, CUDA GPUs/runtime, rank/device placement |
-| NCCL compile check (`nccl-check`) | Upstream `no-link` feature | Compilation only | No CUDA library required; cannot execute native calls |
-
-Each native adapter is explicit. A failed native operation returns an error. It does not switch to the portable model.
+Requirements: Linux namespace privileges, a CUDA toolkit compatible with the pinned NCCL source, an NVIDIA driver, one distinct visible CUDA GPU per rank, and `ip`, `tc`, `nft`, `sysctl` and `ping`. Install the Linux native build dependencies listed below. Build **the pinned NCCL fork**, then link and load that build:
 
 ```sh
-# Debian/Ubuntu dependencies for Linux and RDMA builds:
+make -C vendor/nccl -j2 src.build
+export NCCL_LIB_DIR="$PWD/vendor/nccl/build/lib"
+export LD_LIBRARY_PATH="$NCCL_LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+cargo build --locked --features nccl --bin datacenter-simulator --example nccl_runtime
+./target/debug/datacenter-simulator run examples/gpu-spine-leaf.json --devices 0,1
+```
+
+The sample has two GPU hosts joined through two leaves and a spine. Each rank runs as its own Rust process in its node's patchbay network namespace. Rank zero creates the real NCCL bootstrap ID **inside that namespace**. Workers retain their GPU's CUDA primary context, allocate device buffers, copy inputs to the GPU, initialize NCCL, submit the requested native collective, synchronize the CUDA stream, and copy results back.
+
+NCCL's `Socket` transport sends real TCP/IP packets through the configured links. Each node has a dedicated `simnccl` /32 endpoint; that interface name is reserved. Static routes come from petgraph and per-link kernel `tc netem` applies latency and bandwidth. P2P, shared-memory, NVLS, CollNet and IB transports are disabled for this namespace execution mode so collective traffic uses the modeled fabric. NCCL chooses its own Ring/Tree algorithms. The simulator does not implement those algorithms. Worker-only environment overrides also keep inherited NCCL settings from selecting another transport; CUDA device visibility is inherited.
+
+Results contain GPU output buffers, the NCCL version, `backend: "nccl"`, `transport: "Socket"`, measured wall times, and actual data-interface TX/RX counters. Counters include bootstrap/control traffic. They are not an NCCL packet trace. There are no synthetic collective timestamps, and execution does not advance the model's virtual clock.
+
+The `run` command defaults to CUDA ordinals `0..nranks`; `--devices` specifies rank placement. JSON collective commands accept an optional `execution` object:
+
+```json
+{"operation":"all_reduce","simulation":"<id>","ranks":["<gpu1-id>","<gpu2-id>"],"inputs":[[1,2],[3,4]],"reduction":"sum","execution":{"devices":[0,1],"timeout_secs":60}}
+```
+
+All five reductions (`sum`, `product`, `min`, `max`, `average`) map directly to NCCL operations. Broadcast accepts a root index and its input. All-gather concatenates through NCCL; reduce-scatter invokes `ncclReduceScatter` directly and requires a divisible input count. Counts must match between ranks. Inputs must be finite, at most 16 MiB per rank, with aggregate input and output budgets of 64 MiB each. The timeout is 1–3600 seconds, default 60, covering worker startup, bootstrap, execution and shutdown. Failed or timed-out workers are killed and reaped; partial outputs are not returned. Namespace construction occurs before that deadline.
+
+Library users call `Simulation::collective` with `Collective` and `NcclOptions`, or the four convenience methods with default options. Initialize `patchbay::init_userns()` before creating any threads. Set `DATACENTER_SIMULATOR_WORKER` to the absolute path of the native `datacenter-simulator` executable when embedding in another program. Async callers can retain a `LinuxFabric` and use `fabric.collective(..., worker_path).await`; that API executes through the existing live fabric and accepts explicit worker placement. Do not use the synchronous convenience API inside a Tokio runtime.
+
+## Other backends
+
+| Backend | Behavior | Requirements |
+|---|---|---|
+| Default control/model APIs | Resource state, petgraph route/serialization estimates, checked software NIC memory/queue model | Rust |
+| `linux` | Real Linux TCP/UDP/IP, forwarding, bandwidth/latency conditions and link faults | Linux namespace support and networking tools |
+| `rdma` | Real rust-ibverbs RC send/receive, memory registration and CQ polling | libibverbs and RNIC or SoftRoCE |
+| `nccl` (includes `linux`) | Actual CUDA/NCCL collectives over patchbay TCP/IP | CUDA GPUs, driver and matching libnccl |
+| `nccl-check` | Compile all native paths without linking NCCL; collective execution is rejected | Native build dependencies, no CUDA required |
+
+```sh
 sudo apt-get install nftables iproute2 iputils-ping clang libclang-dev cmake \
   pkg-config libibverbs-dev librdmacm-dev libnl-3-dev libnl-route-3-dev libudev-dev
-
+cargo check --locked --all-targets --features linux,rdma,nccl-check
 cargo build --locked --examples --features linux,rdma
 sudo ./target/debug/examples/linux_fabric
 ./target/debug/examples/rdma_loopback
-
-# Compile all adapters on a host without CUDA:
-cargo check --locked --all-targets --features linux,rdma,nccl-check
 ```
 
-The Linux adapter currently supports at most 240 links (the pinned patchbay IX address pool) and unsplit data interfaces. The Linux example verifies an actual TCP payload, partitions a modeled link, requires connectivity to fail, restores the link, and verifies connectivity again. Application code can use `LinuxFabric::device` to run Rust futures/sockets in any node namespace. Call `patchbay::init_userns()` before creating a runtime or other threads. The Linux handle owns a snapshot of the active portable topology; mutate its live link state through `set_link_up`. Dropping its handles releases the lab. Changes to a separate `Simulation` object do not reconfigure an existing Linux lab.
+The software `Fabric` and `Simulation::transfer` APIs are analytical NIC/topology models, separate from native protocol execution. NCCL never calls them. The Linux backend supports at most 240 links and unsplit data interfaces. Hosts do not forward, OOB/PCIe cannot provide data shortcuts, and helper bridges have no shared uplink. A `LinuxFabric` owns a topology snapshot; change live links through its `set_link_up` method. Dropping its handles releases the lab.
 
-The native RDMA example errors when no RDMA device exists. For SoftRoCE, use an isolated test interface and `rdma link add <name> type rxe netdev <interface>`. It never registers ordinary Rust heap pointers with NCCL. NCCL accepts CUDA-accessible pointers under an explicit unsafe contract; the caller must set the device, coordinate all ranks, and synchronize streams before freeing memory. NCCL uses the actual host/CUDA network configuration, not the portable model's predicted routing.
+## API boundaries and validation
 
-## Model behavior
+See [API coverage](docs/api-coverage.md) for supported Air concepts and local extensions. This does not boot VM images, execute guest shell/ZTP/cloud-init, publish hosted Air service tunnels, implement dynamic BGP convergence, or emulate CUDA/RNIC hardware. Init/file instructions only change modeled guest state. The existing Containerlab/FRR environment remains available separately.
 
-- Graph edges represent individual full-duplex physical data links, including parallel links. Hosts do not forward transit traffic. OOB and PCIe interfaces do not become data-plane shortcuts.
-- Routes minimize unloaded serialization plus propagation cost. Traffic is store-and-forward and FIFO per directed link. Concurrent submissions at the same virtual time contend for that link; opposite directions are independent.
-- Link bandwidth is bits/second; latency and simulation timestamps are nanoseconds. Portable serialization uses integer ceiling arithmetic. Linux uses `tc netem` with fractional microsecond delays; actual timing is bounded by kernel scheduling and machine performance.
-- Ring all-reduce uses reduce-scatter and all-gather rounds, including uneven and empty chunks. Independent scalar-oracle property tests cover sum, product, min, max and average. Broadcast and all-gather are also modeled. Reduce-scatter is a semantic composition of all-reduce and slicing, and reports that full traffic cost.
-- NIC memory has a per-node protection domain, generation checks, remote-write permission and keys, bounded posted-receive/completion queues, and checked ranges. Reset or shutdown invalidates registrations and queue pairs.
-- Topology mutations require INACTIVE. Failed imports, invalid bulk operations, failed collective scheduling and invalid verbs requests do not commit partial state.
-- Checkpoints capture modeled guest files/hostname. Init/file instructions modify this virtual state only. They never write guest paths into the host filesystem.
+All upstreams and registry dependencies are pinned in [upstreams.json](upstreams.json), submodules and Cargo.lock. [Rust CI](../.github/workflows/rust-simulator.yml) checks control/model contracts, the absence of CPU collective fallbacks, native compilation, and real kernel TCP delivery, partition and recovery.
 
-## Fidelity and API coverage
+The manual [NCCL runtime workflow](../.github/workflows/nccl-runtime.yml) builds the pinned NCCL source on a self-hosted Linux runner labeled `nccl` with at least two GPUs. It checks all collectives and reductions, empty and single-rank calls, actual interface traffic, missing-device failure, a kernel-only link partition and recovery after worker termination, plus the scenario CLI. Run it locally with:
 
-This is a local datacenter simulator, not a replacement for the entire NVIDIA hosted Air platform. [API coverage](docs/api-coverage.md) distinguishes implemented local operations, model extensions, and unavailable cloud/guest capabilities. In particular, this does not boot qcow2 images, implement CUDA kernels, emulate GPU compute, implement InfiniBand link-layer signaling/PFC/ECN, or simulate BGP convergence. NCCL collective schedules are not a generic routing-protocol implementation. The existing Containerlab/FRR lab remains the runnable BGP/EX457 environment.
+```sh
+./target/debug/examples/nccl_runtime "$PWD/target/debug/datacenter-simulator"
+```
 
-ZTP and cloud-init content can be stored and exported, but starting with executable guest configuration returns Unsupported because neither the portable model nor network namespaces provide a guest OS/filesystem. Shell instructions also return Unsupported. Service resources are immutable descriptors; no NVIDIA Air external tunnel or worker port is fabricated. Image names and image metadata identify profiles rather than booting an operating system.
-
-Portable operations cap node count at 4096, a transfer at 16 MiB, aggregate collective buffers at 64 MiB, and a collective trace at 65,536 transfers/hops. Requests exceeding a limit return an error. Portable resource budgets are descriptive totals, not CPU/RAM/storage enforcement. Timing is a topology/serialization model, not calibrated NVIDIA hardware performance. Linux tests establish connectivity and isolation, not nanosecond accuracy. SDK REST paths, authentication, legacy aliases, HTTP pagination, and hosted organization/publishing/training workflows are outside the local Rust contract.
-
-## Reproducibility and validation
-
-[upstreams.json](upstreams.json) and git submodule commits pin all four implementation projects and the SDK specification revision. Cargo.lock pins registry dependencies. The [Rust CI workflow](../.github/workflows/rust-simulator.yml) runs the portable suite, the scenario, Clippy, all-adapter compilation, and real Linux connectivity/partition/recovery checks. The manual [RDMA runtime workflow](../.github/workflows/rdma-runtime.yml) requires a self-hosted Linux runner labeled rdma with an RNIC or SoftRoCE device. The existing Dagger/EX457 workflow runs independently on the PR.
-
-Native NCCL runtime validation still requires a CUDA runner and compatible libnccl. Native RDMA runtime validation also remains outstanding: the hosted Azure runner lacks rdma_rxe even after installing its matching extra kernel modules. That unavailable runtime check is not counted as passing. A successful `nccl-check` job only establishes API compilation. See [design and validation](docs/design.md) for the execution boundaries and test mapping.
+CPU-only compile/contract tests do not establish CUDA execution. The hardware gate fails if prerequisites are absent; it does not report skipped devices as success. Actual CUDA execution requires a configured GPU runner. The separate [RDMA runtime workflow](../.github/workflows/rdma-runtime.yml) similarly requires a real RDMA or SoftRoCE device. These runtime gates remain distinct from hosted CI. Kernel timing and physical GPU execution are not calibrated datacenter performance predictions.

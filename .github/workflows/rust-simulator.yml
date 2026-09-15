@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['simulator/**', '.gitmodules', '.github/workflows/rust-simulator.yml']
   push:
-    branches: [main, codex/rust-air-simulator]
+    branches: [main, codex/rust-air-simulator, codex/real-nccl-execution]
     paths: ['simulator/**', '.gitmodules', '.github/workflows/rust-simulator.yml']
 permissions:
   contents: read
@@ -29,9 +29,6 @@ jobs:
       - name: Portable contracts and property tests
         working-directory: simulator
         run: cargo +1.98.0 test --locked --all-targets
-      - name: Runnable GPU datacenter scenario
-        working-directory: simulator
-        run: cargo +1.98.0 run --locked -- run examples/gpu-spine-leaf.json
       - name: Rust lint
         working-directory: simulator
         run: cargo +1.98.0 clippy --locked --all-targets -- -D warnings
@@ -52,6 +49,12 @@ jobs:
       - name: Compile all integrations including NCCL ABI without linking CUDA
         working-directory: simulator
         run: cargo +1.98.0 check --locked --all-targets --features linux,rdma,nccl-check
+      - name: Verify compile-only builds reject every collective entry point
+        working-directory: simulator
+        run: cargo +1.98.0 test --locked --all-targets --features nccl-check
+      - name: Typecheck native execution entry points
+        working-directory: simulator
+        run: cargo +1.98.0 check --locked --all-targets --features nccl
       - name: Build Linux and RDMA executables
         id: native_build
         working-directory: simulator
