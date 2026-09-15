@@ -23,7 +23,7 @@ use serde_json::{Value, json};
 use std::{
     collections::BTreeSet,
     fs::{self, File, OpenOptions},
-    os::{fd::AsRawFd, unix::fs::PermissionsExt},
+    os::fd::AsRawFd,
     path::Path,
     process::Stdio,
     time::Duration,
@@ -37,7 +37,7 @@ pub(crate) fn checked(program: &str, args: &[&str]) -> Result<String> {
         .with_context(|| format!("start {program}"))?;
     ensure!(
         output.status.success(),
-        "{program}: {}",
+        "{program} {args:?}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     Ok(String::from_utf8(output.stdout)?)
@@ -147,7 +147,7 @@ impl LinuxFabric {
             let mut request: libc::ifreq = unsafe { std::mem::zeroed() };
             for (to, from) in request.ifr_name.iter_mut().zip(b"vmtap0") { *to = *from as libc::c_char; }
             request.ifr_ifru.ifru_flags = (libc::IFF_TAP | libc::IFF_NO_PI) as libc::c_short;
-            ensure!(unsafe { libc::ioctl(tap.as_raw_fd(), libc::TUNSETIFF, &request) } >= 0, "TUNSETIFF: {}", std::io::Error::last_os_error());
+            ensure!(unsafe { libc::ioctl(tap.as_raw_fd(), libc::TUNSETIFF, &mut request) } >= 0, "TUNSETIFF: {}", std::io::Error::last_os_error());
             checked("ip", &["address", "add", "10.254.0.1/30", "dev", "vmtap0"])?;
             checked("ip", &["link", "set", "vmtap0", "up"])?;
             checked("sysctl", &["-qw", "net.ipv4.ip_forward=1", "net.ipv4.conf.vmtap0.rp_filter=0"])?;
@@ -205,6 +205,17 @@ impl LinuxFabric {
     }
 }
 
+/// Kill command descendants as well as their parent when a stage times out.
+pub(crate) struct ProcessGroup(pub u32);
+impl Drop for ProcessGroup {
+    fn drop(&mut self) {
+        // The ID belongs to a child we started with process_group(0).
+        unsafe {
+            libc::kill(-(self.0 as i32), libc::SIGKILL);
+        }
+    }
+}
+
 pub struct VmLab {
     // Children are killed before the fabric is released, including on timeout/error.
     children: Vec<Child>,
@@ -219,11 +230,11 @@ impl Drop for VmLab {
     }
 }
 impl VmLab {
-    pub async fn boot(config: &DeepOpsConfig, sim: &Simulation, plan: DeepOpsPlan) -> Result<Self> {
-        fs::create_dir(&config.state_dir)?;
-        fs::set_permissions(&config.state_dir, fs::Permissions::from_mode(0o700))?;
-        fs::create_dir(config.state_dir.join("reports"))?;
-        fs::create_dir(config.state_dir.join("guests"))?;
+    pub(crate) async fn boot(
+        config: &DeepOpsConfig,
+        sim: &Simulation,
+        plan: DeepOpsPlan,
+    ) -> Result<Self> {
         let key = config.state_dir.join("id_ed25519");
         checked(
             "ssh-keygen",
@@ -371,14 +382,14 @@ impl VmLab {
             lab.children.push(cmd.spawn()?);
         }
         lab.fabric.route_guests(&lab.plan.guests)?;
-        for guest in &lab.plan.guests {
+        for guest in lab.plan.guests.clone() {
             eprintln!("waiting for VM {} ({})", guest.name, guest.address);
             let ready = async {
                 loop {
                     if let Ok(output) = lab
                         .ssh(
                             config,
-                            guest,
+                            &guest,
                             &["sudo", "cloud-init", "status", "--wait"],
                             Duration::from_secs(15),
                         )
@@ -386,6 +397,12 @@ impl VmLab {
                         && output.status.success()
                     {
                         return Ok::<_, anyhow::Error>(());
+                    }
+                    for child in &mut lab.children {
+                        ensure!(
+                            child.try_wait()?.is_none(),
+                            "QEMU exited during boot; inspect guests/*/qemu.log"
+                        );
                     }
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 }
@@ -436,10 +453,12 @@ impl VmLab {
         cmd.stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .stdin(Stdio::null());
+        cmd.process_group(0);
         let child = self
             .fabric
             .device(&self.plan.provisioner_id)?
             .spawn_command(cmd)?;
+        let _group = ProcessGroup(child.id().context("SSH process has no PID")?);
         Ok(tokio::time::timeout(duration, child.wait_with_output()).await??)
     }
     pub async fn shutdown(&mut self) {

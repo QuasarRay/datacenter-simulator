@@ -22,6 +22,8 @@ use anyhow::{Context, Result, ensure};
 use serde_json::{Value, json};
 use std::{
     fs::{self, File},
+    os::unix::fs::PermissionsExt,
+    path::Path,
     process::Stdio,
     time::Duration,
 };
@@ -32,6 +34,15 @@ pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
     crate::vm::preflight(&config, !smoke)?;
     if !smoke {
         verify_sources(&config)?;
+    }
+    // Host permissions are needed only to create the caller's requested state directory.
+    // After entering the user namespace all writes are inside this owned directory.
+    fs::create_dir(&config.state_dir).context("create run state directory")?;
+    fs::set_permissions(&config.state_dir, fs::Permissions::from_mode(0o700))?;
+    fs::create_dir(config.state_dir.join("reports"))?;
+    fs::create_dir(config.state_dir.join("guests"))?;
+    if !smoke {
+        prepare_config(&config, &plan)?;
     }
     patchbay::init_userns()?;
     tokio::runtime::Builder::new_current_thread().enable_all().build()?.block_on(async {
@@ -49,31 +60,31 @@ pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
         result.map(|_|())
     })
 }
+fn source_git(directory: &Path, args: &[&str]) -> Result<String> {
+    let directory = fs::canonicalize(directory)?;
+    // A sudo-launched runner still reads the explicitly selected, pinned checkout.
+    // Trust is scoped to this command and directory; no global Git config is changed.
+    let trusted = format!("safe.directory={}", path(&directory)?);
+    let mut command = vec!["-c", &trusted, "-C", path(&directory)?];
+    command.extend_from_slice(args);
+    checked("git", &command)
+}
 fn verify_sources(config: &DeepOpsConfig) -> Result<()> {
     for (dir, expected) in [
         ("integrations/deepops/upstream", deepops::DEEPOPS_COMMIT),
         ("simulator/vendor/nccl", deepops::NCCL_COMMIT),
         ("simulator/vendor/nccl-tests", deepops::NCCL_TESTS_COMMIT),
     ] {
-        let dir = config.repository.join(dir);
+        let dir = fs::canonicalize(config.repository.join(dir))?;
         ensure!(
-            checked("git", &["-C", path(&dir)?, "rev-parse", "HEAD"])?.trim() == expected,
+            source_git(&dir, &["rev-parse", "HEAD"])?.trim() == expected,
             "upstream revision mismatch: {}",
             dir.display()
         );
         ensure!(
-            checked(
-                "git",
-                &[
-                    "-C",
-                    path(&dir)?,
-                    "status",
-                    "--porcelain",
-                    "--untracked-files=no"
-                ]
-            )?
-            .trim()
-            .is_empty(),
+            source_git(&dir, &["status", "--porcelain", "--untracked-files=no"])?
+                .trim()
+                .is_empty(),
             "upstream has tracked changes: {}",
             dir.display()
         );
@@ -142,11 +153,9 @@ fn prepare_config(config: &DeepOpsConfig, plan: &DeepOpsPlan) -> Result<()> {
             "nccl-tests",
         ),
     ] {
-        checked(
-            "git",
+        source_git(
+            &config.repository.join(source),
             &[
-                "-C",
-                path(&config.repository.join(source))?,
                 "archive",
                 "--format=tar.gz",
                 "-o",
@@ -196,12 +205,13 @@ async fn stage(
         .stdout(File::create(&out)?)
         .stderr(File::create(directory.join(format!("{name}.stderr")))?)
         .kill_on_drop(true);
-    let status = lab
+    cmd.process_group(0);
+    let mut child = lab
         .fabric
         .device(&lab.plan.provisioner_id)?
-        .spawn_command(cmd)?
-        .wait()
-        .await?;
+        .spawn_command(cmd)?;
+    let _group = crate::vm::ProcessGroup(child.id().context("stage process has no PID")?);
+    let status = child.wait().await?;
     ensure!(
         status.success(),
         "{name} failed ({status}); inspect {}",
@@ -220,7 +230,6 @@ async fn json_stage(
     serde_json::from_slice(&fs::read(file)?).with_context(|| format!("{name} did not return JSON"))
 }
 async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
-    prepare_config(config, &lab.plan)?;
     // Run upstream tests without reimplementing the upstream tools or their protocols.
     for (name, dir) in [
         ("deepops-validation-unit", "scripts/validation/tests"),
