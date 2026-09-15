@@ -334,6 +334,8 @@ pub fn validate_nccl(value: &Value, collective: &str, compute: &[String]) -> Res
         "NCCL_IB_DISABLE=1",
         "NCCL_P2P_DISABLE=1",
         "NCCL_SHM_DISABLE=1",
+        "OMPI_MCA_pml=ob1",
+        "OMPI_MCA_btl=self,tcp",
         "OMPI_MCA_btl_tcp_if_include=simnccl",
         "OMPI_MCA_oob_tcp_if_include=simnccl",
     ] {

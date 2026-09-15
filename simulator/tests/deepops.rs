@@ -28,7 +28,7 @@ fn report() -> Value {
     let rows: Vec<_> = ["sum", "prod", "min", "max", "avg", "mulsum"].iter().map(|op| json!({"redop":op,"size":256,"out_of_place":{"nwrong":0.0,"time":32.0},"in_place":{"nwrong":0.0,"time":30.0}})).collect();
     json!({"version":4,"nccl_version":23102,"end_time":"2026-09-15T00:00:00",
         "args":["/opt/simulator/nccl-tests/build/all_reduce_perf","-c","1"],
-        "env":["NCCL_NET=Socket","NCCL_NET_PLUGIN=none","NCCL_SOCKET_IFNAME==simnccl","NCCL_IB_DISABLE=1","NCCL_P2P_DISABLE=1","NCCL_SHM_DISABLE=1","OMPI_MCA_btl_tcp_if_include=simnccl","OMPI_MCA_oob_tcp_if_include=simnccl"],
+        "env":["NCCL_NET=Socket","NCCL_NET_PLUGIN=none","NCCL_SOCKET_IFNAME==simnccl","NCCL_IB_DISABLE=1","NCCL_P2P_DISABLE=1","NCCL_SHM_DISABLE=1","OMPI_MCA_pml=ob1","OMPI_MCA_btl=self,tcp","OMPI_MCA_btl_tcp_if_include=simnccl","OMPI_MCA_oob_tcp_if_include=simnccl"],
         "config":{"validation":1,"ngpus":1,"nthreads":1,"devices":[{"rank":0,"hostname":"gpu1","device_info":"NVIDIA GPU"},{"rank":1,"hostname":"gpu2","device_info":"NVIDIA GPU"}]},
         "results":rows,
         "out_of_bounds":{"count":0,"okay":"true"},"errors":[""]})

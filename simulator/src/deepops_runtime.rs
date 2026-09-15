@@ -39,6 +39,7 @@ pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
     fs::set_permissions(&config.state_dir, fs::Permissions::from_mode(0o700))?;
     fs::create_dir(config.state_dir.join("reports"))?;
     fs::create_dir(config.state_dir.join("guests"))?;
+    stage_deepops(&config)?;
     prepare_config(&config, &plan)?;
     patchbay::init_userns()?;
     tokio::runtime::Builder::new_current_thread().enable_all().build()?.block_on(async {
@@ -96,8 +97,52 @@ fn verify_sources(config: &DeepOpsConfig) -> Result<()> {
     );
     Ok(())
 }
+fn integration(config: &DeepOpsConfig) -> std::path::PathBuf {
+    config.state_dir.join("integration")
+}
+fn stage_deepops(config: &DeepOpsConfig) -> Result<()> {
+    // The caller's checkout may be under a private home directory. Copy only
+    // deployment sources/dependencies while host read permissions are available.
+    // New copies belong to this run; no checkout permissions are modified.
+    let original = config.repository.join("integrations/deepops");
+    let staged = integration(config);
+    fs::create_dir(&staged)?;
+    fs::create_dir(staged.join("upstream"))?;
+    fs::create_dir(staged.join("upstream/submodules"))?;
+    for entry in [
+        "README.md",
+        "scripts",
+        "playbooks",
+        "roles",
+        "collections",
+        "config.example",
+        "submodules/kubespray",
+    ] {
+        checked(
+            "cp",
+            &[
+                "-R",
+                "--no-preserve=ownership",
+                path(&original.join("upstream").join(entry))?,
+                path(&staged.join("upstream").join(entry))?,
+            ],
+        )?;
+    }
+    for entry in ["prepare-nccl.yml", "files"] {
+        checked(
+            "cp",
+            &[
+                "-R",
+                "--no-preserve=ownership",
+                path(&original.join(entry))?,
+                path(&staged.join(entry))?,
+            ],
+        )?;
+    }
+    Ok(())
+}
 fn prepare_config(config: &DeepOpsConfig, plan: &DeepOpsPlan) -> Result<()> {
-    let upstream = config.repository.join("integrations/deepops/upstream");
+    let upstream = integration(config).join("upstream");
     let cfg = config.state_dir.join("config");
     fs::create_dir(&cfg)?;
     fs::create_dir(config.state_dir.join("private-logs"))?;
@@ -172,7 +217,7 @@ fn prepare_config(config: &DeepOpsConfig, plan: &DeepOpsPlan) -> Result<()> {
 fn ansible_command(config: &DeepOpsConfig, tool: &str, args: &[&str]) -> Result<Command> {
     let mut cmd = Command::new(config.ansible_bin.join(tool));
     cmd.args(args)
-        .current_dir(config.repository.join("integrations/deepops/upstream"));
+        .current_dir(integration(config).join("upstream"));
     cmd.env_clear()
         .env(
             "PATH",
@@ -207,10 +252,12 @@ async fn stage(
         .stderr(File::create(directory.join(format!("{name}.stderr")))?)
         .kill_on_drop(true);
     cmd.process_group(0);
+    let program = cmd.as_std().get_program().to_string_lossy().to_string();
     let mut child = lab
         .fabric
         .device(&lab.plan.provisioner_id)?
-        .spawn_command(cmd)?;
+        .spawn_command(cmd)
+        .with_context(|| format!("start {program} for {name}"))?;
     let _group = crate::vm::ProcessGroup(child.id().context("stage process has no PID")?);
     let status = child.wait().await?;
     ensure!(
@@ -311,11 +358,7 @@ async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
             &[
                 "-l",
                 "slurm-cluster",
-                path(
-                    &config
-                        .repository
-                        .join("integrations/deepops/prepare-nccl.yml"),
-                )?,
+                path(&integration(config).join("prepare-nccl.yml"))?,
                 "-e",
                 &format!("@{}", path(&config.state_dir.join("config/sources.json"))?),
             ],
