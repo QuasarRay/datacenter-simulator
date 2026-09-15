@@ -191,6 +191,9 @@ fn prepare_config(config: &DeepOpsConfig, plan: &DeepOpsPlan) -> Result<()> {
             path(&config.state_dir.join("known_hosts"))?
         ),
     )?;
+    // The upstream doctor identifies its repository root by this file. Use the
+    // same isolated inventory here as in ANSIBLE_CONFIG, including for subprocesses.
+    fs::copy(cfg.join("ansible.cfg"), upstream.join("ansible.cfg"))?;
     // git archive uses the verified commit, never an uncommitted substitute library.
     for (source, revision, name) in [
         ("simulator/vendor/nccl", deepops::NCCL_COMMIT, "nccl"),
