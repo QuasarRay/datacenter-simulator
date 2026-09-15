@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['simulator/**', 'integrations/deepops/**', '.gitmodules', '.github/workflows/deepops.yml']
   push:
-    branches: [main, codex/deepops-nccl-tests]
+    branches: [main]
     paths: ['simulator/**', 'integrations/deepops/**', '.gitmodules', '.github/workflows/deepops.yml']
 permissions:
   contents: read

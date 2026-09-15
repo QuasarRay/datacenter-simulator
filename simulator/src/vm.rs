@@ -83,6 +83,18 @@ pub fn preflight(config: &DeepOpsConfig, gpu: bool) -> Result<()> {
         "cloud image SHA-256 mismatch"
     );
     if gpu {
+        let mut limit = libc::rlimit {
+            rlim_cur: 0,
+            rlim_max: 0,
+        };
+        ensure!(
+            unsafe { libc::getrlimit(libc::RLIMIT_MEMLOCK, &mut limit) } == 0,
+            "read VFIO memlock limit"
+        );
+        ensure!(
+            limit.rlim_cur == libc::RLIM_INFINITY,
+            "VFIO requires an unlimited process memlock limit; launch with sudo prlimit --memlock=unlimited:unlimited"
+        );
         OpenOptions::new()
             .read(true)
             .write(true)
