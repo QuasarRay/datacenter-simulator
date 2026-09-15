@@ -32,23 +32,24 @@ use tokio::process::Command;
 pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
     let (sim, plan) = config.plan()?;
     crate::vm::preflight(&config, !smoke)?;
-    if !smoke {
-        verify_sources(&config)?;
-    }
+    verify_sources(&config)?;
     // Host permissions are needed only to create the caller's requested state directory.
     // After entering the user namespace all writes are inside this owned directory.
     fs::create_dir(&config.state_dir).context("create run state directory")?;
     fs::set_permissions(&config.state_dir, fs::Permissions::from_mode(0o700))?;
     fs::create_dir(config.state_dir.join("reports"))?;
     fs::create_dir(config.state_dir.join("guests"))?;
-    if !smoke {
-        prepare_config(&config, &plan)?;
-    }
+    prepare_config(&config, &plan)?;
     patchbay::init_userns()?;
     tokio::runtime::Builder::new_current_thread().enable_all().build()?.block_on(async {
         let mut lab=tokio::time::timeout(Duration::from_secs(config.boot_timeout_secs+120),VmLab::boot(&config,&sim,plan)).await.context("VM boot deadline exceeded")??;
         let result=tokio::time::timeout(Duration::from_secs(config.timeout_secs),async {
-            if smoke { lab.smoke(&config).await } else { deploy(&config,&mut lab).await }
+            if smoke {
+                let doctor = check_deepops(&config, &lab).await?;
+                let mut report = lab.smoke(&config).await?;
+                report["doctor"] = doctor;
+                Ok(report)
+            } else { deploy(&config,&mut lab).await }
         }).await.context("deployment/test deadline exceeded").and_then(|v|v);
         lab.shutdown().await;
         let report=match &result {
@@ -229,7 +230,7 @@ async fn json_stage(
     let file = stage(config, lab, name, cmd, private).await?;
     serde_json::from_slice(&fs::read(file)?).with_context(|| format!("{name} did not return JSON"))
 }
-async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
+async fn check_deepops(config: &DeepOpsConfig, lab: &VmLab) -> Result<Value> {
     // Run upstream tests without reimplementing the upstream tools or their protocols.
     for (name, dir) in [
         ("deepops-validation-unit", "scripts/validation/tests"),
@@ -279,6 +280,10 @@ async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
         doctor["ok"] == true,
         "DeepOps doctor rejected deployment: {doctor}"
     );
+    Ok(doctor)
+}
+async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
+    let doctor = check_deepops(config, lab).await?;
     stage(
         config,
         lab,

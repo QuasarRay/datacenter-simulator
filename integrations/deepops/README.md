@@ -6,7 +6,7 @@ A namespace alone shares the host filesystem and cannot safely host a DeepOps no
 
 ## Run a GPU cluster
 
-Use a dedicated Linux x86-64 provisioning machine with KVM, IOMMU, at least two NVIDIA GPUs already assigned to `vfio-pci`, approximately 24 GiB available RAM, and sufficient disk for the guest overlays and native builds. Each GPU's complete IOMMU group must belong to one VM. The runner **does not unbind host GPU drivers**. The default DeepOps driver policy targets Turing or newer GPUs; the guest CUDA toolkit is 12.8. GPU passthrough must be supported by the host platform and device.
+Use a dedicated Linux x86-64 provisioning machine with KVM, IOMMU, at least two NVIDIA GPUs already assigned to `vfio-pci`, approximately 24 GiB available RAM, and sufficient disk for the guest overlays and native builds. Each GPU's complete IOMMU group must belong to one VM. The command below raises only the new process's locked-memory limit so VFIO can pin guest RAM. The runner **does not unbind host GPU drivers**. The default DeepOps driver policy targets Turing or newer GPUs; the guest CUDA toolkit is 12.8. GPU passthrough must be supported by the host platform and device.
 
 Install the provisioning tools and pinned upstreams from the repository root:
 
@@ -23,7 +23,7 @@ Obtain `ubuntu-22.04-server-cloudimg-amd64.img` from [Ubuntu's cloud image relea
 
 ```bash
 simulator/target/debug/datacenter-simulator deepops-plan integrations/deepops/config.json
-sudo simulator/target/debug/datacenter-simulator deepops-run integrations/deepops/config.json
+sudo prlimit --memlock=unlimited:unlimited simulator/target/debug/datacenter-simulator deepops-run integrations/deepops/config.json
 ```
 
 The plan lists exactly the generated guest inventory, resources, source revisions, and addresses. Execution verifies the **resolved Ansible inventory** contains only those guests before any deployment playbook runs. It overrides DeepOps's default MAAS inventory and uses a private per-run SSH key and known-hosts file.
@@ -52,11 +52,11 @@ This profile validates host NCCL collectives over real TCP sockets. It does not 
 
 `state_dir/reports/result.json` reports overall success **only after every full-run stage passes**. The reports directory contains upstream doctor/Slurm JSON, benchmark JSON, and process logs. Guest serial/QEMU logs live under `guests/<name>/`. Resolved inventory and deployment logs stay in `private-logs/`, because resolved variables can contain credentials. VM disks, generated SSH keys, and configuration are not uploaded by CI. QEMU guests stop when the run finishes or fails; retained disks allow diagnosis. Delete a completed run's state directory yourself when no longer needed.
 
-`deepops.yml` runs the upstream unit tests, upstream setup and role lint, focused Molecule scenarios for facts/OpenMPI/NHC, Rust VM lint/build, and real CPU VM isolation/partition/recovery on hosted Linux runners. The Molecule scenarios test role convergence/idempotence; their upstream placeholder verifier assertions are not GPU evidence.
+`deepops.yml` runs the upstream unit tests, upstream setup and role lint, focused Molecule scenarios for facts/OpenMPI/NHC, Rust VM lint/build, and real CPU VM isolation/partition/recovery on hosted Linux runners. The CPU VM run also resolves the generated inventory and requires DeepOps's remote doctor to reach every guest. The Molecule scenarios test role convergence/idempotence; their upstream placeholder verifier assertions are not GPU evidence.
 
 `deepops-gpu.yml` is an explicit manual hardware workflow using `[self-hosted, linux, deepops, gpu]`. Supply a runner-local config with dedicated VFIO devices and a verified image. It runs the full deployment and correctness pipeline and uploads only reports and guest boot logs. Hardware jobs do not run automatically on PR code.
 
-For VM plumbing only, use `deepops-vm-smoke config.json` with an empty `vfio` object, reduced guest resources, and the same verified image. KVM is preferred; CPU smoke can use TCG. Its report says `scope: vm-plumbing-only` and `gpu_tests_run: false`. This cannot satisfy the GPU workflow.
+For VM plumbing and DeepOps preflight, use `deepops-vm-smoke config.json` after `setup.sh`, with an empty `vfio` object, reduced guest resources, and the same verified image. KVM is preferred; CPU smoke can use TCG. Its report says `scope: vm-plumbing-only` and `gpu_tests_run: false`. This cannot satisfy the GPU workflow.
 
 The implementation environment passed the Rust contract tests and DeepOps's 28 unit tests. It has no KVM, QEMU, or GPUs; **a successful full DeepOps/NCCL GPU deployment has not yet been demonstrated here**. Consult the PR's CI results for executed hosted checks, and require a successful `deepops-gpu` report before treating the GPU integration as validated.
 
