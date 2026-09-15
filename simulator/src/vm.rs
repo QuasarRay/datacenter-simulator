@@ -516,12 +516,13 @@ impl VmLab {
             .simulation
             .links()
             .filter(|l| {
-                l.interfaces.iter().any(|id| {
-                    self.fabric
-                        .simulation
-                        .interface(id)
-                        .is_ok_and(|i| i.node == to.node_id)
-                })
+                l.spec.up
+                    && l.interfaces.iter().any(|id| {
+                        self.fabric
+                            .simulation
+                            .interface(id)
+                            .is_ok_and(|i| i.node == to.node_id)
+                    })
             })
             .map(|l| l.id.clone())
             .collect();
