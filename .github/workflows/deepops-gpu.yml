@@ -36,7 +36,7 @@ jobs:
           jq --arg repo "$PWD" --arg base "$(dirname "$(realpath "$SITE_CONFIG")")" --arg state "$RUNNER_TEMP/deepops-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" '.repository=$repo | .state_dir=$state | .manifest |= (if startswith("/") then . else $base+"/"+. end) | .image |= (if startswith("/") then . else $base+"/"+. end) | .ansible_bin |= (if startswith("/") then . else $base+"/"+. end)' "$SITE_CONFIG" > "$RUNNER_TEMP/deepops-run.json"
           simulator/target/debug/datacenter-simulator deepops-plan "$RUNNER_TEMP/deepops-run.json"
       - name: Deploy DeepOps and require its validator plus every NCCL correctness test
-        run: sudo timeout 13800 simulator/target/debug/datacenter-simulator deepops-run "$RUNNER_TEMP/deepops-run.json"
+        run: sudo prlimit --memlock=unlimited:unlimited timeout 13800 simulator/target/debug/datacenter-simulator deepops-run "$RUNNER_TEMP/deepops-run.json"
       - name: Collect reports and guest boot logs
         if: always()
         run: |
