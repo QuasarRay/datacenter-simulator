@@ -337,7 +337,7 @@ fn emit_object_message(
 
         let field_type = type_for_schema(document, property, type_names, inline_enum);
         let number = stable_field_number(name, source_name, &mut used_numbers);
-        let is_required = required.contains(source_name);
+        let is_required = required.contains(source_name) && !schema_is_nullable(property);
 
         if let Some(description) = property.get("description").and_then(Value::as_str) {
             out.push_str(&format!("  // {}\n", one_line(description)));
@@ -547,6 +547,12 @@ fn type_for_schema(
         };
     }
 
+    if let Some(all_of) = schema.get("allOf").and_then(Value::as_array) {
+        if all_of.len() == 1 {
+            return type_for_schema(_document, &all_of[0], type_names, inline_enum);
+        }
+    }
+
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
         return FieldType {
             ty: reference_type(reference, type_names)
@@ -577,11 +583,20 @@ fn type_for_schema(
                     optional_allowed: true,
                     lossy: true,
                 });
-            FieldType {
-                ty: inner.ty,
-                repeated: true,
-                optional_allowed: false,
-                lossy: inner.lossy || inner.repeated,
+            if inner.ty.starts_with("map<") || inner.repeated {
+                FieldType {
+                    ty: "google.protobuf.Struct".to_string(),
+                    repeated: true,
+                    optional_allowed: false,
+                    lossy: true,
+                }
+            } else {
+                FieldType {
+                    ty: inner.ty,
+                    repeated: true,
+                    optional_allowed: false,
+                    lossy: inner.lossy,
+                }
             }
         }
         Some("object") => {
@@ -667,7 +682,18 @@ fn type_for_schema(
 }
 
 fn is_valid_map_value_type(ty: &str) -> bool {
-    !ty.starts_with("map<") && ty != "google.protobuf.Value"
+    !ty.starts_with("map<")
+}
+
+fn schema_is_nullable(schema: &Value) -> bool {
+    if schema.get("nullable").and_then(Value::as_bool) == Some(true) {
+        return true;
+    }
+
+    schema
+        .get("type")
+        .and_then(Value::as_array)
+        .is_some_and(|types| types.iter().any(|value| value.as_str() == Some("null")))
 }
 
 fn schema_type(schema: &Value) -> Option<&str> {
@@ -912,9 +938,10 @@ fn emit_request_message(
         if field_type.lossy {
             out.push_str("  // Complex OpenAPI shape represented as JSON.\n");
         }
+        let effective_required = field.required && !schema_is_nullable(&field.schema);
         let qualifier = if field_type.repeated {
             "repeated "
-        } else if !field.required && field_type.optional_allowed {
+        } else if !effective_required && field_type.optional_allowed {
             "optional "
         } else {
             ""
@@ -1014,7 +1041,7 @@ fn operation_id(method: &str, path: &str, operation: &Value) -> String {
                 "{}_{}",
                 method,
                 path.trim_matches('/')
-                    .replace(['/', '{', '}', '-'], "_")
+                    .replace(&['/', '{', '}', '-'][..], "_")
             )
         })
 }
@@ -1291,6 +1318,21 @@ fn is_proto_keyword(value: &str) -> bool {
             | "rpc"
             | "returns"
             | "stream"
+            | "double"
+            | "float"
+            | "int32"
+            | "int64"
+            | "uint32"
+            | "uint64"
+            | "sint32"
+            | "sint64"
+            | "fixed32"
+            | "fixed64"
+            | "sfixed32"
+            | "sfixed64"
+            | "bool"
+            | "string"
+            | "bytes"
     )
 }
 
@@ -1378,7 +1420,10 @@ mod tests {
                         "properties": {
                             "id": {"type": "integer", "format": "int64"},
                             "name": {"type": "string"},
-                            "status": {"$ref": "#/components/schemas/DeviceStatus"},
+                            "status": {
+                                "allOf": [{"$ref": "#/components/schemas/DeviceStatus"}],
+                                "nullable": true
+                            },
                             "created": {"type": "string", "format": "date-time"}
                         }
                     },
