@@ -48,6 +48,17 @@ pub(crate) fn args(values: &[&str]) -> Vec<String> {
 impl LinuxFabric {
     /// Call patchbay::init_userns() in main before creating any runtime or threads.
     pub async fn build(simulation: &Simulation) -> Result<Self> {
+        if simulation.nodes().any(|n| {
+            n.spec
+                .labels
+                .get("simulator.medium")
+                .and_then(|v| v.as_str())
+                == Some("infiniband")
+        }) {
+            bail!(
+                "InfiniBand intended state requires the ibsim management backend; it is not an Ethernet/NCCL Socket fabric"
+            );
+        }
         if simulation.state() != State::Active {
             bail!("start the model before building its Linux topology");
         }

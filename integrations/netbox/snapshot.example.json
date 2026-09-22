@@ -1,0 +1,189 @@
+{
+  "api_url": "http://127.0.0.1:8000/api/",
+  "fetched_at": "2026-09-22T00:00:00Z",
+  "devices": [
+    {
+      "id": 1,
+      "name": "gpu-1.lab.example",
+      "role": {
+        "slug": "gpu-server"
+      },
+      "status": {
+        "value": "active"
+      },
+      "custom_fields": {
+        "simulator_gpu_profile": "t4",
+        "simulator_gpu_count": 2,
+        "simulator_kubernetes_node": "simulator-worker"
+      }
+    },
+    {
+      "id": 2,
+      "name": "gpu-2.lab.example",
+      "role": {
+        "slug": "gpu-server"
+      },
+      "status": {
+        "value": "planned"
+      },
+      "custom_fields": {
+        "simulator_gpu_profile": "t4",
+        "simulator_gpu_count": 2,
+        "simulator_kubernetes_node": "simulator-worker2"
+      }
+    },
+    {
+      "id": 3,
+      "name": "ib-switch.lab.example",
+      "role": {
+        "slug": "ib-switch"
+      },
+      "status": {
+        "value": "active"
+      },
+      "custom_fields": {}
+    }
+  ],
+  "interfaces": [
+    {
+      "id": 1,
+      "name": "mlx5_0/1",
+      "device": {
+        "id": 1
+      },
+      "type": {
+        "value": "infiniband-hdr"
+      },
+      "enabled": true,
+      "mgmt_only": false,
+      "speed": 200000000,
+      "cable": {
+        "id": 1
+      },
+      "lag": null,
+      "parent": null,
+      "bridge": null,
+      "duplex": {
+        "value": "full"
+      }
+    },
+    {
+      "id": 2,
+      "name": "mlx5_0/1",
+      "device": {
+        "id": 2
+      },
+      "type": {
+        "value": "infiniband-hdr"
+      },
+      "enabled": true,
+      "mgmt_only": false,
+      "speed": 200000000,
+      "cable": {
+        "id": 2
+      },
+      "lag": null,
+      "parent": null,
+      "bridge": null,
+      "duplex": {
+        "value": "full"
+      }
+    },
+    {
+      "id": 3,
+      "name": "IB1/1",
+      "device": {
+        "id": 3
+      },
+      "type": {
+        "value": "infiniband-hdr"
+      },
+      "enabled": true,
+      "mgmt_only": false,
+      "speed": 200000000,
+      "cable": {
+        "id": 1
+      },
+      "lag": null,
+      "parent": null,
+      "bridge": null,
+      "duplex": {
+        "value": "full"
+      }
+    },
+    {
+      "id": 4,
+      "name": "IB1/2",
+      "device": {
+        "id": 3
+      },
+      "type": {
+        "value": "infiniband-hdr"
+      },
+      "enabled": true,
+      "mgmt_only": false,
+      "speed": 200000000,
+      "cable": {
+        "id": 2
+      },
+      "lag": null,
+      "parent": null,
+      "bridge": null,
+      "duplex": {
+        "value": "full"
+      }
+    },
+    {
+      "id": 10,
+      "name": "Management0",
+      "device": {
+        "id": 1
+      },
+      "type": {
+        "value": "1000base-t"
+      },
+      "enabled": true,
+      "mgmt_only": true,
+      "speed": 1000000,
+      "cable": null
+    }
+  ],
+  "cables": [
+    {
+      "id": 1,
+      "status": {
+        "value": "connected"
+      },
+      "a_terminations": [
+        {
+          "object_type": "dcim.interface",
+          "object_id": 1
+        }
+      ],
+      "b_terminations": [
+        {
+          "object_type": "dcim.interface",
+          "object_id": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "status": {
+        "value": "connected"
+      },
+      "a_terminations": [
+        {
+          "object_type": "dcim.interface",
+          "object_id": 2
+        }
+      ],
+      "b_terminations": [
+        {
+          "object_type": "dcim.interface",
+          "object_id": 4
+        }
+      ]
+    }
+  ]
+}

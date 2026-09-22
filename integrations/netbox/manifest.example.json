@@ -1,0 +1,129 @@
+{
+  "format": "JSON",
+  "name": "NetBox intended topology",
+  "ztp": null,
+  "content": {
+    "nodes": {
+      "nb1": {
+        "os": "generic/cachyos",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10,
+        "role": "host",
+        "interfaces": {
+          "i1": {
+            "interface_type": "DATA_PLANE_INTF",
+            "split_parent": null
+          }
+        },
+        "labels": {
+          "kubernetes.node": "simulator-worker",
+          "mokka.gpu_count": 2,
+          "mokka.profile": "t4",
+          "netbox.device_id": 1,
+          "netbox.device_name": "gpu-1.lab.example",
+          "netbox.interfaces": {
+            "i1": {
+              "id": 1,
+              "name": "mlx5_0/1"
+            }
+          },
+          "simulator.medium": "infiniband"
+        },
+        "user_data": null,
+        "meta_data": null
+      },
+      "nb2": {
+        "os": "generic/cachyos",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10,
+        "role": "host",
+        "interfaces": {
+          "i2": {
+            "interface_type": "DATA_PLANE_INTF",
+            "split_parent": null
+          }
+        },
+        "labels": {
+          "kubernetes.node": "simulator-worker2",
+          "mokka.gpu_count": 2,
+          "mokka.profile": "t4",
+          "netbox.device_id": 2,
+          "netbox.device_name": "gpu-2.lab.example",
+          "netbox.interfaces": {
+            "i2": {
+              "id": 2,
+              "name": "mlx5_0/1"
+            }
+          },
+          "simulator.medium": "infiniband"
+        },
+        "user_data": null,
+        "meta_data": null
+      },
+      "nb3": {
+        "os": "generic/cachyos",
+        "cpu": 2,
+        "memory": 1024,
+        "storage": 10,
+        "role": "switch",
+        "interfaces": {
+          "i3": {
+            "interface_type": "DATA_PLANE_INTF",
+            "split_parent": null
+          },
+          "i4": {
+            "interface_type": "DATA_PLANE_INTF",
+            "split_parent": null
+          }
+        },
+        "labels": {
+          "netbox.device_id": 3,
+          "netbox.device_name": "ib-switch.lab.example",
+          "netbox.interfaces": {
+            "i3": {
+              "id": 3,
+              "name": "IB1/1"
+            },
+            "i4": {
+              "id": 4,
+              "name": "IB1/2"
+            }
+          },
+          "simulator.medium": "infiniband"
+        },
+        "user_data": null,
+        "meta_data": null
+      }
+    },
+    "links": [
+      {
+        "endpoints": [
+          "nb1:i1",
+          "nb3:i3"
+        ],
+        "condition": {
+          "bandwidth_bps": 200000000000,
+          "latency_ns": 1000,
+          "up": true
+        }
+      },
+      {
+        "endpoints": [
+          "nb2:i2",
+          "nb3:i4"
+        ],
+        "condition": {
+          "bandwidth_bps": 200000000000,
+          "latency_ns": 1000,
+          "up": true
+        }
+      }
+    ],
+    "oob": false,
+    "enable_dhcp": false,
+    "services": [],
+    "instructions": []
+  }
+}
