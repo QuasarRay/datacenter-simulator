@@ -25,8 +25,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          submodules: recursive
+      - name: Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
       - name: Test the Rust OpenAPI to protobuf generator
-        run: cargo test --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto
+        run: cargo +1.98.0 test --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto
 
   refresh:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -42,6 +45,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+          submodules: recursive
+
+      - name: Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
 
       - name: Download NetBox's committed machine-readable OpenAPI schema
         shell: bash
@@ -65,7 +72,7 @@ jobs:
 
       - name: Generate protobuf contracts
         run: |
-          cargo run --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto -- \
+          cargo +1.98.0 run --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto -- \
             --input "${RUNNER_TEMP}/netbox-openapi.json" \
             --output-dir simulator/proto/netbox \
             --package netbox.v1
