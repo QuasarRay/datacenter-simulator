@@ -53,14 +53,9 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
         .collect();
     ensure!(!cuts.is_empty(), "target HCA must have a connected cable");
     let mut fabric = IbSimulation::build(model, options).await?;
-    let sm = fabric.plan.nodes[source].clone();
-    fabric.backend().start_subnet_manager(&sm, "opensm").await?;
+    fabric.start_subnet_manager(source, "opensm").await?;
     for node in hosts.iter() {
-        let native = fabric.plan.nodes[node].clone();
-        fabric
-            .backend()
-            .wait_active(&native, Duration::from_secs(30))
-            .await?;
+        fabric.wait_active(node, Duration::from_secs(30)).await?;
     }
     let baseline = fabric
         .run(
@@ -75,7 +70,7 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
         String::from_utf8_lossy(&baseline.stderr)
     );
     let discovered = String::from_utf8(baseline.stdout)?;
-    for native in fabric.plan.nodes.values() {
+    for native in fabric.plan().nodes.values() {
         ensure!(
             discovered.contains(&format!("'{native}'"))
                 || discovered.contains(&format!("\"{native}\"")),
@@ -83,9 +78,9 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
         );
     }
     std::fs::write(report_dir.join("discovery-before.txt"), discovered)?;
-    let target_native = fabric.plan.nodes[target].clone();
-    let source_lid = fabric.backend().port_status(&sm)?.lid;
-    let target_lid = fabric.backend().port_status(&target_native)?.lid;
+    let target_native = fabric.plan().nodes[target].clone();
+    let source_lid = fabric.port_status(source)?.lid;
+    let target_lid = fabric.port_status(target)?.lid;
     let mut trace = Command::new("ibtracert");
     trace.args([source_lid.to_string(), target_lid.to_string()]);
     ensure!(
@@ -100,7 +95,7 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
         fabric.set_link_up(link, false).await?;
     }
     ensure!(
-        fabric.backend().port_status(&target_native)?.state == 1,
+        fabric.port_status(target)?.state == 1,
         "native HCA did not go Down"
     );
     let partition = fabric
@@ -123,10 +118,7 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
     for link in &cuts {
         fabric.set_link_up(link, true).await?;
     }
-    fabric
-        .backend()
-        .wait_active(&target_native, Duration::from_secs(30))
-        .await?;
+    fabric.wait_active(target, Duration::from_secs(30)).await?;
     let recovered = fabric
         .run(
             source,
@@ -140,12 +132,8 @@ async fn run(manifest: Manifest, options: IbOptions) -> Result<()> {
         "native IB recovery failed"
     );
     std::fs::write(report_dir.join("discovery-recovered.txt"), recovered.stdout)?;
-    let report = serde_json::json!({"ok":true,"scope":"infiniband-management","native_discovery":true,"opensm_routing":true,"partition":true,"recovery":true,"rdma_payload_tested":false,"nccl_tested":false,"mapping":fabric.plan});
-    fabric
-        .backend()
-        .shutdown()
-        .await
-        .context("reap native IB services")?;
+    let report = serde_json::json!({"ok":true,"scope":"infiniband-management","native_discovery":true,"opensm_routing":true,"partition":true,"recovery":true,"rdma_payload_tested":false,"nccl_tested":false,"mapping":fabric.plan()});
+    fabric.shutdown().await.context("reap native IB services")?;
     std::fs::write(
         report_dir.join("result.json"),
         serde_json::to_vec_pretty(&report)?,

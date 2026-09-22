@@ -7,7 +7,7 @@
 | Inventory empty | Working directory, `-i`, YAML group nesting |
 | Local playbook missing | Use pack root; all referenced files are supplied |
 | SSH denied with a key | Client key, account lock, sshd policy, frrvty membership |
-| Manual SSH works; network_cli fails | Effective libssh backend/config_file and trust inside the actual EE |
+| Manual SSH works; network_cli fails | Patched libssh backend, ansible_libssh_known_hosts and trust inside the actual EE |
 | Unknown module | Collection version/path and EE contents |
 | Facts fail | Legacy frr.frr compatibility; supported gather subsets |
 | Peer count right but verifier fails | Full peer identities, states and ASNs |

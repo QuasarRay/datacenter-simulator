@@ -71,3 +71,19 @@ in-flight partition: an infinite native all-reduce run must produce a correctnes
 row, fail after modeled links are cut, be cancelled, and restore the fabric before
 the normal NCCL suite proves recovery. This new path requires the dedicated GPU
 runner; CPU smoke runs cannot prove it.
+
+The staging adapter and Molecule workflow install Galaxy roles/collections from
+`galaxy.lock.json`, including transitive collections. `install-galaxy-locked.sh`
+verifies every downloaded archive before invoking Galaxy with `--no-deps`.
+Retagged or changed archives fail instead of updating the lock automatically.
+Refresh the lock through review after checking upstream archive contents and
+compatibility. A run keeps `integration/galaxy-artifacts/verified-lock.json`.
+The wrapper reapplies these verified dependencies after upstream's setup test;
+the upstream setup script itself is retained unchanged. The installer also needs
+`curl`, `jq`, `sha256sum` and coreutils. Run reports record external executable
+paths and SHA-256 hashes in `reports/tools.json`; this identifies the environment
+but does not certify that operator-installed tools are trustworthy.
+
+The VM smoke workflow verifies `SHA256SUMS.gpg` with Ubuntu's packaged cloud-image
+keyring before accepting the image checksum. See Ubuntu's [image verification
+instructions](https://ubuntu.com/docs/public-images/public-images-how-to/verify-image-checksum/).

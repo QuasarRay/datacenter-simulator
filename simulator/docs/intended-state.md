@@ -95,7 +95,7 @@ partitions the second host, verifies loss of reachability and restores it.
 It writes native reports and `result.json` with explicit validation scope.
 `ibsim-plan` records simulator-to-native node/port mappings. The library API
 `IbSimulation` supports arbitrary validated graphs, scoped native commands and
-live `set_link_up` calls; changes commit to the model after native acknowledgement.
+live `set_link_up` calls; changes commit to the model after native acknowledgement. `plan()` is read-only. Native mutation is encapsulated; use `start_subnet_manager`, `wait_active`, `port_status` and `shutdown` on the wrapper. Shutdown prevents further live operations.
 UMAD clients attach to the first HCA port (or switch port zero). Explicit
 shutdown reaps services; Drop kills owned process groups. No global preload is
 installed. Native execution requires Linux sockets and namespace privileges.
@@ -120,13 +120,14 @@ NetBox custom fields `simulator_gpu_profile`, `simulator_gpu_count` and
 on each of two workers. Counts exceeding the selected upstream profile fail.
 
 ```sh
+kubectl --context=YOUR_CONTEXT create namespace YOUR_NAMESPACE
 kubectl --context=YOUR_CONTEXT label node YOUR_CPU_LAB_NODE simulator.quasarray.io/mokka=true
 simulator/target/debug/datacenter-simulator mokka-render my-mokka.json new-mokka-plan
 simulator/target/debug/datacenter-simulator mokka-apply my-mokka.json new-mokka-run
 ```
 
-Apply requires an exact upstream Git revision, Ready opted-in nodes, exact
-hostname selectors and no existing advertised NVIDIA GPU capacity. It uses the
+Apply requires an existing Active namespace, an exact upstream Git revision, Ready opted-in nodes, exact
+hostname selectors and no existing advertised NVIDIA GPU capacity. Only an absent GPU key or the string `"0"` is accepted; malformed quantities fail before Helm mutates the cluster. Namespace creation/deletion belongs to the operator, so rollback cannot leave an implicitly created namespace. `tools.json` records canonical Helm/Kubectl paths and SHA-256 identities; a changed executable aborts subsequent commands. It uses the
 local upstream Helm chart with atomic/wait, checks one deployed pod per selected
 node, executes upstream `nvidia-smi`, and requires the intended GPU count.
 The caller must select CPU lab nodes; Kubernetes capacity is not proof that a
@@ -156,3 +157,17 @@ view; it does not provide database isolation or detect an edit that is reverted
 between observations. Continue to use a NetBox change window for strict snapshots.
 Mokka verifies both tracked and untracked/ignored files in the consumed chart
 before reading profiles or emitting plans. No Mokka result proves CUDA execution.
+
+NetBox `acquisition` defaults bound the **whole double observation**, including all
+chunks: 100,000 returned records, 64 MiB of response bytes, 256 HTTP requests and
+120 seconds. Each response is additionally limited to 8 MiB. Configure these
+budgets explicitly for the intended scope. Local integration configs are capped
+at 1 MiB and offline snapshot files at 64 MiB before deserialization.
+
+Offline replay validates the source API root and RFC3339 acquisition timestamp.
+The source must match the configured API root unless `replay_allow_origin_change`
+is explicitly true. That override, both roots and the timestamp are retained in
+`netbox.snapshot` labels. `snapshot_max_age_secs` optionally rejects stale input;
+it is unset by default so archived snapshots remain replayable. A timestamp over
+five minutes in the future is rejected. This metadata records provenance; it is
+not a signature on an externally supplied snapshot.

@@ -89,7 +89,8 @@ impl DeepOpsConfig {
         let parent = path
             .parent()
             .ok_or_else(|| Error::Invalid("config has no parent".into()))?;
-        let mut config: Self = serde_json::from_str(&std::fs::read_to_string(&path)?)?;
+        let mut config: Self =
+            serde_json::from_slice(&crate::input::read(&path, crate::input::CONFIG_LIMIT)?)?;
         for value in [
             &mut config.repository,
             &mut config.manifest,

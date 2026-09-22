@@ -13,27 +13,30 @@
 // language governing rights and limitations.
 
 //! Hardware gate: no mocks, skipped devices, Python, or substitute collectives.
-use anyhow::{Result, ensure};
+use anyhow::{Context, Result, ensure};
 use datacenter_simulator::{
     Simulator,
     collective::{Collective, NcclOptions, Reduction},
     linux::LinuxFabric,
     manifest::Manifest,
 };
-use std::{path::PathBuf, process::Command};
 fn main() -> Result<()> {
-    let worker = PathBuf::from(
-        std::env::args()
-            .nth(1)
-            .expect("pass the native datacenter-simulator binary"),
-    );
+    let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|a| a == "__nccl_rank") {
+        return datacenter_simulator::nccl_worker::run(&args[1..]);
+    }
+    let libraries: datacenter_simulator::evidence::NcclLibraries =
+        serde_json::from_slice(&datacenter_simulator::input::read(
+            args.first().context("pass pinned-libraries.json")?,
+            datacenter_simulator::input::CONFIG_LIMIT,
+        )?)?;
     patchbay::init_userns()?;
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?
-        .block_on(run(worker))
+        .block_on(run(libraries))
 }
-async fn run(worker: PathBuf) -> Result<()> {
+async fn run(libraries: datacenter_simulator::evidence::NcclLibraries) -> Result<()> {
     let mut api = Simulator::new();
     let id = api.import(
         Manifest::from_json(include_str!("gpu-spine-leaf.json"))?,
@@ -48,6 +51,7 @@ async fn run(worker: PathBuf) -> Result<()> {
     let options = NcclOptions {
         devices: vec![0, 1],
         timeout_secs: 60,
+        libraries: Some(libraries),
     };
     let before = serde_json::to_value(sim)?;
     let mut cases = Vec::new();
@@ -97,9 +101,7 @@ async fn run(worker: PathBuf) -> Result<()> {
         ),
     ]);
     for (request, expected) in cases {
-        let result = fabric
-            .collective(&ranks, &request, &options, &worker)
-            .await?;
+        let result = fabric.collective(&ranks, &request, &options).await?;
         ensure!(
             result.backend == "nccl" && result.transport == "Socket",
             "wrong execution backend"
@@ -126,7 +128,6 @@ async fn run(worker: PathBuf) -> Result<()> {
                 devices: vec![0],
                 ..options.clone()
             },
-            &worker,
         )
         .await?;
     ensure!(result.outputs == vec![vec![9.0]], "single-rank NCCL failed");
@@ -147,56 +148,29 @@ async fn run(worker: PathBuf) -> Result<()> {
                 &request,
                 &NcclOptions {
                     devices: vec![0, i32::MAX],
-                    timeout_secs: 15
+                    timeout_secs: 15,
+                    ..options.clone()
                 },
-                &worker
             )
             .await
             .is_err(),
         "missing GPU was accepted"
     );
-    // Cut only the real kernel link, keeping admission's graph connected. NCCL
-    // must encounter the network partition and terminate under its supervisor deadline.
-    let dev = fabric.device(&ranks[0])?;
-    dev.run_sync(|| {
-        ensure!(
-            Command::new("ip")
-                .args(["link", "set", "eth1", "down"])
-                .status()?
-                .success(),
-            "cut link failed"
-        );
-        Ok(())
-    })?;
-    let error = fabric
-        .collective(
-            &ranks,
-            &request,
-            &NcclOptions {
-                timeout_secs: 5,
-                ..options.clone()
-            },
-            &worker,
-        )
-        .await;
-    ensure!(error.is_err(), "NCCL bypassed the partitioned fabric");
-    dev.run_sync(|| {
-        ensure!(
-            Command::new("ip")
-                .args(["link", "set", "eth1", "up"])
-                .status()?
-                .success(),
-            "restore link failed"
-        );
-        Ok(())
-    })?;
-    let recovered = fabric
-        .collective(&ranks, &request, &options, &worker)
-        .await?;
+    // Raw namespace access permanently invalidates this fabric's guarantees.
+    let mut fabric = fabric;
+    let _ = fabric.raw_device(&ranks[0])?;
+    ensure!(
+        fabric.collective(&ranks, &request, &options).await.is_err(),
+        "raw namespace access did not invalidate native evidence"
+    );
+    let fabric = LinuxFabric::build(sim).await?;
+    let recovered = fabric.collective(&ranks, &request, &options).await?;
     ensure!(
         recovered.outputs == vec![vec![2.0; 1024]; 2],
         "NCCL did not recover after worker cleanup"
     );
-    println!("PASS: native NCCL operations, missing-device error, network partition and recovery");
+    println!(
+        "PASS: native NCCL operations, missing-device error, raw-access rejection and fresh-fabric recovery"
+    );
     Ok(())
 }

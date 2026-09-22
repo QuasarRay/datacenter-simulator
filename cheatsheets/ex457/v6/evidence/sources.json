@@ -461,5 +461,15 @@
     "version": "current official documentation; inspect installed daemon",
     "retrieved_on": "2026-09-13",
     "review_note": "Docker manages bridge firewall rules; iptables and nftables backends have different forwarding behavior, and UFW alone does not describe all container traffic filtering."
+  },
+  "PYLIBSSH-SRC": {
+    "title": "Pinned pylibssh session implementation",
+    "url": "https://github.com/ansible/pylibssh/blob/v1.2.2/src/pylibsshext/session.pyx",
+    "locator": "OPTS_MAP knownhosts; Session.connect keyword filtering",
+    "authority": "Official upstream Ansible source",
+    "version": "v1.2.2",
+    "retrieved_on": "2026-09-22",
+    "method": "Pinned source review during 4121cb83 audit remediation; actual network acceptance remains a runtime gate.",
+    "review_note": "knownhosts maps to SSH_OPTIONS_KNOWNHOSTS; config_file is not a supported option in this binding."
   }
 }

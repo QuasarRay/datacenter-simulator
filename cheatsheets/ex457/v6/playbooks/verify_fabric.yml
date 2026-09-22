@@ -16,5 +16,5 @@
         - name: Run exact control-plane checks
           ansible.builtin.import_tasks: tasks/verify.yml
       always:
-        - name: Clean temporary trust configuration
+        - name: Close the session using scoped trust
           ansible.builtin.include_tasks: tasks/cleanup_trust.yml

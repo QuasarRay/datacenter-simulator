@@ -5,7 +5,7 @@ Generated from audit-closure.json. See audit-history.md for all available audit 
 | ID | Severity | Finding | Disposition | Change | Evidence |
 |---|---|---|---|---|---|
 | V4-001 | CRITICAL | Alpine `ansible` account is created but never unlocked | RUNTIME_GATED | Unlock account, enforce public-key-only sshd policy | tests/pyats_live.py::Transport |
-| V4-002 | CRITICAL | Lab `known_hosts` is wired through OpenSSH args that do not define `network_cli` trust | RUNTIME_GATED | Pin libssh and pass its supported config_file with explicit trust | tests/test_automation.py::test_real_ansible_trust_bootstrap, tests/pyats_live.py::Transport |
+| V4-002 | CRITICAL | Lab `known_hosts` is wired through OpenSSH args that do not define `network_cli` trust | RUNTIME_GATED | Pin libssh; hash-check a dependency patch wiring explicit trust to the supported knownhosts argument | tests/test_automation.py::test_real_ansible_trust_bootstrap, tests/pyats_live.py::Transport |
 | V4-003 | CRITICAL | `remote_nodes` is undefined in the shipped verifier | RUNTIME_GATED | Derive remote_nodes in shared model before route includes | tests/pyats_live.py::Convergence, tests/test_properties.py::test_generated_model_oracle |
 | V4-004 | CRITICAL | `0% packet loss` substring test also matches `100% packet loss` | CLOSED_REGRESSION | Parse complete ping counts/loss numerically, reject total and fractional loss | tests/test_properties.py::test_ping_truth_table |
 | V4-005 | HIGH | Inventory points at `examples/lab/known_hosts`, while setup creates root `lab/known_hosts` | CLOSED_REGRESSION | One pack root and explicit trust path | tests/test_automation.py::test_real_ansible_trust_bootstrap |

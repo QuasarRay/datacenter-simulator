@@ -13,7 +13,6 @@
 // language governing rights and limitations.
 
 use datacenter_simulator::{Simulator, linux::LinuxFabric, manifest::Manifest};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 fn main() -> anyhow::Result<()> {
     patchbay::init_userns()?;
     tokio::runtime::Builder::new_current_thread()
@@ -33,32 +32,25 @@ async fn run() -> anyhow::Result<()> {
     let first = sim.route(&a, &b, 0)?[0].clone();
     let mut linux = LinuxFabric::build(sim).await?;
     linux.ping(&a, &b).await?;
-    let target = linux.address(&b)?;
-    // Bind first, then signal readiness across namespaces without timing sleeps.
-    let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
-    let server = linux.device(&b)?.spawn(move |_| async move {
-        let listener = tokio::net::TcpListener::bind((target, 19000)).await?;
-        ready_tx
-            .send(())
-            .map_err(|_| anyhow::anyhow!("client disappeared"))?;
-        let (mut socket, _) = listener.accept().await?;
-        let mut payload = [0u8; 17];
-        socket.read_exact(&mut payload).await?;
-        anyhow::ensure!(&payload == b"GPU-FABRIC-TEST!!", "payload mismatch");
-        anyhow::Ok(())
-    })?;
-    ready_rx.await?;
-    let client = linux.device(&a)?.spawn(move |_| async move {
-        let mut socket = tokio::net::TcpStream::connect((target, 19000)).await?;
-        socket.write_all(b"GPU-FABRIC-TEST!!").await?;
-        anyhow::Ok(())
-    })?;
-    tokio::time::timeout(std::time::Duration::from_secs(10), async {
-        client.await??;
-        server.await??;
-        anyhow::Ok(())
-    })
-    .await??;
+    anyhow::ensure!(
+        linux
+            .tcp_transfer(&a, &b, b"GPU-FABRIC-TEST!!".to_vec())
+            .await?
+            == b"GPU-FABRIC-TEST!!",
+        "TCP payload mismatch"
+    );
+    let mut conditions = linux.model().links().find(|l| l.id == first).unwrap().spec;
+    conditions.bandwidth_bps = 1_000_000_000;
+    conditions.latency_ns = 100_000;
+    linux.set_link_spec(&first, conditions).await?;
+    anyhow::ensure!(
+        linux.model().links().find(|l| l.id == first).unwrap().spec == conditions,
+        "live link model did not commit"
+    );
+    anyhow::ensure!(
+        linux.tcp_transfer(&a, &b, vec![42; 8192]).await? == vec![42; 8192],
+        "TCP payload after live rate/delay update"
+    );
     linux.set_link_up(&first, false).await?;
     anyhow::ensure!(
         linux.ping(&a, &b).await.is_err(),
@@ -66,6 +58,11 @@ async fn run() -> anyhow::Result<()> {
     );
     linux.set_link_up(&first, true).await?;
     linux.ping(&a, &b).await?;
+    let _ = linux.raw_device(&a)?;
+    anyhow::ensure!(
+        linux.ping(&a, &b).await.is_err(),
+        "raw access did not invalidate synchronization"
+    );
     println!("PASS: real TCP payload, isolated partition, and link recovery");
     Ok(())
 }

@@ -25,7 +25,7 @@ def outputs():
     for c in claims:
         refs='<br>'.join(f'[{i}]({sources[i]["url"]}) — {cell(sources[i]["locator"])}' for i in c['sources'])
         matrix.append(f"| {c['id']} | [Section](../{c['section']}) | {cell(c['claim'])} | {refs} |")
-    index=['# Source review record','','Retrieval date: 2026-09-13. Short notes/excerpts below were recorded during source review. They are not full-page snapshots. Source semantics and runtime behavior are different forms of evidence. Product links that redirected to unrelated landing pages were not used as substantive claim support.', '']
+    index=['# Source review record','','Initial retrieval date: 2026-09-13; the pylibssh binding addendum was reviewed 2026-09-22. Short notes/excerpts below were recorded during source review. They are not full-page snapshots. Source semantics and runtime behavior are different forms of evidence. Product links that redirected to unrelated landing pages were not used as substantive claim support.', '']
     for i,s in sources.items():
         index += [f'## {i}', '',f"[{s['title']}]({s['url']})",'',f"Authority: {s['authority']}. Version/scope: {s['version']}.", '',f"Locator: {s['locator']}.", '', 'Review note: '+s.get('review_note',s.get('excerpt','')), '']
     closure=json.loads((ROOT/'evidence/audit-closure.json').read_text())

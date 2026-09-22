@@ -31,7 +31,7 @@ use std::{
 use tokio::process::{Child, Command};
 
 pub(crate) fn checked(program: &str, args: &[&str]) -> Result<String> {
-    let output = std::process::Command::new(program)
+    let output = std::process::Command::new(crate::evidence::resolve(program)?)
         .args(args)
         .output()
         .with_context(|| format!("start {program}"))?;
@@ -221,12 +221,43 @@ impl LinuxFabric {
 }
 
 /// Kill command descendants as well as their parent when a stage times out.
-pub(crate) struct ProcessGroup(pub u32);
+pub(crate) struct ProcessGroup(Option<u32>);
+impl ProcessGroup {
+    pub(crate) fn new(child: &tokio::process::Child) -> Result<Self> {
+        Ok(Self(Some(child.id().context("process has no PID")?)))
+    }
+    fn disarm(&mut self) {
+        self.0 = None;
+    }
+    pub(crate) async fn wait(
+        &mut self,
+        child: &mut tokio::process::Child,
+    ) -> std::io::Result<std::process::ExitStatus> {
+        let result = child.wait().await;
+        // No fallible work or suspension is allowed between reap and disarm.
+        if result.is_ok() || child.id().is_none() {
+            self.disarm();
+        }
+        result
+    }
+    pub(crate) fn try_wait(
+        &mut self,
+        child: &mut tokio::process::Child,
+    ) -> std::io::Result<Option<std::process::ExitStatus>> {
+        let result = child.try_wait();
+        if matches!(result, Ok(Some(_))) || child.id().is_none() {
+            self.disarm();
+        }
+        result
+    }
+}
 impl Drop for ProcessGroup {
     fn drop(&mut self) {
         // The ID belongs to a child we started with process_group(0).
-        unsafe {
-            libc::kill(-(self.0 as i32), libc::SIGKILL);
+        if let Some(pid) = self.0 {
+            unsafe {
+                libc::kill(-(pid as i32), libc::SIGKILL);
+            }
         }
     }
 }
@@ -524,12 +555,36 @@ impl VmLab {
             .stderr(Stdio::piped())
             .stdin(Stdio::null());
         cmd.process_group(0);
-        let child = self
+        let mut child = self
             .fabric
             .device(&self.plan.provisioner_id)?
             .spawn_command(cmd)?;
-        let _group = ProcessGroup(child.id().context("SSH process has no PID")?);
-        Ok(tokio::time::timeout(duration, child.wait_with_output()).await??)
+        let mut group = ProcessGroup::new(&child)?;
+        let stdout = child.stdout.take().context("SSH stdout")?;
+        let stderr = child.stderr.take().context("SSH stderr")?;
+        async fn read(mut stream: impl tokio::io::AsyncRead + Unpin) -> Result<Vec<u8>> {
+            use tokio::io::AsyncReadExt;
+            let mut bytes = Vec::new();
+            (&mut stream)
+                .take(1024 * 1024 + 1)
+                .read_to_end(&mut bytes)
+                .await?;
+            ensure!(bytes.len() <= 1024 * 1024, "SSH output exceeds 1 MiB");
+            Ok(bytes)
+        }
+        let run = async {
+            let (status, stdout, stderr) = tokio::try_join!(
+                async { Ok::<_, anyhow::Error>(group.wait(&mut child).await?) },
+                read(stdout),
+                read(stderr)
+            )?;
+            Ok::<_, anyhow::Error>(std::process::Output {
+                status,
+                stdout,
+                stderr,
+            })
+        };
+        tokio::time::timeout(duration, run).await?
     }
     pub async fn shutdown(&mut self) {
         for child in &mut self.children {
@@ -607,5 +662,32 @@ impl VmLab {
         Ok(
             json!({"ok":true,"scope":"vm-plumbing-only","guests":self.plan.guests,"isolated_filesystems":true,"fabric_ping":true,"partition_blocked":true,"recovery":true,"gpu_tests_run":false}),
         )
+    }
+}
+
+#[cfg(test)]
+mod supervision_tests {
+    use super::*;
+    #[tokio::test(flavor = "current_thread")]
+    async fn reaping_disarms_group_before_guard_can_drop() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "exit 0"]).process_group(0);
+        let mut child = command.spawn().unwrap();
+        let mut guard = ProcessGroup::new(&child).unwrap();
+        assert!(guard.wait(&mut child).await.unwrap().success());
+        assert!(guard.0.is_none());
+        drop(guard);
+        let mut command = Command::new("sh");
+        command.args(["-c", "exec sleep 30"]).process_group(0);
+        let mut child = command.spawn().unwrap();
+        let guard = ProcessGroup::new(&child).unwrap();
+        drop(guard);
+        assert!(
+            !tokio::time::timeout(Duration::from_secs(3), child.wait())
+                .await
+                .unwrap()
+                .unwrap()
+                .success()
+        );
     }
 }

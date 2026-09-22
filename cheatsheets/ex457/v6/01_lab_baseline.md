@@ -9,6 +9,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 ansible-galaxy collection install -r requirements.yml -p collections
+python tools/patch_libssh.py collections
 export ANSIBLE_COLLECTIONS_PATH="$PWD/collections"
 ansible-inventory --graph
 ```
@@ -44,7 +45,7 @@ The Dockerfile uses Alpine `passwd -d ansible` to remove the lock, while sshd di
 
 ## Backend trust
 
-The network playbooks select **libssh**, set host-key checking explicitly, and create a temporary SSH config through `ansible_libssh_config_file`. That config points `UserKnownHostsFile` to the verified public trust file. Default local trust is `.state/known_hosts`; Controller supplies an absolute path in `EX457_KNOWN_HOSTS` through a custom credential.
+The network playbooks select **libssh**, enable host-key checking, and pass the verified trust file as `ansible_libssh_known_hosts`. The source-hash-checked `tools/patch_libssh.py` maps this option to the pinned pylibssh binding's supported `knownhosts` argument. Its `config_file` argument is silently ignored in version 1.2.2, so it cannot carry trust. Apply the patch after collection installation; EE and CI setup do this automatically. Default local trust is `.state/known_hosts`; Controller supplies an absolute path in `EX457_KNOWN_HOSTS` through a custom credential.
 
 Manual OpenSSH login and `network_cli` are separate smoke tests. No OpenSSH common-args setting is used as evidence of network_cli trust. A missing trust file fails before connection. Test that a deliberately wrong server key is rejected. Temporary backend config is removed after resetting the persistent connection.
 

@@ -37,5 +37,10 @@ jobs:
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/simulator/vendor/nccl/build/lib
         run: |
-          timeout 240 ./target/debug/examples/nccl_runtime "$PWD/target/debug/datacenter-simulator"
-          timeout 90 ./target/debug/datacenter-simulator run examples/gpu-spine-leaf.json --devices 0,1
+          nccl=$(readlink -f "$LD_LIBRARY_PATH/libnccl.so.2")
+          cuda=$(ldconfig -p | awk '/libcuda.so.1 .*x86-64/ {print $NF; exit}')
+          cuda=$(readlink -f "$cuda")
+          test -f "$nccl" && test -f "$cuda"
+          jq -n --arg nccl "$nccl" --arg cuda "$cuda" --arg nccl_sha "$(sha256sum "$nccl" | cut -d ' ' -f1)" --arg cuda_sha "$(sha256sum "$cuda" | cut -d ' ' -f1)" '{nccl:{path:$nccl,sha256:$nccl_sha},cuda:{path:$cuda,sha256:$cuda_sha}}' > /tmp/nccl-libraries.json
+          timeout 240 ./target/debug/examples/nccl_runtime /tmp/nccl-libraries.json
+          timeout 90 ./target/debug/datacenter-simulator run examples/gpu-spine-leaf.json --devices 0,1 --libraries /tmp/nccl-libraries.json

@@ -134,7 +134,9 @@ jobs:
           digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image")
           jq --arg image "$image@${digest##*@}" '.image=$image' integrations/k8s-test-infra/config.example.json > integrations/k8s-test-infra/config.ci.json
       - name: Apply GPU intent and verify real upstream NVML consumers
-        run: simulator/target/debug/datacenter-simulator mokka-apply integrations/k8s-test-infra/config.ci.json /tmp/mokka-evidence
+        run: |
+          kubectl --context=kind-simulator create namespace simulator-gpus
+          simulator/target/debug/datacenter-simulator mokka-apply integrations/k8s-test-infra/config.ci.json /tmp/mokka-evidence
       - name: Record cluster diagnostics
         if: always()
         run: |

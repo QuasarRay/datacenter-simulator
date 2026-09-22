@@ -70,7 +70,8 @@ fn dns(name: &str) -> bool {
 }
 impl MokkaConfig {
     pub fn read(path: &Path) -> Result<Self> {
-        let mut config: Self = serde_json::from_slice(&fs::read(path)?)?;
+        let mut config: Self =
+            serde_json::from_slice(&crate::input::read(path, crate::input::CONFIG_LIMIT)?)?;
         let base = path.parent().unwrap_or(Path::new("."));
         if config.manifest.is_relative() {
             config.manifest = base.join(&config.manifest);
@@ -249,6 +250,20 @@ impl Drop for Process {
     }
 }
 fn execute(mut cmd: Command, directory: &Path, label: &str, seconds: u64) -> Result<Vec<u8>> {
+    let program = Path::new(cmd.get_program());
+    let resolved = crate::evidence::resolve(program)?;
+    let identity = crate::evidence::FileIdentity::read(&resolved)?;
+    let identities: BTreeMap<String, crate::evidence::FileIdentity> = serde_json::from_slice(
+        &crate::input::read(directory.join("tools.json"), crate::input::CONFIG_LIMIT)?,
+    )?;
+    ensure!(
+        identities.values().any(|expected| *expected == identity),
+        "external tool identity changed"
+    );
+    // Rebuild using the recorded absolute executable path, preserving arguments.
+    let mut pinned = Command::new(&resolved);
+    pinned.args(cmd.get_args());
+    cmd = pinned;
     let stdout = directory.join(format!("{label}.stdout.log"));
     let stderr = directory.join(format!("{label}.stderr.log"));
     let (out_pipe, out_done) = crate::bounded_log::capture(&stdout)?;
@@ -307,6 +322,22 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
         "mokka-apply requires a source tag plus @sha256: OCI digest; a mutable tag is not provenance"
     );
     let plan = render(config, directory)?;
+    let identities = crate::evidence::tools(&[Path::new("kubectl"), Path::new("helm")])?;
+    fs::write(
+        directory.join("tools.json"),
+        serde_json::to_vec_pretty(&identities)?,
+    )?;
+    // Namespace lifecycle belongs to the operator. Never create it implicitly:
+    // a Helm rollback cannot prove a namespace contains only this run's objects.
+    let mut namespace = kubectl(config);
+    namespace.args(["get", "namespace", &config.namespace, "-o", "json"]);
+    let namespace: Value =
+        serde_json::from_slice(&execute(namespace, directory, "namespace", 30)?)?;
+    ensure!(
+        namespace["metadata"]["name"] == config.namespace
+            && namespace["status"]["phase"] == "Active",
+        "Mokka requires an existing Active namespace"
+    );
     // Validate all target nodes before the first Helm mutation.
     for (index, release) in plan.releases.iter().enumerate() {
         let mut get = kubectl(config);
@@ -332,9 +363,7 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             "Kubernetes node is not Ready"
         );
         ensure!(
-            node["status"]["capacity"]["nvidia.com/gpu"]
-                .as_str()
-                .is_none_or(|v| v == "0"),
+            has_no_gpu_capacity(&node),
             "refusing to overlay a node already advertising GPUs"
         );
     }
@@ -376,7 +405,6 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             .args([
                 "--namespace",
                 &config.namespace,
-                "--create-namespace",
                 "--wait",
                 "--atomic",
                 "--timeout",
@@ -565,5 +593,41 @@ impl Drop for Batch<'_> {
         if let Err(e) = self.record(status, &errors) {
             eprintln!("Mokka cleanup evidence: {e:#}");
         }
+    }
+}
+
+fn has_no_gpu_capacity(node: &Value) -> bool {
+    node["status"]["capacity"]
+        .as_object()
+        .is_some_and(|capacity| match capacity.get("nvidia.com/gpu") {
+            None => true,
+            Some(Value::String(quantity)) => quantity == "0",
+            Some(_) => false,
+        })
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn gpu_capacity_fails_closed_on_wrong_types() {
+        assert!(has_no_gpu_capacity(&json!({"status":{"capacity":{}}})));
+        assert!(has_no_gpu_capacity(
+            &json!({"status":{"capacity":{"nvidia.com/gpu":"0"}}})
+        ));
+        for value in [
+            json!(8),
+            json!(0),
+            json!(null),
+            json!(true),
+            json!({}),
+            json!([]),
+            json!("1"),
+            json!("unknown"),
+        ] {
+            assert!(!has_no_gpu_capacity(
+                &json!({"status":{"capacity":{"nvidia.com/gpu":value}}})
+            ));
+        }
+        assert!(!has_no_gpu_capacity(&json!({})));
     }
 }

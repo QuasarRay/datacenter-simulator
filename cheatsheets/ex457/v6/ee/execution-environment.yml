@@ -8,3 +8,10 @@ dependencies:
   python: requirements.txt
 options:
   package_manager_path: /usr/bin/microdnf
+additional_build_files:
+  - src: ../tools/patch_libssh.py
+    dest: patches
+additional_build_steps:
+  append_galaxy:
+    - COPY _build/patches/patch_libssh.py /tmp/patch_libssh.py
+    - RUN $PYCMD /tmp/patch_libssh.py /usr/share/ansible/collections

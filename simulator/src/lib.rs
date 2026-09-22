@@ -25,9 +25,12 @@ mod cuda;
 pub mod deepops;
 #[cfg(feature = "vm")]
 pub mod deepops_runtime;
+pub mod evidence;
 pub mod fabric;
 #[cfg(feature = "ibsim")]
 pub mod infiniband;
+pub mod input;
+pub mod limits;
 #[cfg(feature = "linux")]
 pub mod linux;
 pub mod manifest;

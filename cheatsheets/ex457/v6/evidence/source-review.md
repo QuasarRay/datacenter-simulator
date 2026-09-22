@@ -1,6 +1,6 @@
 # Source review record
 
-Retrieval date: 2026-09-13. Short notes/excerpts below were recorded during source review. They are not full-page snapshots. Source semantics and runtime behavior are different forms of evidence. Product links that redirected to unrelated landing pages were not used as substantive claim support.
+Initial retrieval date: 2026-09-13; the pylibssh binding addendum was reviewed 2026-09-22. Short notes/excerpts below were recorded during source review. They are not full-page snapshots. Source semantics and runtime behavior are different forms of evidence. Product links that redirected to unrelated landing pages were not used as substantive claim support.
 
 ## EXAM
 
@@ -471,4 +471,14 @@ Authority: Docker maintainers. Version/scope: current official documentation; in
 Locator: Firewall backend; Docker on a router; Docker and ufw.
 
 Review note: Docker manages bridge firewall rules; iptables and nftables backends have different forwarding behavior, and UFW alone does not describe all container traffic filtering.
+
+## PYLIBSSH-SRC
+
+[Pinned pylibssh session implementation](https://github.com/ansible/pylibssh/blob/v1.2.2/src/pylibsshext/session.pyx)
+
+Authority: Official upstream Ansible source. Version/scope: v1.2.2.
+
+Locator: OPTS_MAP knownhosts; Session.connect keyword filtering.
+
+Review note: knownhosts maps to SSH_OPTIONS_KNOWNHOSTS; config_file is not a supported option in this binding.
 
