@@ -22,6 +22,68 @@ use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|s| s.starts_with("netbox-")) {
+        #[cfg(feature = "netbox")]
+        {
+            use datacenter_simulator::netbox::{self, NetBoxConfig, Snapshot};
+            if args.len() != 3 {
+                return Err("usage: netbox-import config.json NEW_DIR | netbox-compile config.json snapshot.json".into());
+            }
+            let config: NetBoxConfig = serde_json::from_slice(&std::fs::read(&args[1])?)?;
+            match args[0].as_str() {
+                "netbox-import" => netbox::import(&config, std::path::Path::new(&args[2]))?,
+                "netbox-compile" => {
+                    let snapshot: Snapshot = serde_json::from_slice(&std::fs::read(&args[2])?)?;
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&netbox::compile(&config, &snapshot)?)?
+                    );
+                }
+                _ => return Err("unknown NetBox command".into()),
+            }
+            return Ok(());
+        }
+        #[cfg(not(feature = "netbox"))]
+        return Err("NetBox integration requires --features netbox".into());
+    }
+    if args.first().is_some_and(|s| s.starts_with("mokka-")) {
+        #[cfg(feature = "mokka")]
+        {
+            use datacenter_simulator::mokka::{self, MokkaConfig};
+            if args.len() < 2 {
+                return Err("expected a Mokka config path".into());
+            }
+            let config = MokkaConfig::read(std::path::Path::new(&args[1]))?;
+            match args[0].as_str() {
+                "mokka-plan" if args.len()==2=>println!("{}",serde_json::to_string_pretty(&config.plan()?)?),
+                "mokka-render" if args.len()==3=>{ mokka::render(&config,std::path::Path::new(&args[2]))?; },
+                "mokka-apply" if args.len()==3=>mokka::apply(&config,std::path::Path::new(&args[2]))?,
+                _=>return Err("usage: mokka-plan config.json | mokka-render config.json NEW_DIR | mokka-apply config.json NEW_DIR".into()),
+            }
+            return Ok(());
+        }
+        #[cfg(not(feature = "mokka"))]
+        return Err("Mokka integration requires --features mokka".into());
+    }
+    if args.first().map(String::as_str) == Some("ibsim-plan") {
+        #[cfg(feature = "ibsim")]
+        {
+            if args.len() != 2 {
+                return Err("usage: ibsim-plan manifest.json".into());
+            }
+            let mut api = Simulator::new();
+            let id = api.import(Manifest::read(&args[1])?, false)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(
+                    &datacenter_simulator::infiniband::topology(api.get(&id)?)?.1
+                )?
+            );
+            return Ok(());
+        }
+        #[cfg(not(feature = "ibsim"))]
+        return Err("InfiniBand integration requires --features ibsim".into());
+    }
     if args.first().is_some_and(|arg| {
         matches!(
             arg.as_str(),

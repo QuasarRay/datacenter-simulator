@@ -87,3 +87,13 @@ supervises the pinned NVIDIA DeepOps deployment and native MPI nccl-tests.
 See [the DeepOps integration guide](../integrations/deepops/README.md) for
 hardware requirements, configuration, report validation, and the separate
 CPU VM smoke and GPU deployment workflows. No Rust–Python FFI is introduced.
+
+## NetBox intended state, native InfiniBand and Kubernetes
+
+The `netbox` feature imports a read-only NetBox REST snapshot into the simulator
+manifest. The `ibsim` feature runs that physical graph through patchbay's native
+ibsim/OpenSM backend, including cable faults and recovery. The `mokka` feature
+deploys the pinned NVIDIA/k8s-test-infra chart on explicitly selected CPU lab
+nodes for GPU metadata and Kubernetes contracts, with its IB mocks disabled.
+See [setup, scope and validation](docs/intended-state.md). These integrations do
+not substitute for real NCCL or verbs payload execution.

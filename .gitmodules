@@ -16,3 +16,6 @@
 [submodule "simulator/vendor/nccl-tests"]
 	path = simulator/vendor/nccl-tests
 	url = https://github.com/NVIDIA/nccl-tests.git
+[submodule "integrations/k8s-test-infra/upstream"]
+	path = integrations/k8s-test-infra/upstream
+	url = https://github.com/NVIDIA/k8s-test-infra.git

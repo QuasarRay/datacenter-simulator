@@ -16,13 +16,19 @@
     },
     "patchbay": {
       "repository": "https://github.com/QuasarRay/patchbay",
-      "revision": "4ccaa15398b692715d8d4325c3497ce5de700ebb",
+      "revision": "9b637fc522fa5c70a83c105e45ac23f38e6e0325",
       "path": "vendor/patchbay"
     },
     "petgraph": {
       "repository": "https://github.com/QuasarRay/petgraph",
       "revision": "a4d94bd2c39ac198c22682b2dcb1ff21583d0db0",
       "path": "vendor/petgraph"
+    },
+    "ibsim": {
+      "repository": "https://github.com/QuasarRay/ibsim",
+      "revision": "40b05c98add7949dba01d128f15771a5efcfee43",
+      "path": "vendor/patchbay/vendor/ibsim",
+      "scope": "InfiniBand management MADs, not verbs payloads"
     }
   },
   "integration": {
@@ -35,6 +41,18 @@
       "repository": "https://github.com/NVIDIA/nccl-tests",
       "revision": "b4d5beebca8a76cf01335f724d154b9b9d394d96",
       "path": "vendor/nccl-tests"
+    },
+    "netbox": {
+      "repository": "https://github.com/netbox-community/netbox.git",
+      "revision": "dbec965a5186a40971312c9331dfb9db46cc9183",
+      "transport": "read-only REST API",
+      "ci_image": "netboxcommunity/netbox:v4.7-5.1.1"
+    },
+    "k8s-test-infra": {
+      "repository": "https://github.com/NVIDIA/k8s-test-infra.git",
+      "revision": "4a44f73b41abc041f93d9b745677fa3210f65a84",
+      "path": "../integrations/k8s-test-infra/upstream",
+      "scope": "Mokka Kubernetes GPU contracts; IB mocks disabled"
     }
   }
 }

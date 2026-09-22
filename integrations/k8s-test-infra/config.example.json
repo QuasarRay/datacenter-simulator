@@ -1,0 +1,7 @@
+{
+  "manifest": "../netbox/manifest.example.json",
+  "upstream": "upstream",
+  "context": "kind-simulator",
+  "namespace": "simulator-gpus",
+  "image": "nvml-mock:simulator-4a44f73b41ab"
+}
