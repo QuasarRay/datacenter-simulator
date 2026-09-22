@@ -82,8 +82,12 @@ source, then run the imported graph:
 ```sh
 make -C simulator/vendor/patchbay/vendor/ibsim/ibsim
 make -C simulator/vendor/patchbay/vendor/ibsim/umad2sim
-sudo simulator/target/debug/examples/ibsim_fabric new-intent/manifest.json new-ib-run
+simulator/target/debug/examples/ibsim_fabric new-intent/manifest.json new-ib-run
 ```
+
+Run as the checkout owner on a host that permits unprivileged user/network
+namespaces. The example creates its own user namespace; using sudo can make a
+private checkout inaccessible after the UID mapping changes.
 
 The example requires at least two connected host HCAs. It starts a dedicated
 patchbay namespace, launches OpenSM, checks actual native discovery and routes,

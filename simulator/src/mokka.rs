@@ -164,6 +164,13 @@ impl MokkaConfig {
                 binding.gpu_count > 0 && binding.gpu_count <= available,
                 "GPU count exceeds the upstream profile; Mokka would silently cap it"
             );
+            // The agent reads GPU_COUNT, but exec'd NVML consumers read the
+            // ConfigMap directly. Set the upstream engine's count in both.
+            ensure!(
+                profile["system"].is_object(),
+                "upstream profile has no system configuration"
+            );
+            profile["system"]["num_devices"] = json!(binding.gpu_count);
             // ibsim is the only IB management backend in this integration. Do not
             // enable Mokka's independent fake IB/verbs fabric alongside it.
             profile["infiniband"] = json!({"enabled":false});
@@ -377,7 +384,10 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
         let lines: Vec<_> = inventory.lines().filter(|l| !l.trim().is_empty()).collect();
         ensure!(
             lines.len() == release.expected_gpus && lines.iter().all(|l| l.starts_with("GPU-")),
-            "observed mock GPU inventory differs from intended state"
+            "observed mock GPU inventory differs from intended state: expected {}, observed {}; inspect {}",
+            release.expected_gpus,
+            lines.len(),
+            directory.join(format!("nvml-{index}.stdout.log")).display()
         );
         observations.push(json!({"node":release.kubernetes_node,"gpu_inventory":lines}));
     }

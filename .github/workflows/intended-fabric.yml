@@ -44,6 +44,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libibmad-dev libibumad-dev opensm infiniband-diags nftables iproute2
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           rustup toolchain install 1.98.0 --profile minimal
           make -C simulator/vendor/patchbay/vendor/ibsim/ibsim
           make -C simulator/vendor/patchbay/vendor/ibsim/umad2sim
@@ -58,7 +59,7 @@ jobs:
           jq -e '.content.nodes | length == 3' /tmp/netbox-intent/manifest.json
           jq -e '.content.links | length == 2 and all(.condition.up)' /tmp/netbox-intent/manifest.json
       - name: Require real OpenSM discovery, partition and recovery on the imported graph
-        run: sudo timeout 180 simulator/target/debug/examples/ibsim_fabric /tmp/netbox-intent/manifest.json /tmp/ibsim-evidence
+        run: timeout 180 simulator/target/debug/examples/ibsim_fabric /tmp/netbox-intent/manifest.json /tmp/ibsim-evidence
       - name: Preserve native evidence and NetBox service logs
         if: always()
         run: |

@@ -137,6 +137,7 @@ fn kubernetes_intent_uses_pinned_gpu_profiles_with_ib_mocks_off() {
         let profile: serde_json::Value =
             serde_json::from_str(release.values["gpu"]["customConfig"].as_str().unwrap()).unwrap();
         assert_eq!(profile["infiniband"]["enabled"], false);
+        assert_eq!(profile["system"]["num_devices"], release.expected_gpus);
     }
     config.nodes.insert(
         "nb1".into(),
