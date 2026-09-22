@@ -25,11 +25,44 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Initialize simulator Rust submodules
+        run: |
+          git submodule update --init --recursive \
+            simulator/vendor/nccl \
+            simulator/vendor/patchbay \
+            simulator/vendor/petgraph \
+            simulator/vendor/rust-ibverbs
       - name: Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
       - name: Test the Rust OpenAPI to protobuf generator
         run: cargo +1.98.0 test --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+      - name: Generate and compile the full current NetBox contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          schema="${RUNNER_TEMP}/netbox-openapi.json"
+          out="${RUNNER_TEMP}/netbox-proto"
+          curl --fail --location --retry 3 --retry-all-errors \
+            "https://raw.githubusercontent.com/netbox-community/netbox/main/contrib/openapi.json" \
+            --output "${schema}"
+          cargo +1.98.0 run --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto -- \
+            --input "${schema}" \
+            --output-dir "${out}" \
+            --package netbox.v1
+          cargo +1.98.0 run --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto -- \
+            --input "${schema}" \
+            --output-dir "${out}" \
+            --package netbox.v1 \
+            --check
+          protoc \
+            --proto_path="${out}" \
+            --proto_path=/usr/include \
+            --descriptor_set_out="${RUNNER_TEMP}/netbox.pb" \
+            "${out}"/*.proto
 
   refresh:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -45,10 +78,22 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-          submodules: recursive
+
+      - name: Initialize simulator Rust submodules
+        run: |
+          git submodule update --init --recursive \
+            simulator/vendor/nccl \
+            simulator/vendor/patchbay \
+            simulator/vendor/petgraph \
+            simulator/vendor/rust-ibverbs
 
       - name: Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
+
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
 
       - name: Download NetBox's committed machine-readable OpenAPI schema
         shell: bash
@@ -76,6 +121,16 @@ jobs:
             --input "${RUNNER_TEMP}/netbox-openapi.json" \
             --output-dir simulator/proto/netbox \
             --package netbox.v1
+
+      - name: Compile generated protobuf contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          protoc \
+            --proto_path=simulator/proto/netbox \
+            --proto_path=/usr/include \
+            --descriptor_set_out="${RUNNER_TEMP}/netbox.pb" \
+            simulator/proto/netbox/*.proto
 
       - name: Detect generated changes
         id: changes
