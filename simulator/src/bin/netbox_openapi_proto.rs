@@ -270,10 +270,7 @@ fn emit_component_schema(
         if field_type.lossy {
             out.push_str("  // Complex OpenAPI item shape represented as JSON.\n");
         }
-        out.push_str(&format!(
-            "  repeated {} items = {number};\n",
-            field_type.ty
-        ));
+        out.push_str(&format!("  repeated {} items = {number};\n", field_type.ty));
         out.push_str("}\n");
         return Ok(());
     }
