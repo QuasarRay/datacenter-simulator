@@ -69,6 +69,12 @@ Services are grouped by the first path segment after `/api/`. For example:
 
 The generated RPC comment retains the original HTTP method and path. The generator does not currently emit grpc-gateway annotations.
 
+## Enum-name stability
+
+Protobuf also canonicalizes enum names for generated JSON/C++-style identifiers. Distinct NetBox values can otherwise collide after that normalization (for example, interface-speed spellings containing decimal points versus adjacent digits).
+
+Generated enum variants therefore retain a readable sanitized value and append an eight-hex-digit FNV-1a hash of the **exact OpenAPI enum value**. The numeric enum assignments remain deterministic as long as upstream enum ordering is unchanged.
+
 ## Stable field numbering
 
 Sequential field numbering is simple but causes wire-incompatible renumbering when a newly-added OpenAPI property sorts before an existing property.
