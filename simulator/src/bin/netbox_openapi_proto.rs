@@ -261,7 +261,8 @@ fn emit_component_schema(
     }
 
     if schema_type(schema) == Some("array") {
-        let item_schema = schema.get("items").unwrap_or(&Value::Null);
+        let null_schema = Value::Null;
+        let item_schema = schema.get("items").unwrap_or(&null_schema);
         let field_type = type_for_schema(document, item_schema, type_names, None);
         out.push_str(&format!("message {name} {{\n"));
         let mut used = BTreeSet::new();
@@ -269,12 +270,10 @@ fn emit_component_schema(
         if field_type.lossy {
             out.push_str("  // Complex OpenAPI item shape represented as JSON.\n");
         }
-        let prefix = if field_type.repeated {
-            "repeated "
-        } else {
-            "repeated "
-        };
-        out.push_str(&format!("  {prefix}{} items = {number};\n", field_type.ty));
+        out.push_str(&format!(
+            "  repeated {} items = {number};\n",
+            field_type.ty
+        ));
         out.push_str("}\n");
         return Ok(());
     }
