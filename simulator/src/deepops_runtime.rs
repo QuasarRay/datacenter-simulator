@@ -20,13 +20,7 @@ use crate::{
 };
 use anyhow::{Context, Result, ensure};
 use serde_json::{Value, json};
-use std::{
-    fs::{self, File},
-    os::unix::fs::PermissionsExt,
-    path::Path,
-    process::Stdio,
-    time::Duration,
-};
+use std::{fs, os::unix::fs::PermissionsExt, path::Path, process::Stdio, time::Duration};
 use tokio::process::Command;
 
 pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
@@ -108,27 +102,76 @@ fn stage_deepops(config: &DeepOpsConfig) -> Result<()> {
     let staged = integration(config);
     fs::create_dir(&staged)?;
     fs::create_dir(staged.join("upstream"))?;
-    fs::create_dir(staged.join("upstream/submodules"))?;
-    for entry in [
-        "README.md",
-        "LICENSE",
-        "scripts",
-        "playbooks",
-        "roles",
-        "collections",
-        "config.example",
-        "submodules/kubespray",
-    ] {
-        checked(
-            "cp",
-            &[
-                "-R",
-                "--no-preserve=ownership",
-                path(&original.join("upstream").join(entry))?,
-                path(&staged.join("upstream").join(entry))?,
-            ],
-        )?;
-    }
+    let upstream = original.join("upstream");
+    let archive = staged.join("deepops.tar");
+    source_git(
+        &upstream,
+        &[
+            "archive",
+            "--format=tar",
+            "-o",
+            path(&archive)?,
+            deepops::DEEPOPS_COMMIT,
+        ],
+    )?;
+    checked(
+        "tar",
+        &[
+            "-xf",
+            path(&archive)?,
+            "-C",
+            path(&staged.join("upstream"))?,
+        ],
+    )?;
+    fs::remove_file(archive)?;
+    let gitlink = source_git(
+        &upstream,
+        &["ls-tree", deepops::DEEPOPS_COMMIT, "submodules/kubespray"],
+    )?;
+    let revision = gitlink
+        .split_whitespace()
+        .nth(2)
+        .context("missing pinned Kubespray gitlink")?;
+    let archive = staged.join("kubespray.tar");
+    source_git(
+        &upstream.join("submodules/kubespray"),
+        &["archive", "--format=tar", "-o", path(&archive)?, revision],
+    )?;
+    fs::create_dir_all(staged.join("upstream/submodules/kubespray"))?;
+    checked(
+        "tar",
+        &[
+            "-xf",
+            path(&archive)?,
+            "-C",
+            path(&staged.join("upstream/submodules/kubespray"))?,
+        ],
+    )?;
+    fs::remove_file(archive)?;
+    let galaxy = config.ansible_bin.join("ansible-galaxy");
+    let requirements = staged.join("upstream/roles/requirements.yml");
+    checked(
+        path(&galaxy)?,
+        &[
+            "role",
+            "install",
+            "-r",
+            path(&requirements)?,
+            "-p",
+            path(&staged.join("upstream/roles/galaxy"))?,
+        ],
+    )?;
+    checked(
+        path(&galaxy)?,
+        &[
+            "collection",
+            "install",
+            "-r",
+            path(&requirements)?,
+            "-p",
+            path(&staged.join("upstream/collections"))?,
+        ],
+    )?;
     for entry in ["prepare-nccl.yml", "files"] {
         checked(
             "cp",
@@ -251,9 +294,12 @@ async fn stage(
         .state_dir
         .join(if private { "private-logs" } else { "reports" });
     let out = directory.join(format!("{name}.stdout"));
+    let (stdout, out_done) = crate::bounded_log::capture(&out)?;
+    let (stderr, err_done) =
+        crate::bounded_log::capture(&directory.join(format!("{name}.stderr")))?;
     cmd.stdin(Stdio::null())
-        .stdout(File::create(&out)?)
-        .stderr(File::create(directory.join(format!("{name}.stderr")))?)
+        .stdout(stdout)
+        .stderr(stderr)
         .kill_on_drop(true);
     cmd.process_group(0);
     let program = cmd.as_std().get_program().to_string_lossy().to_string();
@@ -264,6 +310,8 @@ async fn stage(
         .with_context(|| format!("start {program} for {name}"))?;
     let _group = crate::vm::ProcessGroup(child.id().context("stage process has no PID")?);
     let status = child.wait().await?;
+    out_done.finish()?;
+    err_done.finish()?;
     ensure!(
         status.success(),
         "{name} failed ({status}); inspect {}",
@@ -393,6 +441,7 @@ async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
     deepops::validate_slurm(&slurm, &config.compute)?;
     // Prove that guest traffic is still subject to physical modeled links after deployment.
     let plumbing = lab.smoke(config).await?;
+    let partition = partition_nccl(config, lab).await?;
     let mut reports = serde_json::Map::new();
     let nodes = config.compute.join(",");
     let count = config.compute.len().to_string();
@@ -455,6 +504,138 @@ async fn deploy(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
         reports.insert(collective.to_string(),json!({"ok":true,"rows":report["results"].as_array().map(Vec::len),"ranks":config.compute.len()}));
     }
     Ok(
-        json!({"ok":true,"scope":"deepops-slurm-native-nccl","sources":{"deepops":deepops::DEEPOPS_COMMIT,"nccl":deepops::NCCL_COMMIT,"nccl_tests":deepops::NCCL_TESTS_COMMIT},"doctor":doctor,"slurm":slurm,"fabric":plumbing,"nccl_tests":reports,"gpu_tests_run":true}),
+        json!({"ok":true,"scope":"deepops-slurm-native-nccl","sources":{"deepops":deepops::DEEPOPS_COMMIT,"nccl":deepops::NCCL_COMMIT,"nccl_tests":deepops::NCCL_TESTS_COMMIT},"doctor":doctor,"slurm":slurm,"fabric":plumbing,"nccl_tests":reports,"in_flight_partition":partition,"gpu_tests_run":true}),
+    )
+}
+
+/// Wait for a real nccl-tests correctness row, cut the modeled data fabric while
+/// repeated NCCL cycles are running, require srun failure, then restore before recovery tests.
+async fn partition_nccl(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value> {
+    let controller = lab.plan.guests[0].clone();
+    let target = lab.plan.guests[2].node_id.clone();
+    let links: Vec<_> = lab
+        .fabric
+        .simulation
+        .links()
+        .filter(|l| {
+            l.spec.up
+                && l.interfaces.iter().any(|id| {
+                    lab.fabric
+                        .simulation
+                        .interface(id)
+                        .is_ok_and(|i| i.node == target)
+                })
+        })
+        .map(|l| l.id.clone())
+        .collect();
+    ensure!(
+        !links.is_empty(),
+        "NCCL partition target has no active links"
+    );
+    let name = format!("simulator-partition-{}", uuid::Uuid::new_v4());
+    let count = config.compute.len().to_string();
+    let nodes = config.compute.join(",");
+    let stdout = config.state_dir.join("reports/nccl-partition.stdout");
+    let stderr = config.state_dir.join("reports/nccl-partition.stderr");
+    let (out_pipe, out_done) = crate::bounded_log::capture(&stdout)?;
+    let (err_pipe, err_done) = crate::bounded_log::capture(&stderr)?;
+    let mut cmd = lab.ssh_command(
+        config,
+        &controller,
+        &[
+            "env",
+            "-i",
+            "PATH=/usr/local/bin:/usr/bin:/bin",
+            "/usr/local/bin/srun",
+            "--mpi=pmix",
+            "--nodes",
+            &count,
+            "--ntasks",
+            &count,
+            "--ntasks-per-node=1",
+            "--gpus-per-task=1",
+            "--cpu-bind=none",
+            "--nodelist",
+            &nodes,
+            "--time=00:03:00",
+            "--immediate=30",
+            "--kill-on-bad-exit=1",
+            "--export=NIL",
+            "--job-name",
+            &name,
+            "/opt/simulator/nccl-rank",
+            "all_reduce",
+            "partition",
+        ],
+    )?;
+    cmd.stdout(out_pipe)
+        .stderr(err_pipe)
+        .stdin(Stdio::null())
+        .process_group(0)
+        .kill_on_drop(true);
+    let mut child = lab
+        .fabric
+        .device(&lab.plan.provisioner_id)?
+        .spawn_command(cmd)?;
+    let _group = crate::vm::ProcessGroup(child.id().context("partition process has no PID")?);
+    let mut guard = crate::vm::VmPartition::new(lab);
+    let outcome = async {
+        tokio::time::timeout(Duration::from_secs(90), async {
+            loop {
+                ensure!(
+                    child.try_wait()?.is_none(),
+                    "NCCL exited before fault injection"
+                );
+                let output = fs::read_to_string(&stdout)?;
+                if output.lines().any(|line| {
+                    let fields: Vec<_> = line.split_whitespace().collect();
+                    fields.len() >= 13
+                        && fields[0].parse::<u64>() == Ok(16 * 1024 * 1024)
+                        && fields[8] == "0"
+                        && fields[12] == "0"
+                }) {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+            Ok::<_, anyhow::Error>(())
+        })
+        .await
+        .context("no completed native NCCL row before partition deadline")??;
+        guard.cut(&links)?;
+        let status = tokio::time::timeout(Duration::from_secs(75), child.wait())
+            .await
+            .context("partitioned srun did not terminate")??;
+        ensure!(
+            !status.success(),
+            "NCCL unexpectedly completed through the partition"
+        );
+        Ok::<_, anyhow::Error>(())
+    }
+    .await;
+    let _ = child.start_kill();
+    let _ = tokio::time::timeout(Duration::from_secs(2), child.wait()).await;
+    let restore = guard.restore();
+    // Cancel the uniquely named remote job even if SSH failed while carrying output.
+    let cancel = lab
+        .ssh(
+            config,
+            &controller,
+            &["/usr/local/bin/scancel", "--name", &name],
+            Duration::from_secs(15),
+        )
+        .await;
+    restore?;
+    let cancel = cancel?;
+    ensure!(
+        cancel.status.success(),
+        "failed to cancel partition test job"
+    );
+    out_done.finish()?;
+    err_done.finish()?;
+    outcome?;
+    Ok(
+        json!({"scope":"deepops-slurm-native-nccl-socket","completed_row_before_cut":true,
+        "partition_failed_running_job":true,"links_restored":true,"recovery_checked_by_following_nccl_tests":true}),
     )
 }

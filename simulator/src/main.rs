@@ -111,8 +111,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if args.first().map(String::as_str) == Some("__nccl_rank") {
             return datacenter_simulator::nccl_worker::run(&args[1..]).map_err(Into::into);
         }
-        // Namespace initialization must happen before patchbay/Tokio/CUDA threads.
-        patchbay::init_userns()?;
     }
     match args.first().map(String::as_str) {
         Some("run") if args.len() == 2 || args.len() == 4 => {
@@ -156,17 +154,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut reader = stdin.lock();
             let mut out = io::stdout().lock();
             loop {
-                let mut line = String::new();
-                if reader.by_ref().take(1_048_577).read_line(&mut line)? == 0 {
+                let mut line = Vec::new();
+                if reader
+                    .by_ref()
+                    .take(1_048_577)
+                    .read_until(b'\n', &mut line)?
+                    == 0
+                {
                     break;
                 }
                 if line.len() > 1024 * 1024 {
-                    return Err("command exceeds 1 MiB".into());
-                }
-                if line.trim().is_empty() {
+                    // Drain this command in bounded chunks and keep the session usable.
+                    while !line.ends_with(b"\n") {
+                        line.clear();
+                        if reader.by_ref().take(8192).read_until(b'\n', &mut line)? == 0 {
+                            break;
+                        }
+                    }
+                    writeln!(
+                        out,
+                        "{{\"ok\":false,\"error\":\"JSON command exceeds the 1 MiB transport limit; use the Rust API for larger buffers\"}}"
+                    )?;
+                    out.flush()?;
                     continue;
                 }
-                writeln!(out, "{}", api.respond(&line))?;
+                match std::str::from_utf8(&line) {
+                    Ok(line) if line.trim().is_empty() => continue,
+                    Ok(line) => writeln!(out, "{}", api.respond(line))?,
+                    Err(_) => writeln!(out, "{{\"ok\":false,\"error\":\"command is not UTF-8\"}}")?,
+                }
                 out.flush()?;
             }
         }

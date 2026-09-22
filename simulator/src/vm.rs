@@ -170,6 +170,8 @@ impl LinuxFabric {
         Ok(tap)
     }
     pub(crate) fn route_guests(&self, guests: &[GuestPlan]) -> Result<()> {
+        self.ensure_healthy()?;
+        let graph = crate::topology::RoutingGraph::new(&self.simulation)?;
         for node in self.simulation.nodes() {
             let dev = self.device(&node.id)?;
             crate::linux::command(
@@ -177,17 +179,18 @@ impl LinuxFabric {
                 "ip",
                 &crate::linux::args(&["route", "flush", "proto", "187"]),
             )?;
+            let routes = graph.routes(&node.id)?;
             for guest in guests {
                 let (gateway, iface) = if guest.node_id == node.id {
                     ("10.254.0.2".to_string(), "vmtap0".to_string())
                 } else {
-                    let Ok(route) = self.simulation.route(&node.id, &guest.node_id, 0) else {
+                    let Some(first) = routes.get(&guest.node_id) else {
                         continue;
                     };
                     let link = self
                         .simulation
                         .links()
-                        .find(|l| Some(&l.id) == route.first())
+                        .find(|l| &l.id == first)
                         .context("guest route has no first link")?;
                     let a = self.simulation.interface(&link.interfaces[0])?;
                     let b = self.simulation.interface(&link.interfaces[1])?;
@@ -224,6 +227,61 @@ impl Drop for ProcessGroup {
         // The ID belongs to a child we started with process_group(0).
         unsafe {
             libc::kill(-(self.0 as i32), libc::SIGKILL);
+        }
+    }
+}
+
+/// Restores every successfully cut link on error, timeout or future cancellation.
+pub(crate) struct VmPartition<'a> {
+    pub(crate) lab: &'a mut VmLab,
+    links: Vec<String>,
+    armed: bool,
+}
+impl<'a> VmPartition<'a> {
+    pub(crate) fn new(lab: &'a mut VmLab) -> Self {
+        Self {
+            lab,
+            links: Vec::new(),
+            armed: true,
+        }
+    }
+    pub(crate) fn cut(&mut self, links: &[String]) -> Result<()> {
+        for link in links {
+            self.lab.fabric.set_link_up_sync(link, false)?;
+            self.links.push(link.clone());
+        }
+        self.lab.fabric.route_guests(&self.lab.plan.guests)
+    }
+    fn cleanup(&mut self) -> Result<()> {
+        let mut errors = Vec::new();
+        for link in &self.links {
+            if let Err(e) = self.lab.fabric.set_link_up_sync(link, true) {
+                errors.push(format!("{e:#}"));
+            }
+        }
+        if let Err(e) = self.lab.fabric.route_guests(&self.lab.plan.guests) {
+            errors.push(format!("{e:#}"));
+        }
+        self.armed = false;
+        if !errors.is_empty() {
+            self.lab.fabric.failed = true;
+        }
+        ensure!(
+            errors.is_empty(),
+            "partition restoration failed: {errors:?}"
+        );
+        Ok(())
+    }
+    pub(crate) fn restore(mut self) -> Result<()> {
+        self.cleanup()
+    }
+}
+impl Drop for VmPartition<'_> {
+    fn drop(&mut self) {
+        if self.armed
+            && let Err(e) = self.cleanup()
+        {
+            eprintln!("{e:#}");
         }
     }
 }
@@ -347,7 +405,7 @@ impl VmLab {
                 "-monitor",
                 "none",
                 "-serial",
-                &format!("file:{}", path(&dir.join("serial.log"))?),
+                "stdio",
                 "-drive",
                 &format!(
                     "file={},if=virtio,format=qcow2",
@@ -371,8 +429,8 @@ impl VmLab {
                 cmd.args(["-device", &format!("vfio-pci,host={bdf}")]);
             }
             cmd.stdin(Stdio::null())
-                .stdout(Stdio::null())
-                .stderr(File::create(dir.join("qemu.log"))?)
+                .stdout(crate::bounded_log::output(&dir.join("serial.log"))?)
+                .stderr(crate::bounded_log::output(&dir.join("qemu.log"))?)
                 .kill_on_drop(true);
             let parent = unsafe { libc::getpid() };
             // Only async-signal-safe syscalls after fork. Inherit exactly this TAP descriptor.
@@ -527,17 +585,14 @@ impl VmLab {
             .map(|l| l.id.clone())
             .collect();
         ensure!(!links.is_empty(), "partition target has no physical links");
-        for link in &links {
-            self.fabric.set_link_up(link, false).await?;
-        }
-        self.fabric.route_guests(&self.plan.guests)?;
-        let blocked = self
+        let mut partition = VmPartition::new(self);
+        partition.cut(&links)?;
+        let blocked = partition
+            .lab
             .ssh(config, &from, &argv, Duration::from_secs(10))
-            .await?;
-        for link in &links {
-            self.fabric.set_link_up(link, true).await?;
-        }
-        self.fabric.route_guests(&self.plan.guests)?;
+            .await;
+        partition.restore()?;
+        let blocked = blocked?;
         ensure!(
             !blocked.status.success(),
             "guest traffic bypassed partitioned simulator fabric"

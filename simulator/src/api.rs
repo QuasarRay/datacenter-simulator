@@ -16,15 +16,36 @@ use crate::{id, model::*};
 use chrono::{DateTime, Utc};
 use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Simulator {
     simulations: BTreeMap<String, Simulation>,
+    max_simulations: usize,
+}
+impl Default for Simulator {
+    fn default() -> Self {
+        Self::with_capacity_limit(128)
+    }
 }
 impl Simulator {
+    pub fn with_capacity_limit(max_simulations: usize) -> Self {
+        Self {
+            simulations: BTreeMap::new(),
+            max_simulations,
+        }
+    }
+    pub(crate) fn check_capacity(&self) -> Result<()> {
+        if self.simulations.len() >= self.max_simulations {
+            return Err(Error::Conflict(
+                "simulation session capacity reached".into(),
+            ));
+        }
+        Ok(())
+    }
     pub fn new() -> Self {
         Self::default()
     }
     pub fn create(&mut self, name: &str) -> Result<&Simulation> {
+        self.check_capacity()?;
         if name.trim().is_empty() {
             return Err(Error::Invalid("simulation name is empty".into()));
         }
@@ -51,6 +72,9 @@ impl Simulator {
             ztp_script: None,
             history: Vec::new(),
             clock_ns: 0,
+            scheduling_frontier_ns: 0,
+            history_limit: 10_000,
+            next_mac: 0,
             available: BTreeMap::new(),
         };
         sim.event("created");
@@ -96,37 +120,68 @@ impl Simulator {
         let original = self.get(source)?;
         let mut manifest = original.export()?;
         manifest.name = name.into();
-        // Checkpoint keys are translated by node name, never shared with the source.
+        // Reject stale configuration before allocating anything in the destination.
         let saved = checkpoint
-            .map(|c| {
-                original
+            .map(|key| {
+                let cp = original
                     .checkpoints
-                    .get(c)
-                    .ok_or_else(|| Error::NotFound(c.into()))
-            })
-            .transpose()?
-            .map(|cp| {
-                original
+                    .get(key)
+                    .ok_or_else(|| Error::NotFound(key.into()))?;
+                original.validate_checkpoint(cp)?;
+                let runtime = original
                     .nodes
                     .values()
                     .map(|n| {
                         (
                             n.spec.name.clone(),
-                            cp.runtime.get(&n.id).cloned().unwrap_or_default(),
+                            cp.runtime[&n.id].clone(),
+                            n.management_ip.clone(),
                         )
                     })
-                    .collect::<BTreeMap<_, _>>()
-            });
+                    .collect::<Vec<_>>();
+                let instructions = original
+                    .instructions
+                    .values()
+                    .map(|i| {
+                        (
+                            original.nodes[&i.node].spec.name.clone(),
+                            serde_json::to_value(&i.data).expect("instruction serialization"),
+                            i.run_again_on_rebuild,
+                            cp.instruction_states[&i.id].clone(),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                Ok::<_, Error>((runtime, instructions))
+            })
+            .transpose()?;
+        let leases: Vec<_> = original
+            .nodes
+            .values()
+            .map(|n| (n.spec.name.clone(), n.management_ip.clone()))
+            .collect();
         let cloned = self.import(manifest, false)?;
-        if let Some(saved) = saved {
+        for (name, ip) in leases {
             let sim = self.get_mut(&cloned)?;
-            for instruction in sim.instructions.values_mut() {
-                instruction.state = "COMPLETE".into();
+            let node = sim.node_named(&name)?.id.clone();
+            sim.nodes.get_mut(&node).unwrap().management_ip = ip;
+        }
+        if let Some((saved, mut states)) = saved {
+            let sim = self.get_mut(&cloned)?;
+            for (name, runtime, management_ip) in saved {
+                let id = sim.node_named(&name)?.id.clone();
+                sim.runtime.insert(id.clone(), runtime);
+                sim.nodes.get_mut(&id).unwrap().management_ip = management_ip;
             }
-            for n in sim.nodes.values() {
-                if let Some(value) = saved.get(&n.spec.name) {
-                    sim.runtime.insert(n.id.clone(), value.clone());
-                }
+            for instruction in sim.instructions.values_mut() {
+                let node_name = &sim.nodes[&instruction.node].spec.name;
+                let data = serde_json::to_value(&instruction.data)?;
+                let index = states
+                    .iter()
+                    .position(|(n, d, r, _)| {
+                        n == node_name && *d == data && *r == instruction.run_again_on_rebuild
+                    })
+                    .expect("validated checkpoint instruction mapping");
+                instruction.state = states.remove(index).3;
             }
         }
         if attempt_start && let Err(error) = self.get_mut(&cloned)?.start(None) {
@@ -291,10 +346,15 @@ impl Simulation {
             return Err(Error::Conflict(interface_name.into()));
         }
         let key = id();
-        let bytes = uuid::Uuid::parse_str(&key).unwrap().into_bytes();
+        // A monotonic, locally administered 40-bit identity is unique within this fabric.
+        if self.next_mac >= (1u64 << 40) {
+            return Err(Error::Conflict("MAC address space exhausted".into()));
+        }
+        let bytes = self.next_mac.to_be_bytes();
+        self.next_mac += 1;
         let mac = format!(
             "02:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]
+            bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]
         );
         self.interfaces.insert(
             key.clone(),
@@ -472,14 +532,33 @@ impl Simulation {
         Ok(())
     }
     fn assign_management_addresses(&mut self) {
-        // Dedicated logical management plane; never add forwarding edges to the data plane.
-        for (index, node) in self.nodes.values_mut().enumerate() {
-            let host = index + 2;
-            node.management_ip = if self.auto_oob_enabled && self.enable_dhcp {
-                Some(format!("172.31.{}.{}/16", host / 256, host % 256))
-            } else {
-                None
-            };
+        // Preserve leases when adding nodes. Allocate new leases in name order.
+        if !(self.auto_oob_enabled && self.enable_dhcp) {
+            for node in self.nodes.values_mut() {
+                node.management_ip = None;
+            }
+            return;
+        }
+        let mut used: BTreeSet<String> = self
+            .nodes
+            .values()
+            .filter_map(|n| n.management_ip.clone())
+            .collect();
+        let mut nodes: Vec<_> = self.nodes.values_mut().collect();
+        nodes.sort_by(|a, b| a.spec.name.cmp(&b.spec.name));
+        let mut host = 2;
+        for node in nodes {
+            if node.management_ip.is_some() {
+                continue;
+            }
+            loop {
+                let ip = format!("172.31.{}.{}/16", host / 256, host % 256);
+                host += 1;
+                if used.insert(ip.clone()) {
+                    node.management_ip = Some(ip);
+                    break;
+                }
+            }
         }
     }
     pub fn create_service(
@@ -678,6 +757,7 @@ impl Simulation {
             n.generation += 1;
         }
         self.available.clear();
+        self.scheduling_frontier_ns = self.clock_ns;
         self.event("shutdown");
         Ok(checkpoint)
     }
@@ -705,6 +785,7 @@ impl Simulation {
             n.generation += 1;
         }
         self.available.clear();
+        self.scheduling_frontier_ns = self.clock_ns;
         self.event("rebuilt");
         Ok(())
     }
@@ -733,6 +814,11 @@ impl Simulation {
         if rebuild {
             self.apply_instructions(Some(&unique), true);
         }
+        // Reset cancels all scheduled traffic, including transit reservations.
+        if !nodes.is_empty() {
+            self.available.clear();
+            self.scheduling_frontier_ns = self.clock_ns;
+        }
         self.event(if rebuild {
             "nodes rebuilt"
         } else {
@@ -751,6 +837,12 @@ impl Simulation {
                 state: "COMPLETE".into(),
                 created: Utc::now(),
                 runtime: self.runtime.clone(),
+                configuration: self.checkpoint_configuration()?,
+                instruction_states: self
+                    .instructions
+                    .values()
+                    .map(|i| (i.id.clone(), i.state.clone()))
+                    .collect(),
             },
         );
         self.event("checkpoint created");
@@ -778,15 +870,47 @@ impl Simulation {
         self.event("checkpoint deleted");
         Ok(())
     }
+    fn checkpoint_configuration(&self) -> Result<serde_json::Value> {
+        // Store the exact configuration, not a lossy hash or just node IDs.
+        let mut nodes = serde_json::to_value(&self.nodes)?;
+        for node in nodes.as_object_mut().unwrap().values_mut() {
+            let node = node.as_object_mut().unwrap();
+            node.remove("state");
+            node.remove("generation");
+        }
+        let mut instructions = serde_json::to_value(&self.instructions)?;
+        for i in instructions.as_object_mut().unwrap().values_mut() {
+            i.as_object_mut().unwrap().remove("state");
+        }
+        Ok(
+            serde_json::json!({"nodes": nodes, "interfaces": self.interfaces,
+            "links": self.links, "services": self.services, "instructions": instructions,
+            "ztp": self.ztp_script, "oob": self.auto_oob_enabled, "dhcp": self.enable_dhcp}),
+        )
+    }
+    fn validate_checkpoint(&self, cp: &Checkpoint) -> Result<()> {
+        if !cp.runtime.keys().eq(self.nodes.keys())
+            || !cp.instruction_states.keys().eq(self.instructions.keys())
+            || cp.configuration != self.checkpoint_configuration()?
+        {
+            return Err(Error::Conflict(
+                "checkpoint configuration differs; create a new checkpoint after edits".into(),
+            ));
+        }
+        Ok(())
+    }
     fn restore_checkpoint(&mut self, checkpoint: &str) -> Result<()> {
         let cp = self
             .checkpoints
             .get(checkpoint)
             .ok_or_else(|| Error::NotFound(checkpoint.into()))?;
-        if !cp.runtime.keys().eq(self.nodes.keys()) {
-            return Err(Error::Conflict("checkpoint topology differs".into()));
-        }
+        self.validate_checkpoint(cp)?;
         self.runtime = cp.runtime.clone();
+        for (id, state) in &cp.instruction_states {
+            self.instructions.get_mut(id).unwrap().state = state.clone();
+        }
+        self.available.clear();
+        self.scheduling_frontier_ns = self.clock_ns;
         Ok(())
     }
     pub fn wait_for_state(&self, target: State) -> Result<()> {

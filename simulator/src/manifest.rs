@@ -114,7 +114,17 @@ impl Manifest {
         Ok(serde_json::from_value(value)?)
     }
     pub fn read(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        Self::from_json(&std::fs::read_to_string(path)?)
+        use std::io::Read;
+        const LIMIT: u64 = 16 * 1024 * 1024;
+        let mut bytes = Vec::new();
+        std::fs::File::open(path)?
+            .take(LIMIT + 1)
+            .read_to_end(&mut bytes)?;
+        if bytes.len() as u64 > LIMIT {
+            return Err(Error::Invalid("manifest exceeds 16 MiB".into()));
+        }
+        let text = std::str::from_utf8(&bytes).map_err(|e| Error::Invalid(e.to_string()))?;
+        Self::from_json(text)
     }
 }
 fn endpoint<'a>(sim: &'a Simulation, value: &str) -> Result<&'a Interface> {
@@ -126,6 +136,7 @@ fn endpoint<'a>(sim: &'a Simulation, value: &str) -> Result<&'a Interface> {
 impl Simulator {
     /// Imports transactionally through the same public validators as individual edits.
     pub fn import(&mut self, manifest: Manifest, attempt_start: bool) -> Result<String> {
+        self.check_capacity()?;
         if !manifest.format.eq_ignore_ascii_case("JSON") {
             return Err(Error::Unsupported(format!(
                 "manifest format {}",
@@ -136,6 +147,22 @@ impl Simulator {
         let key = staging.create(&manifest.name)?.id().to_string();
         let sim = staging.get_mut(&key)?;
         for (node_name, m) in &manifest.content.nodes {
+            for field in m.image_metadata.keys() {
+                if ![
+                    "positioning",
+                    "features",
+                    "pxehost",
+                    "secureboot",
+                    "oob",
+                    "network_pci",
+                ]
+                .contains(&field.as_str())
+                {
+                    return Err(Error::Invalid(format!(
+                        "unknown node field {node_name}.{field}; put custom metadata in labels"
+                    )));
+                }
+            }
             let id = sim.create_node(NodeSpec {
                 name: node_name.clone(),
                 image: m.os.clone(),
@@ -183,15 +210,6 @@ impl Simulator {
             }
         }
         for link in &manifest.content.links {
-            for value in &link.endpoints {
-                let (n, i) = value.split_once(':').ok_or_else(|| {
-                    Error::Invalid(format!("endpoint needs node:interface: {value}"))
-                })?;
-                let node_id = sim.node_named(n)?.id.clone();
-                if sim.interface_named(&node_id, i).is_err() {
-                    sim.create_interface(&node_id, i, InterfaceType::Data)?;
-                }
-            }
             let a = endpoint(sim, &link.endpoints[0])?.id.clone();
             let b = endpoint(sim, &link.endpoints[1])?.id.clone();
             sim.create_link([&a, &b], link.condition)?;

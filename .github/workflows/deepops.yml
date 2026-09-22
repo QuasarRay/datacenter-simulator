@@ -61,7 +61,7 @@ jobs:
         run: |
           python3 -m venv /tmp/deepops-molecule
           source /tmp/deepops-molecule/bin/activate
-          pip install ansible==10.7.0 passlib molecule 'molecule-plugins[docker]' docker
+          pip install --require-hashes -r integrations/deepops/molecule-requirements.lock
           cd integrations/deepops/upstream/roles
           ansible-galaxy role install --force -r requirements.yml
           ansible-galaxy collection install --force -r requirements.yml

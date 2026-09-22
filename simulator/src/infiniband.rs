@@ -12,6 +12,9 @@ use std::{collections::BTreeMap, process::Output, time::Duration};
 #[derive(Serialize)]
 pub struct IbPlan {
     pub scope: &'static str,
+    pub rdma_payload_tested: bool,
+    pub nccl_tested: bool,
+    pub bandwidth_latency_enforced: bool,
     pub nodes: BTreeMap<String, String>,
     pub ports: BTreeMap<String, u8>,
     pub native_topology: String,
@@ -30,6 +33,9 @@ pub fn topology(sim: &Simulation) -> Result<(IbTopology, IbPlan)> {
     let mut topology = IbTopology::new();
     let mut plan = IbPlan {
         scope: "infiniband-management",
+        rdma_payload_tested: false,
+        nccl_tested: false,
+        bandwidth_latency_enforced: false,
         nodes: BTreeMap::new(),
         ports: BTreeMap::new(),
         native_topology: String::new(),

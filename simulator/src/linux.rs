@@ -30,6 +30,7 @@ pub struct LinuxFabric {
     pub(crate) addresses: BTreeMap<String, Ipv4Addr>,
     pub(crate) simulation: Simulation,
     _lab: Lab,
+    pub(crate) failed: bool,
 }
 pub(crate) fn command(device: &Device, program: &str, args: &[String]) -> Result<()> {
     let program = program.to_owned();
@@ -75,6 +76,9 @@ impl LinuxFabric {
         }
         if simulation.interfaces().any(|i| i.name == NCCL_INTERFACE) {
             bail!("simnccl is reserved for the NCCL network endpoint");
+        }
+        for link in simulation.links() {
+            link.spec.native_queue_packets()?;
         }
         let lab = Lab::new().await.context("create patchbay lab")?;
         let mut routers = BTreeMap::new();
@@ -164,6 +168,8 @@ impl LinuxFabric {
                         &interface.name,
                         "address",
                         &interface.mac_address,
+                        "mtu",
+                        "1500",
                     ]),
                 )?;
                 if let Some(link) = simulation
@@ -187,7 +193,7 @@ impl LinuxFabric {
                             "rate",
                             &format!("{}bit", link.spec.bandwidth_bps),
                             "limit",
-                            "10000",
+                            &link.spec.native_queue_packets()?.to_string(),
                         ]),
                     )?;
                 }
@@ -221,26 +227,28 @@ impl LinuxFabric {
             addresses,
             simulation: simulation.clone(),
             _lab: lab,
+            failed: false,
         };
         fabric.configure_routes()?;
         Ok(fabric)
     }
     fn configure_routes(&self) -> Result<()> {
+        self.configure_model_routes(&self.simulation)
+    }
+    fn configure_model_routes(&self, model: &Simulation) -> Result<()> {
+        let graph = crate::topology::RoutingGraph::new(model)?;
         for (source, dev) in &self.devices {
             // Protocol 186 marks only this simulator's static routes.
             command(dev, "ip", &args(&["route", "flush", "proto", "186"]))?;
+            let routes = graph.routes(source)?;
             for (destination, ip) in &self.loopbacks {
                 if source == destination {
                     continue;
                 }
-                let Ok(path) = self.simulation.route(source, destination, 0) else {
+                let Some(first) = routes.get(destination) else {
                     continue;
                 };
-                let Some(first) = path.first() else {
-                    continue;
-                };
-                let link = self
-                    .simulation
+                let link = model
                     .links()
                     .find(|l| &l.id == first)
                     .context("route references missing link")?;
@@ -275,6 +283,7 @@ impl LinuxFabric {
             .ok_or_else(|| anyhow!("unknown node {node}"))
     }
     pub async fn ping(&self, source: &str, destination: &str) -> Result<()> {
+        self.ensure_healthy()?;
         let dev = self.devices.get(source).context("unknown source")?;
         let target = self.address(destination)?.to_string();
         let mut cmd = tokio::process::Command::new("ping");
@@ -289,31 +298,124 @@ impl LinuxFabric {
     }
     /// Run real Rust socket code inside a simulated node's namespace.
     pub fn device(&self, node: &str) -> Result<&Device> {
+        self.ensure_healthy()?;
         self.devices
             .get(node)
             .ok_or_else(|| anyhow!("unknown node {node}"))
     }
-    pub async fn set_link_up(&mut self, link_id: &str, up: bool) -> Result<()> {
+    pub(crate) fn ensure_healthy(&self) -> Result<()> {
+        if self.failed {
+            bail!("fabric requires teardown after failed rollback");
+        }
+        Ok(())
+    }
+    // Synchronous transaction: no cancellation point between kernel writes and rollback.
+    pub(crate) fn set_link_up_sync(&mut self, link_id: &str, up: bool) -> Result<()> {
+        self.ensure_healthy()?;
         let link = self
             .simulation
             .links()
             .find(|l| l.id == link_id)
             .context("unknown link")?
             .clone();
-        for id in &link.interfaces {
-            let interface = self.simulation.interface(id)?;
-            let iface = self.devices[&interface.node]
-                .iface(&interface.name)
-                .context("missing kernel interface")?;
-            if up {
-                iface.link_up().await?;
-            } else {
-                iface.link_down().await?;
-            }
+        if link.spec.up == up {
+            return Ok(());
         }
+        let mut next = self.simulation.clone();
         let mut spec = link.spec;
         spec.up = up;
-        self.simulation.set_link(link_id, spec)?;
-        self.configure_routes()
+        next.set_link(link_id, spec)?;
+        let result = apply_or_restore(3, |step, restoring| {
+            if step == 2 {
+                return self.configure_model_routes(if restoring {
+                    &self.simulation
+                } else {
+                    &next
+                });
+            }
+            let interface = self.simulation.interface(&link.interfaces[step])?;
+            let state = if restoring { link.spec.up } else { up };
+            command(
+                &self.devices[&interface.node],
+                "ip",
+                &args(&[
+                    "link",
+                    "set",
+                    "dev",
+                    &interface.name,
+                    if state { "up" } else { "down" },
+                ]),
+            )
+        });
+        if let Err((error, poisoned)) = result {
+            self.failed = poisoned;
+            return Err(error);
+        }
+        self.simulation = next;
+        Ok(())
+    }
+    pub async fn set_link_up(&mut self, link_id: &str, up: bool) -> Result<()> {
+        self.set_link_up_sync(link_id, up)
+    }
+}
+
+/// Attempt every restoration even when one fails; callers must stop using a
+/// resource when restoration cannot be established.
+fn apply_or_restore(
+    steps: usize,
+    mut operation: impl FnMut(usize, bool) -> Result<()>,
+) -> std::result::Result<(), (anyhow::Error, bool)> {
+    for step in 0..steps {
+        if let Err(error) = operation(step, false) {
+            let mut failures = Vec::new();
+            for restore in 0..steps {
+                if let Err(e) = operation(restore, true) {
+                    failures.push(format!("{e:#}"));
+                }
+            }
+            return Err((
+                error.context(format!("rollback errors: {failures:?}")),
+                !failures.is_empty(),
+            ));
+        }
+    }
+    Ok(())
+}
+#[cfg(test)]
+mod transaction_tests {
+    use super::*;
+    #[test]
+    fn failures_at_each_mutation_restore_all_state_and_poison_on_cleanup_failure() {
+        for failure in 0..3 {
+            let mut state = [false; 3];
+            let mut restored = Vec::new();
+            let result = apply_or_restore(3, |step, restoring| {
+                if restoring {
+                    restored.push(step);
+                    state[step] = false;
+                } else {
+                    state[step] = true;
+                    if step == failure {
+                        bail!("injected kernel failure");
+                    }
+                }
+                Ok(())
+            });
+            assert!(!result.unwrap_err().1);
+            assert_eq!(state, [false; 3]);
+            assert_eq!(restored, vec![0, 1, 2]);
+        }
+        let mut restored = Vec::new();
+        let result = apply_or_restore(3, |step, restoring| {
+            if restoring {
+                restored.push(step);
+            }
+            if step == 0 {
+                bail!("injected persistent failure");
+            }
+            Ok(())
+        });
+        assert!(result.unwrap_err().1);
+        assert_eq!(restored, vec![0, 1, 2]);
     }
 }

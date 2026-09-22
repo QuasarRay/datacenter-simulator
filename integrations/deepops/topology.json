@@ -9,49 +9,75 @@
         "role": "host",
         "cpu": 1,
         "memory": 512,
-        "storage": 8
+        "storage": 8,
+        "interfaces": {
+          "eth1": {}
+        }
       },
       "controller": {
         "os": "generic/ubuntu2204",
         "role": "host",
         "cpu": 4,
         "memory": 4096,
-        "storage": 60
+        "storage": 60,
+        "interfaces": {
+          "eth1": {}
+        }
       },
       "gpu1": {
         "os": "generic/ubuntu2204",
         "role": "host",
         "cpu": 4,
         "memory": 8192,
-        "storage": 100
+        "storage": 100,
+        "interfaces": {
+          "eth1": {}
+        }
       },
       "gpu2": {
         "os": "generic/ubuntu2204",
         "role": "host",
         "cpu": 4,
         "memory": 8192,
-        "storage": 100
+        "storage": 100,
+        "interfaces": {
+          "eth1": {}
+        }
       },
       "leaf1": {
         "os": "model/switch",
         "role": "switch",
         "cpu": 1,
         "memory": 512,
-        "storage": 8
+        "storage": 8,
+        "interfaces": {
+          "swp1": {},
+          "swp2": {},
+          "swp3": {},
+          "swp4": {}
+        }
       },
       "leaf2": {
         "os": "model/switch",
         "role": "switch",
         "cpu": 1,
         "memory": 512,
-        "storage": 8
+        "storage": 8,
+        "interfaces": {
+          "swp2": {},
+          "swp1": {}
+        }
       },
       "spine": {
         "os": "model/switch",
         "role": "switch",
         "cpu": 1,
         "memory": 512,
-        "storage": 8
+        "storage": 8,
+        "interfaces": {
+          "swp1": {},
+          "swp2": {}
+        }
       }
     },
     "links": [

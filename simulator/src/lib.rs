@@ -16,6 +16,8 @@
 //! All mutations validate before commit; no Python runtime or Python bindings.
 #![deny(unsafe_op_in_unsafe_fn)]
 pub mod api;
+#[cfg(any(feature = "vm", feature = "mokka"))]
+mod bounded_log;
 pub mod collective;
 pub mod command;
 #[cfg(feature = "nccl")]
@@ -38,6 +40,8 @@ pub mod nccl_backend;
 pub mod nccl_worker;
 #[cfg(feature = "netbox")]
 pub mod netbox;
+#[cfg(feature = "mokka")]
+mod provenance;
 #[cfg(feature = "rdma")]
 pub mod rdma;
 pub mod topology;

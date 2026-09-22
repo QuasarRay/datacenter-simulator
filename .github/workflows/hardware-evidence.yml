@@ -1,0 +1,34 @@
+name: hardware-evidence
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Exact commit to promote (40-character SHA)
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      commit:
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require successful hardware execution for this exact revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TARGET_SHA: ${{ inputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_SHA" =~ ^[a-f0-9]{40}$ ]]
+          for workflow in nccl-runtime.yml rdma-runtime.yml deepops-gpu.yml; do
+            gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" -f head_sha="$TARGET_SHA" -f status=success -f per_page=100 |
+              jq -e --arg sha "$TARGET_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success" and (.event == "push" or .event == "schedule" or .event == "workflow_dispatch") and (.updated_at | fromdateiso8601) >= (now - 604800))] | length > 0'
+          done

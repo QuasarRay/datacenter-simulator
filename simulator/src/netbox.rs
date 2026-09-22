@@ -435,6 +435,15 @@ impl NetBoxClient {
         Ok(records)
     }
     pub fn snapshot(&self, config: &NetBoxConfig) -> Result<Snapshot> {
+        let first = self.read_snapshot(config)?;
+        let second = self.read_snapshot(config)?;
+        ensure!(
+            same_intent(&first, &second)?,
+            "NetBox intent changed during acquisition; retry in a change window"
+        );
+        Ok(second)
+    }
+    fn read_snapshot(&self, config: &NetBoxConfig) -> Result<Snapshot> {
         ensure!(
             !config.device_filter.keys().any(|k| [
                 "limit", "offset", "brief", "fields", "exclude", "omit"
@@ -491,6 +500,20 @@ impl NetBoxClient {
     }
 }
 
+/// Two equal observations detect concurrent edits, but are not database isolation.
+fn same_intent(a: &Snapshot, b: &Snapshot) -> Result<bool> {
+    let normalize = |s: &Snapshot| -> Result<Value> {
+        let mut devices = s.devices.clone();
+        devices.sort_by_key(|d| d.id);
+        let mut interfaces = s.interfaces.clone();
+        interfaces.sort_by_key(|i| i.id);
+        let mut cables = s.cables.clone();
+        cables.sort_by_key(|c| c.id);
+        Ok(serde_json::json!({"devices":devices,"interfaces":interfaces,"cables":cables}))
+    };
+    Ok(normalize(a)? == normalize(b)?)
+}
+
 pub fn import(config: &NetBoxConfig, directory: &Path) -> Result<()> {
     let snapshot = NetBoxClient::new(config)?.snapshot(config)?;
     let manifest = compile(config, &snapshot)?;
@@ -504,4 +527,24 @@ pub fn import(config: &NetBoxConfig, directory: &Path) -> Result<()> {
         serde_json::to_vec_pretty(&manifest)?,
     )?;
     Ok(())
+}
+
+#[cfg(test)]
+mod snapshot_tests {
+    use super::*;
+    #[test]
+    fn acquisition_comparison_detects_edits_but_ignores_listing_order() {
+        let first: Snapshot = serde_json::from_str(include_str!(
+            "../../integrations/netbox/snapshot.example.json"
+        ))
+        .unwrap();
+        let mut second = first.clone();
+        second.devices.reverse();
+        second.interfaces.reverse();
+        second.cables.reverse();
+        second.fetched_at = "another instant".into();
+        assert!(same_intent(&first, &second).unwrap());
+        second.interfaces[0].enabled = !second.interfaces[0].enabled;
+        assert!(!same_intent(&first, &second).unwrap());
+    }
 }

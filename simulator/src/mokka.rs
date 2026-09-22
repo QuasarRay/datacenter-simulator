@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs::{self, File},
+    fs,
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
@@ -52,6 +52,7 @@ pub struct Release {
 pub struct MokkaPlan {
     pub scope: &'static str,
     pub upstream_revision: &'static str,
+    pub image_pinned: bool,
     pub nccl_tested: bool,
     pub rdma_payload_tested: bool,
     pub context: String,
@@ -80,6 +81,11 @@ impl MokkaConfig {
         Ok(config)
     }
     pub fn plan(&self) -> Result<MokkaPlan> {
+        crate::provenance::verify(
+            &self.upstream,
+            REVISION,
+            "deployments/nvml-mock/helm/nvml-mock",
+        )?;
         ensure!(
             dns(&self.namespace)
                 && self.namespace != "default"
@@ -90,15 +96,21 @@ impl MokkaConfig {
             !self.context.is_empty() && !self.context.contains(['\n', '\r']),
             "explicit Kubernetes context required"
         );
-        let (repository, tag) = self
+        let (reference, digest) = self
             .image
+            .split_once('@')
+            .map_or((self.image.as_str(), None), |(r, d)| (r, Some(d)));
+        if let Some(digest) = digest {
+            ensure!(valid_digest(digest), "image must use a SHA-256 OCI digest");
+        }
+        let (repository, source_tag) = reference
             .rsplit_once(':')
             .context("Mokka image needs an explicit source revision tag")?;
         ensure!(
-            !repository.is_empty() && tag == format!("simulator-{}", &REVISION[..12]),
-            "build and tag the pinned Mokka source as simulator-{}",
-            &REVISION[..12]
+            !repository.is_empty() && source_tag == format!("simulator-{}", &REVISION[..12]),
+            "Mokka image tag must identify the pinned source revision"
         );
+        let tag = digest.map_or_else(|| source_tag.to_string(), |d| format!("{source_tag}@{d}"));
         let manifest = Manifest::read(&self.manifest)?;
         Simulator::new().import(manifest.clone(), false)?;
         let mut bindings = self.nodes.clone();
@@ -193,6 +205,7 @@ impl MokkaConfig {
         Ok(MokkaPlan {
             scope: "kubernetes-gpu-contracts",
             upstream_revision: REVISION,
+            image_pinned: digest.is_some(),
             nccl_tested: false,
             rdma_payload_tested: false,
             context: self.context.clone(),
@@ -225,16 +238,24 @@ impl Drop for Process {
         if self.0.try_wait().ok().flatten().is_none() {
             let _ = killpg(Pid::from_raw(self.0.id() as i32), Signal::SIGKILL);
             let _ = self.0.kill();
-            let _ = self.0.wait();
+            let deadline = Instant::now() + Duration::from_secs(2);
+            while self.0.try_wait().ok().flatten().is_none() && Instant::now() < deadline {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            if self.0.try_wait().ok().flatten().is_none() {
+                eprintln!("Mokka cleanup left unreaped PID {}", self.0.id());
+            }
         }
     }
 }
 fn execute(mut cmd: Command, directory: &Path, label: &str, seconds: u64) -> Result<Vec<u8>> {
     let stdout = directory.join(format!("{label}.stdout.log"));
     let stderr = directory.join(format!("{label}.stderr.log"));
+    let (out_pipe, out_done) = crate::bounded_log::capture(&stdout)?;
+    let (err_pipe, err_done) = crate::bounded_log::capture(&stderr)?;
     cmd.stdin(Stdio::null())
-        .stdout(File::create(&stdout)?)
-        .stderr(File::create(&stderr)?)
+        .stdout(out_pipe)
+        .stderr(err_pipe)
         .process_group(0);
     for name in [
         "LD_PRELOAD",
@@ -246,6 +267,7 @@ fn execute(mut cmd: Command, directory: &Path, label: &str, seconds: u64) -> Res
         cmd.env_remove(name);
     }
     let mut child = Process(cmd.spawn().with_context(|| format!("spawn {label}"))?);
+    drop(cmd);
     let end = Instant::now() + Duration::from_secs(seconds);
     let status = loop {
         if let Some(status) = child.0.try_wait()? {
@@ -256,6 +278,8 @@ fn execute(mut cmd: Command, directory: &Path, label: &str, seconds: u64) -> Res
         }
         std::thread::sleep(Duration::from_millis(100));
     };
+    out_done.finish()?;
+    err_done.finish()?;
     ensure!(
         status.success(),
         "{label} failed ({status}); inspect {}",
@@ -275,24 +299,14 @@ fn kubectl(config: &MokkaConfig) -> Command {
 
 /// Apply to explicitly selected CPU lab nodes. No cluster is inferred or created.
 pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
-    let plan = render(config, directory)?;
-    let mut git = Command::new("git");
-    git.arg("-C")
-        .arg(&config.upstream)
-        .args(["rev-parse", "HEAD"]);
     ensure!(
-        String::from_utf8(execute(git, directory, "upstream-revision", 15)?)?.trim() == REVISION,
-        "Mokka checkout does not match pinned source"
+        config
+            .image
+            .split_once('@')
+            .is_some_and(|(_, d)| valid_digest(d)),
+        "mokka-apply requires a source tag plus @sha256: OCI digest; a mutable tag is not provenance"
     );
-    let mut clean = Command::new("git");
-    clean.arg("-C").arg(&config.upstream).args([
-        "diff",
-        "--exit-code",
-        "HEAD",
-        "--",
-        "deployments/nvml-mock/helm/nvml-mock",
-    ]);
-    execute(clean, directory, "upstream-chart-clean", 15)?;
+    let plan = render(config, directory)?;
     // Validate all target nodes before the first Helm mutation.
     for (index, release) in plan.releases.iter().enumerate() {
         let mut get = kubectl(config);
@@ -324,11 +338,39 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             "refusing to overlay a node already advertising GPUs"
         );
     }
+    let mut list = Command::new("helm");
+    list.args([
+        "list",
+        "--all",
+        "--output",
+        "json",
+        "--namespace",
+        &config.namespace,
+    ])
+    .arg(format!("--kube-context={}", config.context));
+    let existing: Vec<Value> =
+        serde_json::from_slice(&execute(list, directory, "existing-releases", 30)?)?;
+    ensure!(
+        plan.releases
+            .iter()
+            .all(|r| !existing.iter().any(|e| e["name"] == r.name)),
+        "Mokka batch requires new release names; existing releases are never overwritten"
+    );
+    let mut batch = Batch {
+        config,
+        directory,
+        releases: Vec::new(),
+        armed: true,
+        owner: uuid::Uuid::new_v4().to_string(),
+    };
     let chart = config.upstream.join("deployments/nvml-mock/helm/nvml-mock");
     let mut observations = Vec::new();
     for (index, release) in plan.releases.iter().enumerate() {
         let mut helm = Command::new("helm");
-        helm.args(["upgrade", "--install", &release.name])
+        batch.releases.push(release.name.clone());
+        batch.record("applying", &[])?;
+        helm.args(["install", &release.name])
+            .args(["--labels", &format!("simulator-run={}", batch.owner)])
             .arg(&chart)
             .arg(format!("--kube-context={}", config.context))
             .args([
@@ -363,6 +405,17 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             items.len() == 1 && items[0]["spec"]["nodeName"] == release.kubernetes_node,
             "Mokka release did not resolve to exactly its intended node"
         );
+        let agent = items[0]["spec"]["containers"]
+            .as_array()
+            .context("missing pod containers")?
+            .iter()
+            .find(|c| c["name"] == "node-agent")
+            .context("missing Mokka node agent")?;
+        ensure!(
+            agent["image"] == config.image,
+            "deployed image reference differs from the pinned plan"
+        );
+        let image_ids = items[0]["status"]["containerStatuses"].clone();
         let name = items[0]["metadata"]["name"]
             .as_str()
             .context("missing pod name")?;
@@ -389,8 +442,10 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             lines.len(),
             directory.join(format!("nvml-{index}.stdout.log")).display()
         );
-        observations.push(json!({"node":release.kubernetes_node,"gpu_inventory":lines}));
+        observations.push(json!({"node":release.kubernetes_node,"gpu_inventory":lines,"container_images":image_ids}));
     }
+    batch.record("complete", &[])?;
+    batch.armed = false;
     fs::write(
         directory.join("result.json"),
         serde_json::to_vec_pretty(
@@ -398,4 +453,93 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
         )?,
     )?;
     Ok(())
+}
+
+fn valid_digest(digest: &str) -> bool {
+    digest.strip_prefix("sha256:").is_some_and(|h| {
+        h.len() == 64
+            && h.bytes()
+                .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    })
+}
+struct Batch<'a> {
+    config: &'a MokkaConfig,
+    directory: &'a Path,
+    releases: Vec<String>,
+    armed: bool,
+    owner: String,
+}
+impl Batch<'_> {
+    fn record(&self, status: &str, errors: &[String]) -> Result<()> {
+        fs::write(
+            self.directory.join("batch-state.json"),
+            serde_json::to_vec_pretty(&json!({
+                "status":status,"owned_releases":self.releases,"owner":self.owner,"cleanup_errors":errors,
+                "scope":"kubernetes-gpu-contracts","nccl_tested":false,"rdma_payload_tested":false
+            }))?,
+        )?;
+        Ok(())
+    }
+}
+impl Drop for Batch<'_> {
+    fn drop(&mut self) {
+        if !self.armed {
+            return;
+        }
+        let mut errors = Vec::new();
+        // Only uninstall releases bearing this run's ownership token, including
+        // partial installs. A competing install between preflight and install is safe.
+        let mut list = Command::new("helm");
+        list.args([
+            "list",
+            "--all",
+            "--output",
+            "json",
+            "--namespace",
+            &self.config.namespace,
+            "--selector",
+            &format!("simulator-run={}", self.owner),
+        ])
+        .arg(format!("--kube-context={}", self.config.context));
+        let owned = execute(list, self.directory, "rollback-owned", 30)
+            .and_then(|bytes| Ok(serde_json::from_slice::<Vec<Value>>(&bytes)?));
+        let owned = match owned {
+            Ok(owned) => owned,
+            Err(e) => {
+                let _ = self.record(
+                    "partial-cleanup-required",
+                    &[format!("cannot verify release ownership: {e:#}")],
+                );
+                return;
+            }
+        };
+        for (i, name) in self.releases.iter().enumerate().rev() {
+            if !owned.iter().any(|r| r["name"] == *name) {
+                continue;
+            }
+            let mut helm = Command::new("helm");
+            helm.args([
+                "uninstall",
+                name,
+                "--namespace",
+                &self.config.namespace,
+                "--ignore-not-found",
+                "--wait",
+                "--timeout",
+                "30s",
+            ])
+            .arg(format!("--kube-context={}", self.config.context));
+            if let Err(e) = execute(helm, self.directory, &format!("rollback-{i}"), 45) {
+                errors.push(format!("{name}: {e:#}"));
+            }
+        }
+        let status = if errors.is_empty() {
+            "rolled-back"
+        } else {
+            "partial-cleanup-required"
+        };
+        if let Err(e) = self.record(status, &errors) {
+            eprintln!("Mokka cleanup evidence: {e:#}");
+        }
+    }
 }

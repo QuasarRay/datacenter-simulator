@@ -53,7 +53,7 @@ pub enum Collective {
 pub struct NcclOptions {
     /// CUDA ordinals visible to this process, in rank order. Empty selects 0..nranks.
     pub devices: Vec<i32>,
-    /// Deadline for worker startup, bootstrap, collective execution and shutdown.
+    /// Deadline for execution. Failure cleanup has an additional two-second grace period.
     pub timeout_secs: u64,
 }
 impl Default for NcclOptions {
@@ -105,6 +105,8 @@ pub struct CollectiveResult {
     pub elapsed_ns: u64,
     /// Per-rank wall time from submission through CUDA stream synchronization.
     pub rank_elapsed_ns: Vec<u64>,
+    /// Aggregate fabric counters; may include other traffic, never NCCL-only byte attribution.
+    pub network_accounting: String,
     pub network: Vec<RankTraffic>,
 }
 
@@ -173,11 +175,8 @@ impl Collective {
             if sim.node(node)?.spec.role != Role::Host {
                 return Err(Error::Invalid("NCCL ranks must be hosts".into()));
             }
-            for peer in ranks {
-                sim.route(node, peer, 0)?;
-            }
         }
-        Ok(())
+        sim.validate_rank_connectivity(ranks)
     }
 }
 fn memory_limit() -> Error {

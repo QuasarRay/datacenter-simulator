@@ -93,7 +93,10 @@ jobs:
       - name: Upstream unit, race, harness and chart tests
         working-directory: integrations/k8s-test-infra/upstream
         run: |
-          helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3 --verify=false
+          git clone https://github.com/helm-unittest/helm-unittest.git /tmp/helm-unittest
+          git -C /tmp/helm-unittest checkout --detach 6f82a998e0b5461762ca959f87f5dd344af5e4eb
+          test "$(git -C /tmp/helm-unittest rev-parse HEAD)" = 6f82a998e0b5461762ca959f87f5dd344af5e4eb
+          make -C /tmp/helm-unittest install
           make test
           make test-e2e-framework
           make helm-tests helm-crds-tests
@@ -119,9 +122,19 @@ jobs:
           echo 'eb244cbafcc157dff60cf68693c14c9a75c4e6e6fedaf9cd71c58117cb93e3fa  /tmp/kind' | sha256sum --check
           chmod +x /tmp/kind
           /tmp/kind create cluster --name simulator --config integrations/k8s-test-infra/kind.ci.yaml --wait 180s
-          /tmp/kind load docker-image nvml-mock:simulator-4a44f73b41ab --name simulator
+          docker run -d -p 127.0.0.1:5001:5000 --name simulator-registry registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+          docker network connect kind simulator-registry
+          for node in $(/tmp/kind get nodes --name simulator); do
+            docker exec "$node" mkdir -p /etc/containerd/certs.d/localhost:5001
+            printf '[host."http://simulator-registry:5000"]\n' | docker exec -i "$node" tee /etc/containerd/certs.d/localhost:5001/hosts.toml
+          done
+          image=localhost:5001/nvml-mock:simulator-4a44f73b41ab
+          docker tag nvml-mock:simulator-4a44f73b41ab "$image"
+          docker push "$image"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image")
+          jq --arg image "$image@${digest##*@}" '.image=$image' integrations/k8s-test-infra/config.example.json > integrations/k8s-test-infra/config.ci.json
       - name: Apply GPU intent and verify real upstream NVML consumers
-        run: simulator/target/debug/datacenter-simulator mokka-apply integrations/k8s-test-infra/config.example.json /tmp/mokka-evidence
+        run: simulator/target/debug/datacenter-simulator mokka-apply integrations/k8s-test-infra/config.ci.json /tmp/mokka-evidence
       - name: Record cluster diagnostics
         if: always()
         run: |
@@ -129,6 +142,7 @@ jobs:
           kubectl --context=kind-simulator get pods -A -o wide > /tmp/mokka-evidence/pods.txt 2>&1 || true
           kubectl --context=kind-simulator -n simulator-gpus logs -l app.kubernetes.io/name=nvml-mock --all-containers --prefix > /tmp/mokka-evidence/agents.log 2>&1 || true
           if test -x /tmp/kind; then /tmp/kind delete cluster --name simulator; fi
+          docker rm -f simulator-registry || true
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

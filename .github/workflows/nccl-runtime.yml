@@ -1,5 +1,10 @@
 name: nccl-runtime
 on:
+  push:
+    branches: [main]
+    paths: ['simulator/**', 'integrations/**', '.github/workflows/nccl-runtime.yml']
+  schedule:
+    - cron: '17 3 * * 1'
   workflow_dispatch:
 permissions:
   contents: read

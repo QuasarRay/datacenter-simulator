@@ -161,6 +161,14 @@ impl Default for LinkSpec {
     }
 }
 impl LinkSpec {
+    /// Native netem queue in packets, at 1500-byte MTU: two BDPs plus 1024 packets.
+    /// Analytical transfers have unbounded lossless queues and do not model packet drops.
+    pub fn native_queue_packets(&self) -> Result<u32> {
+        let bdp = (self.bandwidth_bps as u128 * self.latency_ns as u128)
+            .div_ceil(8 * 1_000_000_000 * 1500);
+        u32::try_from(2 * bdp + 1024)
+            .map_err(|_| Error::Invalid("native queue capacity exceeds u32 packets".into()))
+    }
     pub fn validate(&self) -> Result<()> {
         if self.bandwidth_bps == 0 || self.latency_ns > 1_000_000_000_000 {
             return Err(Error::Invalid(
@@ -240,6 +248,10 @@ pub struct Checkpoint {
     pub created: DateTime<Utc>,
     #[serde(skip)]
     pub(crate) runtime: BTreeMap<String, NodeRuntime>,
+    #[serde(skip)]
+    pub(crate) configuration: serde_json::Value,
+    #[serde(skip)]
+    pub(crate) instruction_states: BTreeMap<String, String>,
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct Simulation {
@@ -263,6 +275,10 @@ pub struct Simulation {
     pub(crate) ztp_script: Option<String>,
     pub(crate) history: Vec<HistoryEntry>,
     pub(crate) clock_ns: u64,
+    pub(crate) scheduling_frontier_ns: u64,
+    pub(crate) history_limit: usize,
+    #[serde(skip)]
+    pub(crate) next_mac: u64,
     #[serde(skip)]
     pub(crate) available: BTreeMap<(String, String), u64>,
 }
@@ -309,6 +325,12 @@ impl Simulation {
     }
     pub fn checkpoints(&self) -> impl Iterator<Item = &Checkpoint> {
         self.checkpoints.values()
+    }
+    /// Retain the newest `limit` events; zero disables retention.
+    pub fn set_history_limit(&mut self, limit: usize) {
+        self.history_limit = limit;
+        let excess = self.history.len().saturating_sub(limit);
+        self.history.drain(..excess);
     }
     pub fn history(&self) -> &[HistoryEntry] {
         &self.history
@@ -361,6 +383,13 @@ impl Simulation {
     }
     pub(crate) fn event(&mut self, description: &str) {
         self.modified = Utc::now();
+        if self.history_limit == 0 {
+            return;
+        }
+        if self.history.len() >= self.history_limit {
+            self.history
+                .drain(..=self.history.len() - self.history_limit);
+        }
         self.history.push(HistoryEntry {
             object_id: self.id.clone(),
             model: "simulation".into(),

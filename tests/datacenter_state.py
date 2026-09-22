@@ -25,6 +25,7 @@ def command(args: list[str]) -> str:
         check=True,
         text=True,
         capture_output=True,
+        timeout=30,
     )
     return result.stdout
 
@@ -106,11 +107,9 @@ class CommonSetup(aetest.CommonSetup):
             container_name(lab_name, node_name)
             for node_name in intent["nodes"]
         }
-        actual = set(command(["docker", "ps", "--format", "{{.Names}}"]).splitlines())
-
-        missing = sorted(expected - actual)
-        if missing:
-            self.failed(f"Expected Containerlab nodes are not running: {missing}")
+        actual = set(command(["docker", "ps", "-a", "--filter", f"label=containerlab={lab_name}", "--format", "{{.Names}}"]).splitlines())
+        if actual != expected:
+            self.failed(f"Lab node set differs: missing={sorted(expected-actual)}, extra={sorted(actual-expected)}")
 
 
 class NodeStateMatchesIntent(aetest.Testcase):
@@ -251,6 +250,11 @@ class ContainerlabOperationalState(aetest.Testcase):
             for interface in node.get("interfaces", []):
                 actual[(node_name, interface.get("name"))] = interface.get("state")
 
+        scoped = {key for key in actual if key[0] in {container_name(intent["name"], n) for n in intent["nodes"]}}
+        # lo and eth0 are the intentional loopback and management interfaces.
+        extras = {key for key in scoped - expected_interfaces if key[1] not in {"lo", "eth0"}}
+        if extras:
+            failures.append(f"Unexpected lab interfaces: {sorted(extras)}")
         for key in sorted(expected_interfaces):
             if key not in actual:
                 failures.append(f"{key[0]}:{key[1]} is absent from operational state")
@@ -261,6 +265,28 @@ class ContainerlabOperationalState(aetest.Testcase):
 
         if failures:
             self.failed("\n".join(failures))
+
+
+class FabricTraffic(aetest.Testcase):
+    """Real IP delivery and link fault recovery in the connectivity-only lab."""
+    @aetest.test
+    def direct_delivery_partition_and_recovery(self, intent, lab_name):
+        for link in intent["links"]:
+            a, b = link["endpoints"]
+            source = container_name(lab_name, a["node"])
+            target = str(ipaddress.ip_interface(b["address"]).ip)
+            ping = ["docker", "exec", source, "ping", "-n", "-c", "1", "-W", "2", "-I", a["interface"], target]
+            command(ping)
+            target_container = container_name(lab_name, b["node"])
+            change = ["docker", "exec", target_container, "ip", "link", "set", b["interface"]]
+            try:
+                command(change + ["down"])
+                blocked = subprocess.run(ping, capture_output=True, timeout=10)
+                if blocked.returncode == 0:
+                    self.failed(f"{link['name']}: traffic bypassed the cut physical link")
+            finally:
+                command(change + ["up"])
+            command(ping)
 
 
 if __name__ == "__main__":

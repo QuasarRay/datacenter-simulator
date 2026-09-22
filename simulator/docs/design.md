@@ -42,3 +42,58 @@ Native compilation does not validate GPU execution. Hosted CPU runners validate 
 - [NCCL transport configuration](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html)
 - [CUDA primary contexts](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__PRIMARY__CTX.html)
 - [CUDA memory](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__MEM.html) and [streams](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__STREAM.html)
+
+## Audit corrections (2026-09-22)
+
+Analytical submissions must have nondecreasing timestamps, including concurrent
+submissions at equal times. An older submission is rejected atomically. Reset,
+shutdown and rebuild cancel reservations and reset this submission frontier to
+the completed model clock. This API returns reservations immediately; it is not
+an event queue that can retroactively reorder previously returned traces.
+
+Both analytical and Linux routing minimize total configured latency, breaking
+ties by hop count, independently of transfer size. Hosts never forward transit.
+A single graph is compiled for each native route update, then one shortest-path
+search runs per source. Rank admission uses switch components and explicit direct
+host links rather than reconstructing every pair's path.
+
+Checkpoints contain an exact configuration snapshot and instruction states.
+Restore and clone reject any changed nodes, interfaces, links, resources,
+services, instructions or guest configuration. New instructions are never
+fabricated as COMPLETE. Management leases persist across node insertions and
+clones. Interface MACs are allocated uniquely within each simulation.
+
+Native links use MTU 1500 and a netem queue of
+`2 * ceil(bandwidth_bps * latency_ns / (8 * 1e9 * 1500)) + 1024` packets.
+Unrepresentable queue capacities fail before native setup. This bounds the queue
+by two one-way bandwidth-delay products plus a burst allowance. Analytical
+queues are lossless and unbounded. Neither backend promises PFC/ECN, jitter,
+packet-loss injection or RDMA congestion fidelity.
+
+Native link changes restore both endpoints and routes on failure. A failed
+rollback poisons the fabric, so traffic operations fail until teardown. VM
+partition guards also restore links on error or cancellation. NCCL failure
+cleanup gets two seconds beyond the execution deadline and reports unreaped
+PIDs instead of waiting forever. Such PIDs can retain GPU resources until the
+kernel releases them. Interface counters include unrelated concurrent traffic;
+results explicitly label that accounting scope.
+
+JSON commands have a separate 1 MiB wire limit, including their newline, while
+Rust collective buffers retain their existing 16 MiB/rank and 64 MiB aggregate
+limits. Oversized or invalid UTF-8 commands return structured errors and the
+session continues. Local manifest reads stop at 16 MiB. Sessions default to 128
+simulations (`Simulator::with_capacity_limit` changes this); event history retains
+the newest 10,000 entries (`set_history_limit` changes this).
+
+Hardware workflows run on trusted main pushes and weekly, as well as manual
+requests. Set the explicit RDMA device/port/GID repository variables and the
+runner-local `DEEPOPS_GPU_CONFIG` path. Never run untrusted fork PRs on these
+privileged runners. The reusable `hardware-evidence.yml` promotion gate requires
+successful runs of all three hardware workflows for the exact commit within
+seven days. Maintainers must make it required in their promotion/branch policy;
+this change cannot manufacture hardware runs or alter repository protection.
+
+The audit's real InfiniBand payload gap remains: ibsim provides management MADs,
+not a verbs data plane. Socket NCCL, local RNIC loopback and Mokka results do not
+close that gap. A true emulated IB payload backend and an attached GPU/RNIC lab
+are prerequisites for an NCCL-IB/GPUDirect claim.
