@@ -76,7 +76,9 @@ where
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--input" => input = Some(next_arg(&mut args, "--input")?),
-            "--output-dir" => output_dir = Some(PathBuf::from(next_arg(&mut args, "--output-dir")?)),
+            "--output-dir" => {
+                output_dir = Some(PathBuf::from(next_arg(&mut args, "--output-dir")?))
+            }
             "--package" => package = next_arg(&mut args, "--package")?,
             "--check" => check = true,
             "--help" | "-h" => {
@@ -178,7 +180,11 @@ fn build_type_names(document: &Value) -> BTreeMap<String, String> {
         if candidate.is_empty() {
             candidate = "AnonymousSchema".to_string();
         }
-        if candidate.chars().next().is_some_and(|ch| ch.is_ascii_digit()) {
+        if candidate
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_ascii_digit())
+        {
             candidate = format!("Schema{candidate}");
         }
 
@@ -214,13 +220,7 @@ fn generate_types_proto(
         let name = type_names
             .get(original)
             .expect("all schemas must have a generated type name");
-        emit_component_schema(
-            &mut out,
-            document,
-            name,
-            schema,
-            type_names,
-        )?;
+        emit_component_schema(&mut out, document, name, schema, type_names)?;
         out.push('\n');
     }
 
@@ -255,9 +255,7 @@ fn emit_component_schema(
         out.push_str("  // OpenAPI union retained losslessly as arbitrary JSON.\n");
         let mut used = BTreeSet::new();
         let number = stable_field_number(name, "value", &mut used);
-        out.push_str(&format!(
-            "  google.protobuf.Value value = {number};\n"
-        ));
+        out.push_str(&format!("  google.protobuf.Value value = {number};\n"));
         out.push_str("}\n");
         return Ok(());
     }
@@ -271,14 +269,20 @@ fn emit_component_schema(
         if field_type.lossy {
             out.push_str("  // Complex OpenAPI item shape represented as JSON.\n");
         }
-        let prefix = if field_type.repeated { "repeated " } else { "repeated " };
+        let prefix = if field_type.repeated {
+            "repeated "
+        } else {
+            "repeated "
+        };
         out.push_str(&format!("  {prefix}{} items = {number};\n", field_type.ty));
         out.push_str("}\n");
         return Ok(());
     }
 
     let (properties, required) = collect_properties(document, schema);
-    if !properties.is_empty() || schema_type(schema) == Some("object") || schema.get("allOf").is_some()
+    if !properties.is_empty()
+        || schema_type(schema) == Some("object")
+        || schema.get("allOf").is_some()
     {
         emit_object_message(
             out,
@@ -295,7 +299,9 @@ fn emit_component_schema(
     let field_type = type_for_schema(document, schema, type_names, None);
     out.push_str(&format!("message {name} {{\n"));
     if field_type.lossy {
-        out.push_str("  // OpenAPI shape represented as JSON because protobuf has no direct equivalent.\n");
+        out.push_str(
+            "  // OpenAPI shape represented as JSON because protobuf has no direct equivalent.\n",
+        );
     }
     let mut used = BTreeSet::new();
     let number = stable_field_number(name, "value", &mut used);
@@ -322,7 +328,9 @@ fn emit_object_message(
 
     let inline_enums = inline_enum_types(name, properties);
     for (field_name, (enum_name, enum_schema)) in &inline_enums {
-        out.push_str(&format!("  // Inline enum for OpenAPI property {field_name}.\n"));
+        out.push_str(&format!(
+            "  // Inline enum for OpenAPI property {field_name}.\n"
+        ));
         emit_nested_enum(out, enum_name, enum_schema, 2);
         out.push('\n');
     }
@@ -380,9 +388,7 @@ fn emit_object_message(
                     field_type.ty
                 ));
             } else {
-                out.push_str(&format!(
-                    "  google.protobuf.Struct entries = {number};\n"
-                ));
+                out.push_str(&format!("  google.protobuf.Struct entries = {number};\n"));
             }
         }
     }
@@ -717,10 +723,7 @@ fn is_enum_schema(schema: &Value) -> bool {
     schema.get("enum").and_then(Value::as_array).is_some()
 }
 
-fn reference_type(
-    reference: &str,
-    type_names: &BTreeMap<String, String>,
-) -> Option<String> {
+fn reference_type(reference: &str, type_names: &BTreeMap<String, String>) -> Option<String> {
     let name = reference.rsplit('/').next()?;
     let decoded = name.replace("~1", "/").replace("~0", "~");
     type_names.get(&decoded).cloned()
@@ -740,10 +743,11 @@ fn collect_operations(document: &Value) -> BTreeMap<String, Vec<(String, String,
         for method in ["get", "post", "put", "patch", "delete"] {
             if let Some(operation) = path_item.get(method) {
                 if operation.is_object() {
-                    services
-                        .entry(service_group(path))
-                        .or_default()
-                        .push((method.to_string(), path.clone(), operation.clone()));
+                    services.entry(service_group(path)).or_default().push((
+                        method.to_string(),
+                        path.clone(),
+                        operation.clone(),
+                    ));
                 }
             }
         }
@@ -753,9 +757,7 @@ fn collect_operations(document: &Value) -> BTreeMap<String, Vec<(String, String,
         operations.sort_by(|a, b| {
             a.1.cmp(&b.1)
                 .then_with(|| a.0.cmp(&b.0))
-                .then_with(|| {
-                    operation_id(&a.0, &a.1, &a.2).cmp(&operation_id(&b.0, &b.1, &b.2))
-                })
+                .then_with(|| operation_id(&a.0, &a.1, &a.2).cmp(&operation_id(&b.0, &b.1, &b.2)))
         });
     }
 
@@ -800,7 +802,11 @@ fn generate_service_proto(
                 to_pascal_case(&path.replace('/', "_"))
             );
         }
-        if rpc_name.chars().next().is_some_and(|ch| ch.is_ascii_digit()) {
+        if rpc_name
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_ascii_digit())
+        {
             rpc_name = format!("Operation{rpc_name}");
         }
         if used_rpc_names.contains(&rpc_name) {
@@ -816,13 +822,8 @@ fn generate_service_proto(
             &rpc_name,
             type_names,
         )?;
-        let response_type = emit_response_message(
-            &mut messages,
-            document,
-            operation,
-            &rpc_name,
-            type_names,
-        );
+        let response_type =
+            emit_response_message(&mut messages, document, operation, &rpc_name, type_names);
 
         let summary = operation
             .get("summary")
@@ -964,11 +965,7 @@ fn deduplicate_request_field_names(fields: &mut [RequestField]) {
 
     for field in fields.iter_mut() {
         if counts.get(&field.field_name).copied().unwrap_or(0) > 1 {
-            let prefix = field
-                .comment
-                .split_whitespace()
-                .next()
-                .unwrap_or("value");
+            let prefix = field.comment.split_whitespace().next().unwrap_or("value");
             field.field_name = proto_field_name(&format!("{prefix}_{}", field.source_name));
         }
     }
@@ -1098,10 +1095,7 @@ fn write_header(out: &mut String, document: &Value, package: &str) {
     out.push_str(&format!("package {package};\n\n"));
 }
 
-fn write_files(
-    files: &BTreeMap<String, String>,
-    output_dir: &Path,
-) -> Result<(), Box<dyn Error>> {
+fn write_files(files: &BTreeMap<String, String>, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(output_dir)?;
     let manifest_path = output_dir.join(MANIFEST_FILE);
 
@@ -1129,10 +1123,7 @@ fn write_files(
     Ok(())
 }
 
-fn check_files(
-    files: &BTreeMap<String, String>,
-    output_dir: &Path,
-) -> Result<(), Box<dyn Error>> {
+fn check_files(files: &BTreeMap<String, String>, output_dir: &Path) -> Result<(), Box<dyn Error>> {
     let mut mismatches = Vec::new();
 
     for (name, expected) in files {
