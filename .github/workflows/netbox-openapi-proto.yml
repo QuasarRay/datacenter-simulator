@@ -1,0 +1,106 @@
+name: netbox-openapi-proto
+
+on:
+  workflow_dispatch:
+    inputs:
+      netbox_ref:
+        description: NetBox branch, tag, or commit to import
+        required: false
+        default: main
+  schedule:
+    - cron: "17 4 * * 1"
+  pull_request:
+    paths:
+      - simulator/src/bin/netbox_openapi_proto.rs
+      - simulator/docs/netbox-openapi-proto.md
+      - .github/workflows/netbox-openapi-proto.yml
+
+permissions:
+  contents: read
+
+jobs:
+  generator-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Test the Rust OpenAPI to protobuf generator
+        run: cargo test --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto
+
+  refresh:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      NETBOX_REF: ${{ inputs.netbox_ref || 'main' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download NetBox's committed machine-readable OpenAPI schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          schema="${RUNNER_TEMP}/netbox-openapi.json"
+          curl --fail --location --retry 3 --retry-all-errors \
+            "https://raw.githubusercontent.com/netbox-community/netbox/${NETBOX_REF}/contrib/openapi.json" \
+            --output "${schema}"
+          python3 - "${schema}" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          path = pathlib.Path(sys.argv[1])
+          document = json.loads(path.read_text())
+          assert str(document.get("openapi", "")).startswith("3."), "not an OpenAPI 3 document"
+          assert document.get("paths"), "OpenAPI document has no paths"
+          print("NetBox OpenAPI version:", document.get("info", {}).get("version", "unknown"))
+          PY
+
+      - name: Generate protobuf contracts
+        run: |
+          cargo run --locked --manifest-path simulator/Cargo.toml --bin netbox_openapi_proto -- \
+            --input "${RUNNER_TEMP}/netbox-openapi.json" \
+            --output-dir simulator/proto/netbox \
+            --package netbox.v1
+
+      - name: Detect generated changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$(git status --porcelain -- simulator/proto/netbox)" ]]; then
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create or refresh generated-contract pull request
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="automation/netbox-openapi-proto"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "${branch}"
+          git add simulator/proto/netbox
+          git commit -m "chore: refresh NetBox OpenAPI protobufs"
+          git push --force origin "${branch}"
+
+          existing="$(gh pr list --head "${branch}" --base main --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "${existing}" ]]; then
+            gh pr create \
+              --base main \
+              --head "${branch}" \
+              --title "chore: refresh NetBox OpenAPI protobufs" \
+              --body "Regenerates simulator/proto/netbox from netbox-community/netbox@\`${NETBOX_REF}\` contrib/openapi.json using the Rust netbox_openapi_proto generator."
+          else
+            echo "Updated existing PR #${existing}"
+          fi
