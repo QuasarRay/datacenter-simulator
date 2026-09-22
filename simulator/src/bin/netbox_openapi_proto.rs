@@ -474,8 +474,13 @@ fn emit_enum_values(out: &mut String, name: &str, schema: &Value, indent: usize)
                 variant = format!("{enum_prefix}_VALUE_{}", to_upper_snake(&raw));
             }
 
+            // protoc derives canonical enum/JSON names which can collapse distinct
+            // OpenAPI values such as "2.5gbase-t" and "25gbase-t". Preserve the
+            // readable spelling while making the exact upstream value part of the
+            // generated identifier.
+            variant = format!("{variant}_{:08X}", fnv1a(raw.as_bytes()));
             if used.contains(&variant) {
-                variant = format!("{variant}_{:08X}", fnv1a(raw.as_bytes()));
+                variant = format!("{variant}_{number}");
             }
             used.insert(variant.clone());
             out.push_str(&format!("{prefix}{variant} = {number};\n"));
