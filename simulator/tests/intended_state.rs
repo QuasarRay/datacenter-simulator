@@ -157,3 +157,93 @@ fn kubernetes_intent_uses_pinned_gpu_profiles_with_ib_mocks_off() {
     config.namespace = "default".into();
     assert!(config.plan().is_err());
 }
+
+#[cfg(feature = "mokka")]
+#[test]
+fn mokka_failed_second_release_rolls_back_only_owned_releases() {
+    use std::{fs, os::unix::fs::PermissionsExt, process::Command};
+    let root = std::env::temp_dir().join(format!("mokka-batch-{}", uuid::Uuid::new_v4()));
+    fs::create_dir(&root).unwrap();
+    let fixtures = root.join("fixtures");
+    fs::create_dir(&fixtures).unwrap();
+    let bin = root.join("bin");
+    fs::create_dir(&bin).unwrap();
+    let mut config = datacenter_simulator::mokka::MokkaConfig::read(
+        &std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../integrations/k8s-test-infra/config.example.json"),
+    )
+    .unwrap();
+    config
+        .image
+        .push_str(&format!("@sha256:{}", "a".repeat(64)));
+    let config_path = root.join("config.json");
+    fs::write(&config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    for name in ["simulator-worker", "simulator-worker2"] {
+        fs::write(fixtures.join(format!("{name}.json")),serde_json::to_vec(&serde_json::json!({
+            "metadata":{"name":name,"labels":{"kubernetes.io/hostname":name,"simulator.quasarray.io/mokka":"true"}},
+            "status":{"conditions":[{"type":"Ready","status":"True"}],"capacity":{}}
+        })).unwrap()).unwrap();
+    }
+    fs::write(fixtures.join("pods.json"),serde_json::to_vec(&serde_json::json!({"items":[{
+        "metadata":{"name":"test-pod"},"spec":{"nodeName":"simulator-worker","containers":[{"name":"node-agent","image":config.image}]},
+        "status":{"containerStatuses":[{"name":"node-agent","ready":true,"imageID":"containerd://sha256:fixture"}]}
+    }]})).unwrap()).unwrap();
+    fs::write(
+        bin.join("kubectl"),
+        r#"#!/bin/sh
+case "$*" in
+  *"get node simulator-worker2 "*) cat "$FIXTURES/simulator-worker2.json";;
+  *"get node simulator-worker "*) cat "$FIXTURES/simulator-worker.json";;
+  *"wait --for=condition=Ready pod "*) touch "$FIXTURES/ready";;
+  *"get pods "*) test -f "$FIXTURES/ready" || exit 96; cat "$FIXTURES/pods.json";;
+  *"exec test-pod "*) printf 'GPU-1, T4\nGPU-2, T4\n';;
+  *) exit 98;;
+esac
+"#,
+    )
+    .unwrap();
+    fs::write(
+        bin.join("helm"),
+        r#"#!/bin/sh
+case "$*" in
+  "list "*"--selector "*) printf '[{"name":"sim-gpu-0"}]';;
+  "list "*) printf '[]';;
+  "install sim-gpu-0 "*) exit 0;;
+  "install sim-gpu-1 "*) exit 9;;
+  "uninstall sim-gpu-0 "*) printf 'sim-gpu-0\n' >> "$FIXTURES/uninstalled";;
+  *) exit 97;;
+esac
+"#,
+    )
+    .unwrap();
+    for name in ["helm", "kubectl"] {
+        fs::set_permissions(bin.join(name), fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let state = root.join("state");
+    let output = Command::new(env!("CARGO_BIN_EXE_datacenter-simulator"))
+        .args(["mokka-apply"])
+        .arg(config_path)
+        .arg(&state)
+        .env("FIXTURES", &fixtures)
+        .env(
+            "PATH",
+            format!("{}:{}", bin.display(), std::env::var("PATH").unwrap()),
+        )
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value =
+        serde_json::from_slice(&fs::read(state.join("batch-state.json")).unwrap()).unwrap();
+    assert_eq!(
+        report["status"],
+        "rolled-back",
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        fs::read_to_string(fixtures.join("uninstalled")).unwrap(),
+        "sim-gpu-0\n"
+    );
+    assert!(!state.join("result.json").exists());
+    fs::remove_dir_all(root).unwrap();
+}

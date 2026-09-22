@@ -385,6 +385,20 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             ])
             .arg(directory.join(format!("{}.values.json", release.name)));
         execute(helm, directory, &format!("helm-{index}"), 360)?;
+        // Helm can consider an OnDelete DaemonSet deployed before its new
+        // containers exist. Wait for the actual pod before inspecting/probing it.
+        let mut ready = kubectl(config);
+        ready.args([
+            "-n",
+            &config.namespace,
+            "wait",
+            "--for=condition=Ready",
+            "pod",
+            "-l",
+            &format!("app.kubernetes.io/instance={}", release.name),
+            "--timeout=120s",
+        ]);
+        execute(ready, directory, &format!("ready-{index}"), 130)?;
         let mut pods = kubectl(config);
         pods.args([
             "-n",
@@ -416,6 +430,16 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
             "deployed image reference differs from the pinned plan"
         );
         let image_ids = items[0]["status"]["containerStatuses"].clone();
+        ensure!(
+            image_ids
+                .as_array()
+                .is_some_and(|statuses| statuses.iter().any(|s| {
+                    s["name"] == "node-agent"
+                        && s["ready"] == true
+                        && s["imageID"].as_str().is_some_and(|id| !id.is_empty())
+                })),
+            "Mokka node agent has no ready running image identity"
+        );
         let name = items[0]["metadata"]["name"]
             .as_str()
             .context("missing pod name")?;

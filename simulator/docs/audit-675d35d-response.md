@@ -52,8 +52,8 @@ claiming broader fidelity. “Open” identifies missing capability/evidence.
 | DS-031 | Implemented, **hardware verification outstanding:** the DeepOps GPU run waits for an actual nccl-tests correctness row, cuts modeled links while repeated cycles are running, requires failure, restores/cancels, then runs the normal suite for recovery. |
 | DS-032 | Confirmed; Mokka rejects tracked, untracked and ignored changes in consumed chart/profile paths. Tests cover all three mutation types. |
 | DS-033 | Confirmed; source verification precedes profile reads and plan/render output creation. |
-| DS-034 | Confirmed; apply requires a source tag plus OCI digest. The chart receives the digest-qualified reference, deployed pod references are checked, and running image IDs are recorded. Tag-only plans explicitly report `image_pinned: false`. |
-| DS-035 | Confirmed; new-release batches roll back their owned releases on any install/verification failure. A unique Helm label prevents deleting a competing/pre-existing release. Partial cleanup is recorded in `batch-state.json`. |
+| DS-034 | Confirmed; apply requires a source tag plus OCI digest. The chart receives the digest-qualified reference, deployed pod references are checked, and running image IDs are recorded. An explicit pod readiness wait handles Helm's early return for OnDelete DaemonSets. Tag-only plans explicitly report `image_pinned: false`. |
+| DS-035 | Confirmed; new-release batches roll back their owned releases on any install/verification failure. A unique Helm label prevents deleting a competing/pre-existing release. Partial cleanup is recorded in `batch-state.json`. A process-level regression injects failure in the second release and checks cleanup of the first without removing an unowned release. |
 | DS-036 | Partially mitigated; two complete, sorted intended-state observations must agree. Tests detect changes and tolerate listing order changes. REST acquisition is still not a database transaction and cannot detect changes reverted between observations. |
 | DS-037 | Boundary; mandatory Mokka scope flags remain false for NCCL/RDMA, with existing regression assertions. No generic GPU-execution success is synthesized. |
 | DS-038 | Partially mitigated; trusted-main pushes and weekly runs now trigger hardware workflows. A reusable promotion gate requires exact-commit successes within seven days. Runner provisioning/configuration, actual successful execution, and requiring the gate in repository policy remain operator prerequisites. |
@@ -69,9 +69,13 @@ claiming broader fidelity. “Open” identifies missing capability/evidence.
 
 ## Evidence and limits
 
+Three identical regressions (DS-001, DS-003 and DS-004) were also run against an
+independent worktree of the audited commit: all three failed there and pass with
+these changes.
+
 Local Rust validation uses 1.98.1; hosted workflows retain the project's pinned
 1.98.0 toolchain. The combined `ibsim,netbox,mokka,vm,nccl-check` suite passed
-51 tests and its all-target clippy run passed with warnings denied. This builds
+52 tests and its all-target clippy run passed with warnings denied. This builds
 native orchestration but deliberately cannot execute NCCL. JSON transport,
 checkpoint, scheduler, provenance, rollback, log bounds and snapshot comparison
 have targeted regressions. YAML, shell syntax and patch whitespace checks pass.
@@ -88,4 +92,24 @@ failed at the audited main SHA. Baseline runs:
 [intended fabric](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35728109960),
 [DeepOps](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35728109931),
 [legacy gate](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35728109984).
-New PR CI results must be assessed separately.
+New PR CI results are assessed separately. At remediation commit `8143ee4d`:
+
+- [Rust/native](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35742134720)
+  passed, including native namespace traffic and partition/recovery, RDMA
+  compilation and NCCL type checking.
+- [DeepOps](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35742134729)
+  passed upstream checks, all three Molecule scenarios and real VM fabric
+  partition/recovery.
+- [Intended fabric](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35742134755)
+  passed upstream Mokka tests, Rust tests and live NetBox/ibsim/OpenSM discovery,
+  partition and recovery. Its Mokka deployment exposed a container readiness race;
+  the follow-up explicitly waits for ready pods before querying NVML.
+- [The separate EX457 gate](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35742134680)
+  still fails host trust. The pinned `ansible-pylibssh` 1.2.2 `Session.connect`
+  ignores `config_file` supplied by netcommon 8.1.0, so the generated alternate
+  known-hosts configuration never reaches libssh. This pre-existing training-lab
+  transport defect remains open; host-key checking has not been disabled.
+
+GPU NCCL execution, the new in-flight fault case and RNIC payload execution still
+need dedicated hardware evidence. Passing CPU CI does not close DS-023/024/026
+or establish a successful hardware gate for DS-038.
