@@ -55,6 +55,7 @@ pub fn execute(
     }
     let result = (|| -> Result<CollectiveResult> {
         let worker = worker_executable()?;
+        patchbay::init_userns()?;
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?
@@ -127,6 +128,7 @@ impl LinuxFabric {
             !cfg!(feature = "nccl-check"),
             "nccl-check cannot execute NCCL"
         );
+        self.ensure_healthy()?;
         request.validate(&self.simulation, ranks)?;
         let devices = options.devices_for(ranks.len())?;
         let began = Instant::now();
@@ -218,6 +220,7 @@ impl LinuxFabric {
                 outputs,
                 elapsed_ns: began.elapsed().as_nanos().try_into()?,
                 rank_elapsed_ns,
+                network_accounting: "interface-counters-including-concurrent-traffic".into(),
                 network,
             })
         };
@@ -228,8 +231,28 @@ impl LinuxFabric {
             for child in &mut children {
                 let _ = child.start_kill();
             }
-            for child in &mut children {
-                let _ = child.wait().await;
+            let cleanup = async {
+                for child in &mut children {
+                    let _ = child.wait().await;
+                }
+            };
+            if tokio::time::timeout(Duration::from_secs(2), cleanup)
+                .await
+                .is_err()
+            {
+                let unreaped: Vec<_> = children
+                    .iter_mut()
+                    .filter_map(|c| {
+                        if c.try_wait().ok().flatten().is_none() {
+                            c.id()
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                bail!(
+                    "NCCL failed; cleanup grace exceeded 2 seconds; unreaped PIDs: {unreaped:?}; GPUs must not be reused until these exit"
+                );
             }
         }
         match result {

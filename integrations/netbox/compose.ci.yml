@@ -1,7 +1,7 @@
 # Ephemeral CI only. Credentials are intentionally public test data.
 services:
   netbox:
-    image: netboxcommunity/netbox:v4.7-5.1.1
+    image: netboxcommunity/netbox:v4.7-5.1.1@sha256:59e3e5954d0243d8648f2fa7ba82cf7c7770aaeef392026cca8b21cd67411e74
     ports: ['127.0.0.1:8000:8080']
     depends_on: [postgres, redis]
     environment:
@@ -30,10 +30,10 @@ services:
       retries: 40
       start_period: 60s
   postgres:
-    image: postgres:18-alpine
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     environment:
       POSTGRES_DB: netbox
       POSTGRES_USER: netbox
       POSTGRES_PASSWORD: simulator-ci
   redis:
-    image: valkey/valkey:9.1-alpine
+    image: valkey/valkey:9.1-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11

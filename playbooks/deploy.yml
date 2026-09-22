@@ -32,15 +32,42 @@
           - "{{ topology_file }}"
       changed_when: false
 
-    - name: Deploy containerlab datacenter
+    - name: Inspect resources already owned by this lab
       become: true
       ansible.builtin.command:
-        argv:
-          - containerlab
-          - deploy
-          - --topo
-          - "{{ topology_file }}"
-      register: containerlab_deploy
+        argv: [docker, ps, -a, --filter, "label=containerlab={{ dc.name }}", --format, "{{ '{{.Names}}' }}"]
+      register: existing_lab
+      changed_when: false
+
+    - name: Refuse to replace an existing or partial lab implicitly
+      ansible.builtin.assert:
+        that: existing_lab.stdout_lines | length == 0
+        fail_msg: "Lab resources already exist. Verify them or run destroy.yml before redeployment."
+
+    - name: Deploy a new lab with failure cleanup
+      block:
+        - name: Deploy containerlab datacenter
+          become: true
+          ansible.builtin.command:
+            argv: [containerlab, deploy, --topo, "{{ topology_file }}"]
+          register: containerlab_deploy
+          changed_when: containerlab_deploy.rc == 0
+        - name: Verify actual traffic and declared state
+          become: true
+          ansible.builtin.command:
+            argv: ["{{ ansible_playbook_python }}", "{{ project_root }}/tests/datacenter_state.py"]
+          changed_when: false
+      rescue:
+        - name: Remove resources from the failed new deployment
+          become: true
+          ansible.builtin.command:
+            argv: [containerlab, destroy, --topo, "{{ topology_file }}", --cleanup]
+          register: failed_cleanup
+          failed_when: false
+          changed_when: failed_cleanup.rc == 0
+        - name: Report the original failure and cleanup outcome
+          ansible.builtin.fail:
+            msg: "Deployment failed: {{ ansible_failed_result }}. Cleanup rc={{ failed_cleanup.rc }}: {{ failed_cleanup.stderr }}"
 
     - name: Show deployment output
       ansible.builtin.debug:

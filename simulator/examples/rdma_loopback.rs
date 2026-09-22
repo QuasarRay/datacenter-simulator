@@ -13,10 +13,20 @@
 // language governing rights and limitations.
 
 fn main() -> anyhow::Result<()> {
-    let result = datacenter_simulator::rdma::loopback(
+    let selection = datacenter_simulator::rdma::RdmaDevice {
+        name: std::env::var("SIMULATOR_RDMA_DEVICE")?,
+        port: std::env::var("SIMULATOR_RDMA_PORT")?.parse()?,
+        gid_index: std::env::var("SIMULATOR_RDMA_GID_INDEX")?.parse()?,
+    };
+    let result = datacenter_simulator::rdma::loopback_on(
+        &selection,
         b"datacenter-rdma",
         std::time::Duration::from_secs(5),
     )?;
-    println!("RDMA payload verified: {} bytes", result.len());
+    println!(
+        "{}",
+        serde_json::json!({"ok":true,"scope":"local-rc-loopback",
+        "selection":selection,"bytes":result.len(),"modeled_fabric_tested":false,"nccl_tested":false})
+    );
     Ok(())
 }

@@ -563,3 +563,243 @@ fn unrepresentable_path_duration_returns_error_without_clock_mutation() {
     ));
     assert_eq!(sim.clock_ns(), 0);
 }
+
+#[test]
+fn audit_monotonic_scheduler_and_reset_cancel_reservations() {
+    let (mut api, id, ranks, _) = star(2);
+    let sim = api.get_mut(&id).unwrap();
+    sim.schedule_transfer(&ranks[0], &ranks[1], 1000, 10_000)
+        .unwrap();
+    assert!(matches!(
+        sim.schedule_transfer(&ranks[0], &ranks[1], 1000, 1),
+        Err(Error::Invalid(_))
+    ));
+    sim.reset_nodes(&[ranks[0].clone()], false).unwrap();
+    let transfer = sim
+        .schedule_transfer(&ranks[0], &ranks[1], 1000, 0)
+        .unwrap();
+    assert_eq!(transfer.hops[0].start_ns, 0);
+}
+
+#[test]
+fn audit_checkpoint_rejects_every_configuration_change_atomically() {
+    for change in 0..6 {
+        let (mut api, id, ranks, links) = star(2);
+        let sim = api.get_mut(&id).unwrap();
+        let cp = sim.shutdown(true).unwrap().unwrap();
+        match change {
+            0 => {
+                sim.create_node(NodeSpec::host("later")).unwrap();
+            }
+            1 => {
+                sim.create_instruction(
+                    &ranks[0],
+                    InstructionData::File {
+                        files: BTreeMap::from([("/late".into(), "late".into())]),
+                    },
+                    false,
+                )
+                .unwrap();
+            }
+            2 => {
+                sim.create_interface(&ranks[0], "extra", InterfaceType::Data)
+                    .unwrap();
+            }
+            3 => {
+                let mut spec = sim.node(&ranks[0]).unwrap().spec.clone();
+                spec.resources.cpu += 1;
+                sim.update_node(&ranks[0], spec).unwrap();
+            }
+            4 => {
+                sim.set_link(
+                    &links[0],
+                    LinkSpec {
+                        up: false,
+                        ..LinkSpec::default()
+                    },
+                )
+                .unwrap();
+            }
+            _ => {
+                let iface = sim.interface_named(&ranks[0], "eth0").unwrap().id.clone();
+                sim.create_service(&iface, "ssh", 22, ServiceType::SSH)
+                    .unwrap();
+            }
+        }
+        let before = snapshot(sim);
+        assert!(
+            matches!(sim.start(Some(&cp)), Err(Error::Conflict(_))),
+            "case {change}"
+        );
+        assert_eq!(snapshot(sim), before);
+        assert!(matches!(
+            api.clone_simulation(&id, "bad clone", Some(&cp), true),
+            Err(Error::Conflict(_))
+        ));
+        assert_eq!(api.list(None, None, 0, 100).len(), 1);
+    }
+}
+
+#[test]
+fn audit_pending_checkpoint_instruction_is_not_falsely_complete() {
+    let mut api = Simulator::new();
+    let id = api.create("pending").unwrap().id().to_string();
+    let sim = api.get_mut(&id).unwrap();
+    let node = sim.create_node(NodeSpec::host("a")).unwrap();
+    sim.create_instruction(
+        &node,
+        InstructionData::Init {
+            hostname: "applied".into(),
+        },
+        false,
+    )
+    .unwrap();
+    let cp = sim.create_checkpoint("before-start").unwrap();
+    sim.start(None).unwrap();
+    sim.shutdown(false).unwrap();
+    sim.rebuild(Some(&cp)).unwrap();
+    assert_eq!(sim.instructions().next().unwrap().state, "PENDING");
+    let clone = api.clone_simulation(&id, "clone", Some(&cp), true).unwrap();
+    let sim = api.get(&clone).unwrap();
+    assert_eq!(
+        sim.runtime(&sim.node_named("a").unwrap().id)
+            .unwrap()
+            .hostname,
+        "applied"
+    );
+}
+
+#[test]
+fn audit_addresses_macs_and_quotas_are_stable() {
+    let (mut api, id, _, _) = star(2);
+    let sim = api.get_mut(&id).unwrap();
+    sim.shutdown(false).unwrap();
+    sim.set_auto_oob(true, true).unwrap();
+    let leases: BTreeMap<_, _> = sim
+        .nodes()
+        .map(|n| (n.spec.name.clone(), n.management_ip.clone()))
+        .collect();
+    sim.create_node(NodeSpec::host("aaa-new")).unwrap();
+    for (name, ip) in &leases {
+        assert_eq!(&sim.node_named(name).unwrap().management_ip, ip);
+    }
+    let macs: std::collections::BTreeSet<_> = sim.interfaces().map(|i| &i.mac_address).collect();
+    assert_eq!(macs.len(), sim.interfaces().count());
+    sim.set_history_limit(3);
+    for _ in 0..12 {
+        sim.update(None, Some(Some("x".into()))).unwrap();
+    }
+    assert_eq!(sim.history().len(), 3);
+    let mut limited = Simulator::with_capacity_limit(1);
+    limited.create("one").unwrap();
+    assert!(limited.create("two").is_err());
+    assert!(
+        limited
+            .import(api.get(&id).unwrap().export().unwrap(), false)
+            .is_err()
+    );
+}
+
+#[test]
+fn audit_manifest_typos_are_rejected() {
+    for content in [
+        serde_json::json!({"nodes":{"a":{"os":"x","cpus":4}}}),
+        serde_json::json!({"nodes":{"a":{"os":"x","interfaces":{"eth0":{}}},"b":{"os":"x","interfaces":{"eth0":{}}}},"links":[{"endpoints":["a:et0","b:eth0"]}]}),
+    ] {
+        let manifest = Manifest::from_json(
+            &serde_json::json!({"format":"JSON","name":"typo","content":content}).to_string(),
+        )
+        .unwrap();
+        let mut api = Simulator::new();
+        assert!(api.import(manifest, false).is_err());
+        assert!(api.list(None, None, 0, 10).is_empty());
+    }
+}
+
+#[test]
+fn audit_native_queue_accounts_for_high_bdp() {
+    let link = LinkSpec {
+        bandwidth_bps: 400_000_000_000,
+        latency_ns: 1_000_000_000,
+        up: true,
+    };
+    assert_eq!(link.native_queue_packets().unwrap(), 66_667_692);
+    assert!(
+        LinkSpec {
+            bandwidth_bps: u64::MAX,
+            latency_ns: 1_000_000_000_000,
+            up: true
+        }
+        .native_queue_packets()
+        .is_err()
+    );
+}
+
+#[cfg(any(not(feature = "nccl"), feature = "nccl-check"))]
+#[test]
+fn audit_collective_admission_scales_without_reconstructing_all_pairs() {
+    let (api, id, ranks, _) = star(1024);
+    let start = std::time::Instant::now();
+    let result =
+        api.get(&id)
+            .unwrap()
+            .all_reduce(&ranks, &vec![vec![]; ranks.len()], Reduction::Sum);
+    assert!(matches!(result, Err(Error::Unsupported(_))));
+    assert!(start.elapsed() < std::time::Duration::from_secs(10));
+}
+
+#[test]
+fn audit_json_oversize_and_invalid_utf8_do_not_destroy_session() {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut child = Command::new(env!("CARGO_BIN_EXE_datacenter-simulator"))
+        .arg("json")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut input = child.stdin.take().unwrap();
+    input.write_all(&vec![b'x'; 1024 * 1024]).unwrap();
+    input.write_all("é\n".as_bytes()).unwrap();
+    input
+        .write_all(b"\xff\n{\"operation\":\"create\",\"name\":\"still-alive\"}\n")
+        .unwrap();
+    drop(input);
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success());
+    let rows: Vec<serde_json::Value> = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert_eq!(rows.len(), 3);
+    assert_eq!(rows[0]["ok"], false);
+    assert_eq!(rows[1]["ok"], false);
+    assert_eq!(rows[2]["ok"], true);
+}
+
+#[test]
+fn audit_manifest_size_is_checked_before_deserialization() {
+    let path = std::env::temp_dir().join(format!("oversize-manifest-{}", uuid::Uuid::new_v4()));
+    let file = std::fs::File::create(&path).unwrap();
+    file.set_len(16 * 1024 * 1024 + 1).unwrap();
+    assert!(matches!(Manifest::read(&path), Err(Error::Invalid(_))));
+    std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn audit_clone_preserves_management_leases_after_insertion() {
+    let (mut api, id, _, _) = star(2);
+    let sim = api.get_mut(&id).unwrap();
+    sim.shutdown(false).unwrap();
+    sim.set_auto_oob(true, true).unwrap();
+    sim.create_node(NodeSpec::host("aaa")).unwrap();
+    let leases: BTreeMap<_, _> = sim
+        .nodes()
+        .map(|n| (n.spec.name.clone(), n.management_ip.clone()))
+        .collect();
+    let clone = api.clone_simulation(&id, "clone", None, false).unwrap();
+    for n in api.get(&clone).unwrap().nodes() {
+        assert_eq!(leases[&n.spec.name], n.management_ip);
+    }
+}

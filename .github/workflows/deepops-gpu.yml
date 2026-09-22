@@ -1,5 +1,10 @@
 name: deepops-gpu
 on:
+  push:
+    branches: [main]
+    paths: ['simulator/**', 'integrations/**', '.github/workflows/deepops-gpu.yml']
+  schedule:
+    - cron: '17 5 * * 1'
   workflow_dispatch:
     inputs:
       config:
@@ -30,7 +35,7 @@ jobs:
           cargo +1.98.0 build --locked --features vm
       - name: Resolve this checkout and a unique state directory
         env:
-          SITE_CONFIG: ${{ inputs.config }}
+          SITE_CONFIG: ${{ inputs.config || vars.DEEPOPS_GPU_CONFIG }}
         run: |
           test -f "$SITE_CONFIG"
           jq --arg repo "$PWD" --arg base "$(dirname "$(realpath "$SITE_CONFIG")")" --arg state "$RUNNER_TEMP/deepops-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" '.repository=$repo | .state_dir=$state | .manifest |= (if startswith("/") then . else $base+"/"+. end) | .image |= (if startswith("/") then . else $base+"/"+. end) | .ansible_bin |= (if startswith("/") then . else $base+"/"+. end)' "$SITE_CONFIG" > "$RUNNER_TEMP/deepops-run.json"

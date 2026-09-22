@@ -61,3 +61,13 @@ For VM plumbing and DeepOps preflight, use `deepops-vm-smoke config.json` after 
 The implementation environment passed the Rust contract tests and DeepOps's 28 unit tests. It has no KVM, QEMU, or GPUs; **a successful full DeepOps/NCCL GPU deployment has not yet been demonstrated here**. Consult the PR's CI results for executed hosted checks, and require a successful `deepops-gpu` report before treating the GPU integration as validated.
 
 Pinned source revisions are in [../../simulator/upstreams.json](../../simulator/upstreams.json) and the Git submodule entries. DeepOps, nccl-tests, and their dependencies retain their upstream licenses.
+
+Audit hardening: deployment materializes the exact committed DeepOps and
+Kubespray trees with Git archives, then installs the versioned Galaxy requirements
+into that fresh tree. It never copies untracked local roles or modules. Galaxy
+artifacts are version-pinned but not content-hash attested. Stage, QEMU and serial
+logs retain at most 16 MiB with a truncation marker. GPU runs now require an
+in-flight partition: an infinite native all-reduce run must produce a correctness
+row, fail after modeled links are cut, be cancelled, and restore the fabric before
+the normal NCCL suite proves recovery. This new path requires the dedicated GPU
+runner; CPU smoke runs cannot prove it.

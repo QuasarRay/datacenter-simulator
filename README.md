@@ -15,3 +15,10 @@ Review [tests and CI](cheatsheets/ex457/v6/21_v6_tests_ci.md) and the [official-
 v6 adds audit-linked Hypothesis and pyATS tests, strict backup/transport/route contracts, and a Dagger pipeline in `ci/`. See [historical audit mappings](cheatsheets/ex457/v6/evidence/audit-history.md). The workflow requires both the original simulator and the v6 lab checks to pass.
 
 The [v5 pack](cheatsheets/ex457/v5/README.md) is **historical regression input, not current exam guidance**. In particular, do not use its older Controller/CaC wording to choose an AAP 2.6 configuration-as-code collection; the current product correction is documented in [v6 chapter 12](cheatsheets/ex457/v6/12_controller_iac.md).
+
+The root Containerlab/Ansible example is an IP connectivity lab: ASN values are
+inventory labels, not configured BGP sessions. Its tests check exact owned
+resources, direct data-link traffic, partition and recovery. Routed BGP exercises
+live under `cheatsheets/ex457`; the Rust simulator uses explicit static routes.
+Redeployment refuses an existing lab and leaves it untouched; destroy it explicitly
+before applying changed intent. A failed new deployment rolls back its resources.

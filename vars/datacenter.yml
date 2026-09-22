@@ -19,12 +19,6 @@ dc:
       cpu: 0.5
       memory: 256Mb
 
-    server:
-      kind: linux
-      image: ghcr.io/srl-labs/network-multitool:v0.9.0
-      cpu: 1
-      memory: 512Mb
-
   nodes:
     spine1:
       role: spine

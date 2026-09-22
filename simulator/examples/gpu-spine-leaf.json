@@ -9,35 +9,53 @@
         "role": "switch",
         "cpu": 2,
         "memory": 1024,
-        "storage": 10
+        "storage": 10,
+        "interfaces": {
+          "swp1": {},
+          "swp2": {}
+        }
       },
       "leaf1": {
         "os": "model/switch",
         "role": "switch",
         "cpu": 2,
         "memory": 1024,
-        "storage": 10
+        "storage": 10,
+        "interfaces": {
+          "swp1": {},
+          "swp2": {}
+        }
       },
       "leaf2": {
         "os": "model/switch",
         "role": "switch",
         "cpu": 2,
         "memory": 1024,
-        "storage": 10
+        "storage": 10,
+        "interfaces": {
+          "swp2": {},
+          "swp1": {}
+        }
       },
       "gpu1": {
         "os": "generic/ubuntu2204",
         "role": "host",
         "cpu": 8,
         "memory": 16384,
-        "storage": 100
+        "storage": 100,
+        "interfaces": {
+          "eth1": {}
+        }
       },
       "gpu2": {
         "os": "generic/ubuntu2204",
         "role": "host",
         "cpu": 8,
         "memory": 16384,
-        "storage": 100
+        "storage": 100,
+        "interfaces": {
+          "eth1": {}
+        }
       }
     },
     "links": [

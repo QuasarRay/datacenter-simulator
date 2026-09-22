@@ -1,5 +1,10 @@
 name: rdma-runtime
 on:
+  push:
+    branches: [main]
+    paths: ['simulator/**', 'integrations/**', '.github/workflows/rdma-runtime.yml']
+  schedule:
+    - cron: '17 4 * * 1'
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,4 +25,8 @@ jobs:
         run: cargo +1.98.0 build --locked --example rdma_loopback --features rdma
       - name: Require real RDMA send and receive
         working-directory: simulator
+        env:
+          SIMULATOR_RDMA_DEVICE: ${{ vars.SIMULATOR_RDMA_DEVICE }}
+          SIMULATOR_RDMA_PORT: ${{ vars.SIMULATOR_RDMA_PORT }}
+          SIMULATOR_RDMA_GID_INDEX: ${{ vars.SIMULATOR_RDMA_GID_INDEX }}
         run: timeout 15 ./target/debug/examples/rdma_loopback

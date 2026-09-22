@@ -104,7 +104,7 @@ installed. Native execution requires Linux sockets and namespace privileges.
 
 The upstream project is pinned as `integrations/k8s-test-infra/upstream`. Build
 its image from that source; the required revision tag ties the configuration
-to that build convention (a tag is not cryptographic image provenance):
+to that build convention. Applying also requires the immutable OCI digest:
 
 ```sh
 docker build -f integrations/k8s-test-infra/upstream/deployments/nvml-mock/Dockerfile \
@@ -113,7 +113,7 @@ docker build -f integrations/k8s-test-infra/upstream/deployments/nvml-mock/Docke
 
 Copy `config.example.json` and set explicit cluster context, dedicated namespace,
 manifest and source checkout paths. Load/publish that image where the selected
-**CPU lab nodes** can pull it. Bind each model host to a Kubernetes node, GPU
+**CPU lab nodes** can pull it. Set `image` to `registry/repository:simulator-4a44f73b41ab@sha256:<64 hex digest>` from the pushed build. Planning accepts a tag and reports `image_pinned: false`; apply rejects it. The CI uses a disposable local registry and records the running image IDs. Bind each model host to a Kubernetes node, GPU
 profile and count using `nodes`, or omit `nodes` to use the imported labels.
 NetBox custom fields `simulator_gpu_profile`, `simulator_gpu_count` and
 `simulator_kubernetes_node` map to those labels. The example uses two T4 GPUs
@@ -134,8 +134,7 @@ machine lacks physical GPUs. Mokka mounts a simulated driver footprint on those
 nodes. Ambient NRI injection, independent IB mocks, kernel logging, allocation
 watching and mock topology/IMEX features are disabled by the generated values.
 Uninstall the releases listed in `plan.json` with Helm against the same context
-and namespace. Successful releases remain installed if a later release fails;
-logs and plans identify what was applied. For complete test isolation, delete
+and namespace. Apply requires new release names and rolls back all releases created by this batch if any install or verification fails. `batch-state.json` records successful rollback or resources needing cleanup; existing releases are never overwritten. For complete test isolation, delete
 the disposable cluster after collecting evidence.
 
 ## Validation
@@ -150,3 +149,10 @@ The patchbay PR adds additional native backup-route and namespace tests.
 DeepOps and real NCCL/verbs gates remain separate. Passing these CPU tests does
 not imply that CUDA/NCCL or RDMA payload execution has passed; use the existing
 hardware workflows for those claims.
+
+Live NetBox acquisition now requires two matching complete observations. This
+rejects changes observed between reads, including a stable but different second
+view; it does not provide database isolation or detect an edit that is reverted
+between observations. Continue to use a NetBox change window for strict snapshots.
+Mokka verifies both tracked and untracked/ignored files in the consumed chart
+before reading profiles or emitting plans. No Mokka result proves CUDA execution.

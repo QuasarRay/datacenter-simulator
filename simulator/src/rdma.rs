@@ -18,25 +18,36 @@ use std::time::{Duration, Instant};
 
 /// Execute a bounded reliable-connected loopback on an RDMA or SoftRoCE device.
 /// Absence of a device is an error; it never becomes a successful emulated result.
-pub fn loopback(payload: &[u8], timeout: Duration) -> Result<Vec<u8>> {
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RdmaDevice {
+    pub name: String,
+    pub port: u8,
+    pub gid_index: u32,
+}
+pub fn loopback_on(selection: &RdmaDevice, payload: &[u8], timeout: Duration) -> Result<Vec<u8>> {
     if payload.is_empty() || payload.len() > 1024 * 1024 || timeout.is_zero() {
         bail!("payload must be 1 byte..1 MiB and timeout must be positive");
     }
     let devices = ibverbs::devices()?;
     let device = devices
         .iter()
-        .next()
-        .context("no RDMA device; configure SoftRoCE or attach an RNIC")?;
+        .find(|d| {
+            d.name()
+                .is_some_and(|n| n.to_bytes() == selection.name.as_bytes())
+        })
+        .context("configured RDMA device is absent")?;
     let ctx = device.open()?;
     let cq = ctx.create_cq(16).build()?;
     let pd = ctx.alloc_pd()?;
-    let gid = ctx
-        .routable_gid(1)?
-        .context("no routable GID on RDMA port 1")?
-        .gid_index;
+    if selection.port == 0 {
+        bail!("RDMA port must be explicit and nonzero");
+    }
+    ctx.query_port(selection.port)?;
+    ctx.query_gid(selection.port, selection.gid_index)?;
     let prepared = pd
-        .create_qp::<ibverbs::Rc>(&cq, &cq, 1)?
-        .set_gid_index(gid)
+        .create_qp::<ibverbs::Rc>(&cq, &cq, selection.port)?
+        .set_gid_index(selection.gid_index)
         .build()?;
     let endpoint = prepared.endpoint()?;
     // MR is declared before QP so QP is destroyed first on errors/timeouts.
@@ -77,4 +88,18 @@ pub fn loopback(payload: &[u8], timeout: Duration) -> Result<Vec<u8>> {
         bail!("RDMA payload mismatch");
     }
     Ok(result)
+}
+
+/// Compatibility entry point now requires explicit runner configuration.
+pub fn loopback(payload: &[u8], timeout: Duration) -> Result<Vec<u8>> {
+    let selection = RdmaDevice {
+        name: std::env::var("SIMULATOR_RDMA_DEVICE").context("set SIMULATOR_RDMA_DEVICE")?,
+        port: std::env::var("SIMULATOR_RDMA_PORT")
+            .context("set SIMULATOR_RDMA_PORT")?
+            .parse()?,
+        gid_index: std::env::var("SIMULATOR_RDMA_GID_INDEX")
+            .context("set SIMULATOR_RDMA_GID_INDEX")?
+            .parse()?,
+    };
+    loopback_on(&selection, payload, timeout)
 }
