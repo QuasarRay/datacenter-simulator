@@ -1,0 +1,17 @@
+# Whole-datacenter and workload scope
+
+## FID-05 — Infrastructure quantities have no shared causal model
+
+**High · Gap · Existing G005.** [simulator/src/model.rs](https://github.com/QuasarRay/datacenter-simulator/blob/c6aedddfbb9ac569b5e0eb68acc616452bf66136/simulator/src/model.rs#L68) stores CPU, memory and storage quantities. [simulator/src/api.rs](https://github.com/QuasarRay/datacenter-simulator/blob/c6aedddfbb9ac569b5e0eb68acc616452bf66136/simulator/src/api.rs#L1116) sums them; portable execution does not consume simulated CPU cycles, storage IOPS or memory bandwidth. Management IPs/services are descriptors, not an independently powered BMC or an implemented Redfish/IPMI server. There is no power budget, cooling, thermal throttling, disk failure, checkpoint-I/O or workload-storage model driving outcomes.
+
+The [NVIDIA SuperPOD fabric guide](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/network-fabrics.html) separates compute, storage, in-band management and OOB networks. In this repository those domains are not represented as independent interacting infrastructure planes. A storage stall or thermal limit cannot causally slow a simulated training job; a host reset is not a BMC power-cycle sequence.
+
+**Remedy and acceptance:** introduce small event/state models with explicit units and dependency edges, not heavyweight guest processes for every modeled component. Demonstrate a storage-limited step, thermal throttling and an OOB-controlled recovery while the compute plane is unavailable. Until then report these quantities as intent, not measured capacity or operational health. VM disks and genuine guest provisioning do not supply a datacenter-wide storage model.
+
+## FID-06 — Current collectives do not span production workload behavior
+
+**Medium · Gap · Existing G006.** [simulator/src/collective.rs](https://github.com/QuasarRay/datacenter-simulator/blob/c6aedddfbb9ac569b5e0eb68acc616452bf66136/simulator/src/collective.rs#L33) supports four operations with `f64` inputs and 64-MiB aggregate input/output limits each. [simulator/src/cuda.rs](https://github.com/QuasarRay/datacenter-simulator/blob/c6aedddfbb9ac569b5e0eb68acc616452bf66136/simulator/src/cuda.rs#L99) allocates eight-byte elements. [integrations/deepops/files/nccl-rank.sh](https://github.com/QuasarRay/datacenter-simulator/blob/c6aedddfbb9ac569b5e0eb68acc616452bf66136/integrations/deepops/files/nccl-rank.sh#L18) exercises eleven upstream binaries with double precision, 256 B–1 MiB, five measured iterations and one warmup; the partition run is a separate fixed 16-MiB case.
+
+This covers useful correctness cases, but not mixed-precision training buckets, compute/communication overlap, concurrent communicators, long-lived training, large all-to-all imbalance, data loading or placement-sensitive scheduling. `CollectiveResult.elapsed_ns` includes worker startup/bootstrap/teardown; `rank_elapsed_ns` has a different scope. Neither is an end-to-end training-step model.
+
+**Remedy and acceptance:** define supported workload traces and compare like timing scopes. Add representative sizes/types, skew and overlap under explicit host budgets, with repeated runs and variance. Keep unchecked upstream in-place modes explicitly unchecked; do not replace their `null` correctness field with a fabricated zero. Treat a fixed correctness pass as correctness evidence only, not a throughput calibration.
