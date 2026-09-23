@@ -186,6 +186,8 @@ impl Simulator {
                     let child = sim.interface_named(&id, iface)?.id.clone();
                     let parent_id = sim.interface_named(&id, parent)?.id.clone();
                     if parent == iface
+                        || spec.interface_type != InterfaceType::Data
+                        || sim.interface(&parent_id)?.interface_type != InterfaceType::Data
                         || m.interfaces
                             .get(parent)
                             .is_some_and(|p| p.split_parent.is_some())
@@ -230,6 +232,7 @@ impl Simulator {
         if let Some(ztp) = manifest.ztp {
             sim.create_ztp_script(ztp)?;
         }
+        sim.validate_limits(sim.limits())?;
         if attempt_start {
             sim.start(None)?;
         }
@@ -290,7 +293,7 @@ impl Simulation {
             })
             .collect();
         links.sort_by(|a, b| a.endpoints.cmp(&b.endpoints));
-        let services = self
+        let mut services: Vec<_> = self
             .services
             .values()
             .map(|s| ManifestService {
@@ -300,7 +303,8 @@ impl Simulation {
                 service_type: s.service_type,
             })
             .collect();
-        let instructions = self
+        services.sort_by_cached_key(|s| serde_json::to_string(s).expect("service serialization"));
+        let mut instructions: Vec<_> = self
             .instructions
             .values()
             .map(|i| ManifestInstruction {
@@ -309,6 +313,8 @@ impl Simulation {
                 run_again_on_rebuild: i.run_again_on_rebuild,
             })
             .collect();
+        instructions
+            .sort_by_cached_key(|i| serde_json::to_string(i).expect("instruction serialization"));
         Ok(Manifest {
             format: "JSON".into(),
             name: self.name.clone(),

@@ -22,7 +22,7 @@ use crate::{
 use anyhow::{Context, Result, bail, ensure};
 use serde::de::DeserializeOwned;
 use std::{
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::Stdio,
     time::{Duration, Instant},
 };
@@ -31,13 +31,15 @@ use tokio::{
     process::{Child, ChildStdout, Command},
 };
 
-/// CLI defaults to its own worker entry point. Embedders point this at the built
-/// datacenter-simulator executable; no Python interpreter or shell is involved.
-pub fn worker_executable() -> Result<PathBuf> {
-    match std::env::var_os("DATACENTER_SIMULATOR_WORKER") {
-        Some(path) => Ok(PathBuf::from(path)),
-        None => Ok(std::env::current_exe()?),
-    }
+/// Only the running executable can host ranks; embedders must call the worker
+/// entry point before their runtime. An external executable is never selected.
+fn worker_executable() -> Result<PathBuf> {
+    ensure!(
+        std::env::var_os("DATACENTER_SIMULATOR_WORKER").is_none(),
+        "DATACENTER_SIMULATOR_WORKER is forbidden; external NCCL workers are not supported"
+    );
+    crate::evidence::reject_loader_injection()?;
+    Ok(std::fs::canonicalize("/proc/self/exe")?)
 }
 pub fn execute(
     sim: &Simulation,
@@ -54,27 +56,36 @@ pub fn execute(
         ));
     }
     let result = (|| -> Result<CollectiveResult> {
-        let worker = worker_executable()?;
+        worker_executable()?;
         patchbay::init_userns()?;
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?
             .block_on(async {
                 let fabric = LinuxFabric::build(sim).await?;
-                fabric.collective(ranks, request, options, &worker).await
+                fabric.collective(ranks, request, options).await
             })
     })();
     result.map_err(|e| Error::State(format!("native NCCL execution failed: {e:#}")))
 }
 
 /// The worker environment is private to each child. Host process globals are not changed.
-fn worker_command(executable: &Path, rank: usize, count: usize, device: i32) -> Command {
-    let mut cmd = Command::new(executable);
+fn worker_command(
+    rank: usize,
+    count: usize,
+    device: i32,
+    nonce: &str,
+    libraries: &crate::evidence::NcclLibraries,
+) -> Result<Command> {
+    // /proc/self/exe pins the running inode even if its installation path changes.
+    let mut cmd = Command::new("/proc/self/exe");
     cmd.args([
         "__nccl_rank",
         &rank.to_string(),
         &count.to_string(),
         &device.to_string(),
+        nonce,
+        &serde_json::to_string(libraries)?,
     ]);
     // Prevent inherited NCCL tuning from enabling a transport outside the lab.
     for (key, _) in std::env::vars_os() {
@@ -82,6 +93,22 @@ fn worker_command(executable: &Path, rank: usize, count: usize, device: i32) -> 
             cmd.env_remove(key);
         }
     }
+    for name in [
+        "LD_PRELOAD",
+        "LD_AUDIT",
+        "LD_LIBRARY_PATH",
+        "DYLD_INSERT_LIBRARIES",
+    ] {
+        cmd.env_remove(name);
+    }
+    cmd.env(
+        "LD_LIBRARY_PATH",
+        libraries
+            .nccl
+            .path
+            .parent()
+            .context("NCCL library directory")?,
+    );
     cmd.envs([
         ("NCCL_NET", "Socket"),
         ("NCCL_NET_PLUGIN", "none"),
@@ -103,7 +130,7 @@ fn worker_command(executable: &Path, rank: usize, count: usize, device: i32) -> 
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .kill_on_drop(true);
-    cmd
+    Ok(cmd)
 }
 async fn message<T: DeserializeOwned>(reader: &mut BufReader<ChildStdout>) -> Result<T> {
     let mut line = String::new();
@@ -122,8 +149,15 @@ impl LinuxFabric {
         ranks: &[String],
         request: &Collective,
         options: &NcclOptions,
-        worker: &Path,
     ) -> Result<CollectiveResult> {
+        let worker = worker_executable()?;
+        let executable = crate::evidence::FileIdentity::read(&worker)?;
+        let libraries = options
+            .libraries
+            .as_ref()
+            .context("native NCCL requires pinned CUDA/NCCL library paths and SHA-256 hashes")?;
+        libraries.verify()?;
+        libraries.verify_mapped(std::process::id(), false)?;
         ensure!(
             !cfg!(feature = "nccl-check"),
             "nccl-check cannot execute NCCL"
@@ -133,17 +167,19 @@ impl LinuxFabric {
         let devices = options.devices_for(ranks.len())?;
         let began = Instant::now();
         let mut children: Vec<Child> = Vec::new();
+        let nonce = uuid::Uuid::new_v4().to_string();
         let run = async {
             let mut before = Vec::new();
             let mut readers = Vec::new();
             for (rank, node) in ranks.iter().enumerate() {
                 before.push(self.data_counters(node)?);
                 let mut child = self.device(node)?.spawn_command(worker_command(
-                    worker,
                     rank,
                     ranks.len(),
                     devices[rank],
-                ))?;
+                    &nonce,
+                    libraries,
+                )?)?;
                 readers.push(BufReader::new(
                     child.stdout.take().context("NCCL worker stdout")?,
                 ));
@@ -151,11 +187,23 @@ impl LinuxFabric {
             }
             let mut id = None;
             let mut version = None;
+            let mut gpu_identity = Vec::new();
             // All CUDA devices must initialize before any rank enters blocking NCCL init.
             for (rank, reader) in readers.iter_mut().enumerate() {
                 let ready: Ready = message(reader)
                     .await
                     .with_context(|| format!("initialize NCCL rank {rank}"))?;
+                ensure!(ready.nonce == nonce, "NCCL worker session mismatch");
+                let pid = children[rank].id().context("NCCL worker already reaped")?;
+                use std::os::unix::fs::MetadataExt;
+                let expected = std::fs::metadata("/proc/self/exe")?;
+                let observed = std::fs::metadata(format!("/proc/{pid}/exe"))?;
+                ensure!(
+                    (expected.dev(), expected.ino()) == (observed.dev(), observed.ino()),
+                    "foreign NCCL worker executable"
+                );
+                libraries.verify_mapped(pid, true)?;
+                gpu_identity.push(ready.device_identity);
                 if rank == 0 {
                     id = Some(
                         ready
@@ -213,7 +261,9 @@ impl LinuxFabric {
                     rx_bytes: rx.checked_sub(before[rank].1).context("RX counter reset")?,
                 });
             }
+            require_data_traffic(ranks.len(), output_count, &network)?;
             Ok(CollectiveResult {
+                execution_identity: serde_json::json!({"trust":"operator-pinned-libraries-and-same-executable", "worker":executable, "libraries":libraries, "devices":gpu_identity, "session":nonce, "tools":self.tool_identities()}),
                 backend: "nccl".into(),
                 transport: "Socket".into(),
                 nccl_version: version.context("missing NCCL version")?,
@@ -303,5 +353,60 @@ impl LinuxFabric {
             }
             Ok((tx, rx))
         })
+    }
+}
+
+fn require_data_traffic(ranks: usize, count: usize, traffic: &[RankTraffic]) -> Result<()> {
+    ensure!(
+        ranks <= 1
+            || count == 0
+            || (traffic.len() == ranks && traffic.iter().all(|t| t.tx_bytes > 0 && t.rx_bytes > 0)),
+        "nonempty multi-rank NCCL produced no bidirectional data-interface traffic"
+    );
+    Ok(())
+}
+
+#[cfg(test)]
+mod audit_tests {
+    use super::*;
+    #[test]
+    fn zero_traffic_cannot_certify_nonempty_multirank_execution() {
+        assert!(require_data_traffic(2, 1, &[]).is_err());
+        let traffic = vec![
+            RankTraffic {
+                node: "a".into(),
+                tx_bytes: 0,
+                rx_bytes: 0,
+            },
+            RankTraffic {
+                node: "b".into(),
+                tx_bytes: 1,
+                rx_bytes: 1,
+            },
+        ];
+        assert!(require_data_traffic(2, 1, &traffic).is_err());
+        assert!(require_data_traffic(1, 1, &[]).is_ok());
+    }
+    #[test]
+    fn arbitrary_worker_selection_is_rejected() {
+        if std::env::var_os("AUDIT_WORKER_CHILD").is_some() {
+            assert!(
+                worker_executable()
+                    .unwrap_err()
+                    .to_string()
+                    .contains("DATACENTER_SIMULATOR_WORKER")
+            );
+            return;
+        }
+        let status = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "nccl_backend::audit_tests::arbitrary_worker_selection_is_rejected",
+            ])
+            .env("AUDIT_WORKER_CHILD", "1")
+            .env("DATACENTER_SIMULATOR_WORKER", "/bin/true")
+            .status()
+            .unwrap();
+        assert!(status.success());
     }
 }

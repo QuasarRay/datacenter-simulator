@@ -56,13 +56,13 @@ def test_machine_passphrase_and_privilege_contract():
 
 def test_real_ansible_trust_bootstrap(tmp_path):
     trust=tmp_path/'known_hosts'; trust.write_text('172.30.0.11 ssh-ed25519 fixture-public-only\n')
-    # No SSH happens: this checks real network_cli variable evaluation and file lifecycle.
+    # Network SSH and wrong-key rejection are separate live CI gates.
     play=[{'hosts':'spine1','gather_facts':False,'vars_files':[str(ROOT/'model-upstream.yml')],
            'tasks':[{'ansible.builtin.import_tasks':str(ROOT/'playbooks/tasks/model.yml')},
                     {'ansible.builtin.import_tasks':str(ROOT/'playbooks/tasks/trust.yml')},
-                    {'ansible.builtin.assert':{'that':["ansible_libssh_config_file == ex457_ssh_config.path", "ansible_libssh_config_file | length > 0"]}},
-                    {'ansible.builtin.stat':{'path':'{{ ansible_libssh_config_file }}'},'delegate_to':'localhost','register':'backend'},
-                    {'ansible.builtin.assert':{'that':["backend.stat.isreg", "backend.stat.mode == '0600'"]}},
+                    {'ansible.builtin.assert':{'that':["ansible_libssh_known_hosts == ex457_trust_path", "ansible_libssh_known_hosts | length > 0"]}},
+                    {'ansible.builtin.stat':{'path':'{{ ansible_libssh_known_hosts }}'},'delegate_to':'localhost','register':'backend'},
+                    {'ansible.builtin.assert':{'that':["backend.stat.isreg"]}},
                     {'ansible.builtin.import_tasks':str(ROOT/'playbooks/tasks/cleanup_trust.yml')}]}]
     file=tmp_path/'bootstrap.yml'; file.write_text(yaml.safe_dump(play))
     secure_dir(ROOT/'.state')
@@ -204,3 +204,69 @@ def test_network_cleanup_refuses_unowned_or_active_network(defect):
     elif defect=='attached':network['Containers']={'active':{'Name':'other-lab-node'}}
     else:network['Driver']='overlay'
     with pytest.raises(ValueError):module.validate(network,'gpu-dc-mgmt','172.30.0.0/24')
+
+
+def test_libssh_dependency_patch_is_exact_and_idempotent(tmp_path):
+    from patch_libssh import patch, ORIGINAL, OPTION, AFTER, BEFORE
+    from ansible.plugins.loader import connection_loader, init_plugin_loader
+    init_plugin_loader()
+    data=Path(connection_loader.find_plugin("ansible.netcommon.libssh")).read_text()
+    original=data.replace(OPTION, '', 1).replace(AFTER, BEFORE, 1)
+    assert hashlib.sha256(original.encode()).hexdigest()==ORIGINAL
+    target=tmp_path/'ansible_collections/ansible/netcommon/plugins/connection/libssh.py'
+    target.parent.mkdir(parents=True); target.write_text(original)
+    patch(tmp_path); once=target.read_bytes(); patch(tmp_path)
+    assert target.read_bytes()==once
+    target.write_text(target.read_text()+'\n# unexpected modification\n')
+    with pytest.raises(RuntimeError): patch(tmp_path)
+
+
+def test_libssh_real_host_trust_accepts_pinned_key_and_rejects_wrong_key(tmp_path):
+    import shutil
+    import socket
+    import time
+    if os.geteuid()!=0 or not shutil.which('sshd'):
+        pytest.skip('loopback SSH regression needs root and openssh-server')
+    capabilities=int(next(line.split()[1] for line in Path('/proc/self/status').read_text().splitlines() if line.startswith('CapEff:')),16)
+    if not capabilities & (1 << 18):
+        if os.environ.get('EX457_DAGGER_RUNNER'):
+            pytest.fail('mandatory live SSH regression requires CAP_SYS_CHROOT in the CI container')
+        pytest.skip('openssh privilege separation requires CAP_SYS_CHROOT')
+    Path('/run/sshd').mkdir(exist_ok=True)
+    for name in ['server', 'client', 'wrong']:
+        subprocess.run(['ssh-keygen','-q','-t','ed25519','-N','','-f',str(tmp_path/name)],check=True)
+    with socket.socket() as s:
+        s.bind(('127.0.0.1',0)); port=s.getsockname()[1]
+    config=tmp_path/'sshd_config'
+    config.write_text(f'''ListenAddress 127.0.0.1
+Port {port}
+HostKey {tmp_path/'server'}
+PidFile {tmp_path/'sshd.pid'}
+AuthorizedKeysFile {tmp_path/'client.pub'}
+StrictModes no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+UsePAM no
+''')
+    log=(tmp_path/'sshd.log').open('w')
+    server=subprocess.Popen([shutil.which('sshd'),'-D','-e','-f',str(config)],stdout=log,stderr=log)
+    try:
+        for _ in range(100):
+            if server.poll() is not None: pytest.fail((tmp_path/'sshd.log').read_text())
+            try:
+                with socket.create_connection(('127.0.0.1',port),timeout=.1): break
+            except OSError: time.sleep(.02)
+        trust=tmp_path/'known_hosts'
+        command=['ansible','all','-i','127.0.0.1,','-c','ansible.netcommon.libssh','-u','root',
+                 '--private-key',str(tmp_path/'client'),'-m','ansible.builtin.raw','-a','printf trusted',
+                 '-e',json.dumps({'ansible_port':port,'ansible_libssh_known_hosts':str(trust),
+                                 'ansible_host_key_checking':True,'ansible_libssh_host_key_auto_add':False})]
+        for key,success in [('server',True),('wrong',False)]:
+            trust.write_text(f'[127.0.0.1]:{port} '+(tmp_path/(key+'.pub')).read_text())
+            run=subprocess.run(command,capture_output=True,text=True,timeout=30)
+            assert (run.returncode==0)==success,run.stdout+run.stderr
+            if success: assert 'trusted' in run.stdout
+            else: assert 'Host key' in run.stdout+run.stderr
+    finally:
+        server.terminate(); server.wait(timeout=5); log.close()

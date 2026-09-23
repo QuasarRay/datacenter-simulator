@@ -252,9 +252,12 @@ pub struct Checkpoint {
     pub(crate) configuration: serde_json::Value,
     #[serde(skip)]
     pub(crate) instruction_states: BTreeMap<String, String>,
+    #[serde(skip)]
+    pub(crate) retained_bytes: usize,
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct Simulation {
+    pub(crate) limits: crate::limits::Limits,
     pub(crate) id: String,
     pub(crate) name: String,
     pub(crate) state: State,

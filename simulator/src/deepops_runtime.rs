@@ -33,6 +33,40 @@ pub fn run(config: DeepOpsConfig, smoke: bool) -> Result<()> {
     fs::set_permissions(&config.state_dir, fs::Permissions::from_mode(0o700))?;
     fs::create_dir(config.state_dir.join("reports"))?;
     fs::create_dir(config.state_dir.join("guests"))?;
+    let mut programs: Vec<std::path::PathBuf> = [
+        "qemu-system-x86_64",
+        "qemu-img",
+        "cloud-localds",
+        "ssh",
+        "ssh-keygen",
+        "ip",
+        "nft",
+        "tc",
+        "git",
+        "tar",
+        "cp",
+        "sha256sum",
+    ]
+    .iter()
+    .map(std::path::PathBuf::from)
+    .collect();
+    programs.extend(
+        [
+            "ansible",
+            "ansible-playbook",
+            "ansible-inventory",
+            "ansible-galaxy",
+            "python3",
+        ]
+        .iter()
+        .map(|p| config.ansible_bin.join(p)),
+    );
+    let identities =
+        crate::evidence::tools(&programs.iter().map(|p| p.as_path()).collect::<Vec<_>>())?;
+    fs::write(
+        config.state_dir.join("reports/tools.json"),
+        serde_json::to_vec_pretty(&identities)?,
+    )?;
     stage_deepops(&config)?;
     prepare_config(&config, &plan)?;
     patchbay::init_userns()?;
@@ -149,27 +183,14 @@ fn stage_deepops(config: &DeepOpsConfig) -> Result<()> {
     )?;
     fs::remove_file(archive)?;
     let galaxy = config.ansible_bin.join("ansible-galaxy");
-    let requirements = staged.join("upstream/roles/requirements.yml");
     checked(
-        path(&galaxy)?,
+        "bash",
         &[
-            "role",
-            "install",
-            "-r",
-            path(&requirements)?,
-            "-p",
+            path(&original.join("install-galaxy-locked.sh"))?,
+            path(&galaxy)?,
             path(&staged.join("upstream/roles/galaxy"))?,
-        ],
-    )?;
-    checked(
-        path(&galaxy)?,
-        &[
-            "collection",
-            "install",
-            "-r",
-            path(&requirements)?,
-            "-p",
             path(&staged.join("upstream/collections"))?,
+            path(&staged.join("galaxy-artifacts"))?,
         ],
     )?;
     for entry in ["prepare-nccl.yml", "files"] {
@@ -308,8 +329,8 @@ async fn stage(
         .device(&lab.plan.provisioner_id)?
         .spawn_command(cmd)
         .with_context(|| format!("start {program} for {name}"))?;
-    let _group = crate::vm::ProcessGroup(child.id().context("stage process has no PID")?);
-    let status = child.wait().await?;
+    let mut group = crate::vm::ProcessGroup::new(&child)?;
+    let status = group.wait(&mut child).await?;
     out_done.finish()?;
     err_done.finish()?;
     ensure!(
@@ -577,13 +598,13 @@ async fn partition_nccl(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value
         .fabric
         .device(&lab.plan.provisioner_id)?
         .spawn_command(cmd)?;
-    let _group = crate::vm::ProcessGroup(child.id().context("partition process has no PID")?);
+    let mut group = crate::vm::ProcessGroup::new(&child)?;
     let mut guard = crate::vm::VmPartition::new(lab);
     let outcome = async {
         tokio::time::timeout(Duration::from_secs(90), async {
             loop {
                 ensure!(
-                    child.try_wait()?.is_none(),
+                    group.try_wait(&mut child)?.is_none(),
                     "NCCL exited before fault injection"
                 );
                 let output = fs::read_to_string(&stdout)?;
@@ -603,7 +624,7 @@ async fn partition_nccl(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value
         .await
         .context("no completed native NCCL row before partition deadline")??;
         guard.cut(&links)?;
-        let status = tokio::time::timeout(Duration::from_secs(75), child.wait())
+        let status = tokio::time::timeout(Duration::from_secs(75), group.wait(&mut child))
             .await
             .context("partitioned srun did not terminate")??;
         ensure!(
@@ -614,7 +635,7 @@ async fn partition_nccl(config: &DeepOpsConfig, lab: &mut VmLab) -> Result<Value
     }
     .await;
     let _ = child.start_kill();
-    let _ = tokio::time::timeout(Duration::from_secs(2), child.wait()).await;
+    let _ = tokio::time::timeout(Duration::from_secs(2), group.wait(&mut child)).await;
     let restore = guard.restore();
     // Cancel the uniquely named remote job even if SSH failed while carrying output.
     let cancel = lab

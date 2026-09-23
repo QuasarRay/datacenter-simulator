@@ -15,7 +15,7 @@
     "area": "Ansible SSH",
     "finding": "Lab `known_hosts` is wired through OpenSSH args that do not define `network_cli` trust",
     "status": "RUNTIME_GATED",
-    "remediation": "Pin libssh and pass its supported config_file with explicit trust",
+    "remediation": "Pin libssh; hash-check a dependency patch wiring explicit trust to the supported knownhosts argument",
     "file": "playbooks/tasks/trust.yml",
     "evidence": "tests/test_automation.py::test_real_ansible_trust_bootstrap, tests/pyats_live.py::Transport"
   },

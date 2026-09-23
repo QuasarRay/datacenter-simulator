@@ -28,6 +28,7 @@ jobs:
         working-directory: integrations/deepops/upstream
         run: |
           ./scripts/setup.sh </dev/null
+          ../install-galaxy-locked.sh /opt/deepops/env/bin/ansible-galaxy "$PWD/roles/galaxy" "$PWD/collections" /tmp/deepops-galaxy-cache
           /opt/deepops/env/bin/ansible --version
           /opt/deepops/env/bin/python3 -c 'from packaging.version import Version; print(Version("1.0"))'
       - name: Check generated inventory with DeepOps doctor and playbook syntax
@@ -62,12 +63,11 @@ jobs:
           python3 -m venv /tmp/deepops-molecule
           source /tmp/deepops-molecule/bin/activate
           pip install --require-hashes -r integrations/deepops/molecule-requirements.lock
-          cd integrations/deepops/upstream/roles
-          ansible-galaxy role install --force -r requirements.yml
-          ansible-galaxy collection install --force -r requirements.yml
+          integrations/deepops/install-galaxy-locked.sh /tmp/deepops-molecule/bin/ansible-galaxy integrations/deepops/upstream/roles/galaxy /tmp/deepops-molecule-collections /tmp/deepops-galaxy-cache
       - name: Run the unmodified upstream role scenario
         working-directory: integrations/deepops/upstream/roles/${{ matrix.role }}
         env:
+          ANSIBLE_COLLECTIONS_PATH: /tmp/deepops-molecule-collections
           ANSIBLE_ROLES_PATH: ${{ github.workspace }}/integrations/deepops/upstream/roles/galaxy:${{ github.workspace }}/integrations/deepops/upstream/roles
         run: |
           source /tmp/deepops-molecule/bin/activate
@@ -83,7 +83,7 @@ jobs:
       - name: Install VM and namespace tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 qemu-utils cloud-image-utils nftables iproute2 iputils-ping
+          sudo apt-get install -y qemu-system-x86 qemu-utils cloud-image-utils ubuntu-cloudimage-keyring gnupg nftables iproute2 iputils-ping
           rustup toolchain install 1.98.0 --profile minimal --component clippy
       - name: Install DeepOps for the real remote-doctor check
         run: integrations/deepops/setup.sh
@@ -97,6 +97,8 @@ jobs:
           mkdir -p /tmp/deepops-smoke
           curl --fail --retry 3 -L https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img -o /tmp/deepops-smoke/ubuntu.img
           curl --fail --retry 3 -L https://cloud-images.ubuntu.com/releases/jammy/release/SHA256SUMS -o /tmp/deepops-smoke/SHA256SUMS
+          curl --fail --retry 3 -L https://cloud-images.ubuntu.com/releases/jammy/release/SHA256SUMS.gpg -o /tmp/deepops-smoke/SHA256SUMS.gpg
+          gpgv --keyring /usr/share/keyrings/ubuntu-cloudimage-keyring.gpg /tmp/deepops-smoke/SHA256SUMS.gpg /tmp/deepops-smoke/SHA256SUMS
           digest=$(awk '$2 ~ /ubuntu-22.04-server-cloudimg-amd64.img$/ {print $1}' /tmp/deepops-smoke/SHA256SUMS)
           test "${#digest}" -eq 64
           jq '.content.nodes |= with_entries(if .value.role == "host" then .value.cpu = 1 | .value.memory = 768 | .value.storage = 8 else . end)' integrations/deepops/topology.json > /tmp/deepops-smoke/topology.json
@@ -111,7 +113,7 @@ jobs:
             sudo find /tmp/deepops-smoke/state -type f \( -name '*.log' -o -name result.json -o -name 'deepops-*.stdout' -o -name 'deepops-*.stderr'  \) -exec cp --parents '{}' /tmp/deepops-evidence/ \;
             sudo chmod -R a+rX /tmp/deepops-evidence
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: deepops-vm-fabric

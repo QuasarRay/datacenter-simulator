@@ -12,23 +12,8 @@
     that:
       - ex457_trust_stat.stat.isreg | default(false)
       - ex457_trust_stat.stat.size | default(0) > 0
-- name: Allocate backend configuration in the execution environment
-  ansible.builtin.tempfile:
-    state: file
-    suffix: .ex457-ssh-config
-  changed_when: false
-  register: ex457_ssh_config
-  delegate_to: localhost
-- name: Set libssh's documented config_file input
-  ansible.builtin.copy:
-    dest: "{{ ex457_ssh_config.path }}"
-    mode: "0600"
-    content: |
-      Host *
-        UserKnownHostsFile {{ ex457_trust_path }}
-        StrictHostKeyChecking yes
-  delegate_to: localhost
-  changed_when: false
-- name: Publish the concrete backend path after the file exists
+- name: Supply the known-hosts option supported by the pinned binding
   ansible.builtin.set_fact:
-    ansible_libssh_config_file: "{{ ex457_ssh_config.path }}"
+    ansible_libssh_known_hosts: "{{ ex457_trust_path }}"
+    ansible_host_key_checking: true
+    ansible_libssh_host_key_auto_add: false

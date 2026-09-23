@@ -55,12 +55,15 @@ pub struct NcclOptions {
     pub devices: Vec<i32>,
     /// Deadline for execution. Failure cleanup has an additional two-second grace period.
     pub timeout_secs: u64,
+    /// Operator-pinned library identities; mandatory for native execution.
+    pub libraries: Option<crate::evidence::NcclLibraries>,
 }
 impl Default for NcclOptions {
     fn default() -> Self {
         Self {
             devices: Vec::new(),
             timeout_secs: 60,
+            libraries: None,
         }
     }
 }
@@ -97,6 +100,7 @@ pub struct RankTraffic {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CollectiveResult {
+    pub execution_identity: serde_json::Value,
     pub backend: String,
     pub transport: String,
     pub nccl_version: i32,

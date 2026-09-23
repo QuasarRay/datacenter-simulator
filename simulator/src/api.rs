@@ -46,12 +46,15 @@ impl Simulator {
     }
     pub fn create(&mut self, name: &str) -> Result<&Simulation> {
         self.check_capacity()?;
-        if name.trim().is_empty() {
-            return Err(Error::Invalid("simulation name is empty".into()));
+        if name.trim().is_empty() || name.len() > 256 {
+            return Err(Error::Invalid(
+                "simulation name must contain 1..=256 bytes".into(),
+            ));
         }
         let id = id();
         let now = Utc::now();
         let mut sim = Simulation {
+            limits: crate::limits::Limits::default(),
             id: id.clone(),
             name: name.into(),
             state: State::Inactive,
@@ -184,6 +187,13 @@ impl Simulator {
                 instruction.state = states.remove(index).3;
             }
         }
+        if let Err(error) = self
+            .get(&cloned)?
+            .validate_limits(self.get(&cloned)?.limits())
+        {
+            self.simulations.remove(&cloned);
+            return Err(error);
+        }
         if attempt_start && let Err(error) = self.get_mut(&cloned)?.start(None) {
             self.simulations.remove(&cloned);
             return Err(error);
@@ -219,9 +229,18 @@ impl Simulation {
         new_name: Option<&str>,
         metadata: Option<Option<String>>,
     ) -> Result<()> {
-        if new_name.is_some_and(|n| n.trim().is_empty()) {
-            return Err(Error::Invalid("simulation name is empty".into()));
+        if new_name.is_some_and(|n| n.trim().is_empty() || n.len() > 256) {
+            return Err(Error::Invalid(
+                "simulation name must contain 1..=256 bytes".into(),
+            ));
         }
+        self.data_change(
+            &(&self.name, &self.metadata),
+            &(
+                new_name.unwrap_or(&self.name),
+                metadata.as_ref().unwrap_or(&self.metadata),
+            ),
+        )?;
         if let Some(n) = new_name {
             self.name = n.into();
         }
@@ -248,6 +267,7 @@ impl Simulation {
     }
     pub fn create_node(&mut self, spec: NodeSpec) -> Result<String> {
         self.inactive()?;
+        self.data_change(&(), &(&spec, &spec.name, "x".repeat(1024)))?;
         name(&spec.name)?;
         spec.resources.validate()?;
         if spec.image.trim().is_empty() {
@@ -287,6 +307,7 @@ impl Simulation {
     }
     pub fn update_node(&mut self, node: &str, spec: NodeSpec) -> Result<()> {
         self.inactive()?;
+        self.data_change(&self.node(node)?.spec, &spec)?;
         self.node(node)?;
         name(&spec.name)?;
         spec.resources.validate()?;
@@ -331,6 +352,12 @@ impl Simulation {
         interface_type: InterfaceType,
     ) -> Result<String> {
         self.inactive()?;
+        crate::limits::capacity(
+            "interfaces",
+            self.interfaces.len(),
+            1,
+            self.limits.interfaces,
+        )?;
         self.node(node)?;
         name(interface_name)?;
         if interface_name == "lo" || interface_name.len() > 15 {
@@ -399,6 +426,12 @@ impl Simulation {
     }
     pub fn breakout(&mut self, interface: &str, split_count: usize) -> Result<Vec<String>> {
         self.inactive()?;
+        crate::limits::capacity(
+            "interfaces",
+            self.interfaces.len(),
+            split_count,
+            self.limits.interfaces,
+        )?;
         let parent = self.interface(interface)?.clone();
         if ![2, 4, 8].contains(&split_count) || parent.interface_type != InterfaceType::Data {
             return Err(Error::Invalid(
@@ -463,6 +496,7 @@ impl Simulation {
     }
     pub fn create_link(&mut self, endpoints: [&str; 2], spec: LinkSpec) -> Result<String> {
         self.inactive()?;
+        crate::limits::capacity("links", self.links.len(), 1, self.limits.links)?;
         spec.validate()?;
         let a = self.interface(endpoints[0])?;
         let b = self.interface(endpoints[1])?;
@@ -568,6 +602,9 @@ impl Simulation {
         node_port: u16,
         service_type: ServiceType,
     ) -> Result<String> {
+        self.inactive()?;
+        crate::limits::capacity("services", self.services.len(), 1, self.limits.services)?;
+        self.data_change(&(), &(name, interface, "x".repeat(512)))?;
         let i = self.interface(interface)?;
         if !i.split_children.is_empty() || node_port == 0 {
             return Err(Error::Invalid(
@@ -598,6 +635,7 @@ impl Simulation {
         Ok(key)
     }
     pub fn delete_service(&mut self, service: &str) -> Result<()> {
+        self.inactive()?;
         self.services
             .remove(service)
             .ok_or_else(|| Error::NotFound(service.into()))?;
@@ -609,6 +647,7 @@ impl Simulation {
     }
     pub fn create_ztp_script(&mut self, content: String) -> Result<()> {
         self.inactive()?;
+        self.data_change(&self.ztp_script, &Some(&content))?;
         if self.ztp_script.is_some() {
             return Err(Error::Conflict("ZTP script exists".into()));
         }
@@ -618,6 +657,7 @@ impl Simulation {
     }
     pub fn update_ztp_script(&mut self, content: String) -> Result<()> {
         self.inactive()?;
+        self.data_change(&self.ztp_script, &Some(&content))?;
         if self.ztp_script.is_none() {
             return Err(Error::NotFound("ZTP script".into()));
         }
@@ -640,6 +680,13 @@ impl Simulation {
         run_again_on_rebuild: bool,
     ) -> Result<String> {
         self.inactive()?;
+        crate::limits::capacity(
+            "instructions",
+            self.instructions.len(),
+            1,
+            self.limits.instructions,
+        )?;
+        self.data_change(&(), &(&data, node, "x".repeat(512)))?;
         self.node(node)?;
         match &data {
             InstructionData::Init{hostname}=>name(hostname)?,
@@ -684,6 +731,15 @@ impl Simulation {
                 return Err(Error::Invalid("duplicate node assignment".into()));
             }
         }
+        let previous: Vec<_> = assignments
+            .iter()
+            .map(|(node, _, _)| (&self.nodes[node].user_data, &self.nodes[node].meta_data))
+            .collect();
+        let next: Vec<_> = assignments
+            .iter()
+            .map(|(_, user, meta)| (user, meta))
+            .collect();
+        self.data_change(&previous, &next)?;
         for (node, user, meta) in assignments {
             let n = self.nodes.get_mut(node).unwrap();
             n.user_data = user.clone();
@@ -692,22 +748,47 @@ impl Simulation {
         self.event("node configs assigned");
         Ok(())
     }
-    fn apply_instructions(&mut self, selected: Option<&BTreeSet<String>>, rebuild: bool) {
-        for instruction in self.instructions.values_mut() {
-            if selected.is_some_and(|s| !s.contains(&instruction.node)) {
+    fn apply_instructions(
+        &mut self,
+        mut runtime: BTreeMap<String, NodeRuntime>,
+        selected: Option<&BTreeSet<String>>,
+        rebuild: bool,
+    ) -> Result<()> {
+        let mut ordered: Vec<_> = self.instructions.values().collect();
+        ordered.sort_by_cached_key(|i| {
+            (
+                self.nodes[&i.node].spec.name.clone(),
+                serde_json::to_string(&i.data).expect("instruction serialization"),
+                i.run_again_on_rebuild,
+            )
+        });
+        let mut completed = Vec::new();
+        for instruction in ordered {
+            if selected.is_some_and(|s| !s.contains(&instruction.node))
+                || (instruction.state == "COMPLETE"
+                    && !(rebuild && instruction.run_again_on_rebuild))
+            {
                 continue;
             }
-            if instruction.state == "COMPLETE" && !(rebuild && instruction.run_again_on_rebuild) {
-                continue;
-            }
-            let runtime = self.runtime.entry(instruction.node.clone()).or_default();
+            let state = runtime.entry(instruction.node.clone()).or_default();
             match &instruction.data {
-                InstructionData::Init { hostname } => runtime.hostname = hostname.clone(),
-                InstructionData::File { files } => runtime.files.extend(files.clone()),
+                InstructionData::Init { hostname } => state.hostname = hostname.clone(),
+                InstructionData::File { files } => state.files.extend(files.clone()),
                 InstructionData::Shell { .. } => continue,
             }
-            instruction.state = "COMPLETE".into();
+            completed.push(instruction.id.clone());
         }
+        let mut instructions = self.instructions.clone();
+        for id in completed {
+            instructions.get_mut(&id).unwrap().state = "COMPLETE".into();
+        }
+        self.data_change(
+            &(&self.runtime, &self.instructions),
+            &(&runtime, &instructions),
+        )?;
+        self.runtime = runtime;
+        self.instructions = instructions;
+        Ok(())
     }
     pub fn start(&mut self, checkpoint: Option<&str>) -> Result<()> {
         self.inactive()?;
@@ -735,7 +816,7 @@ impl Simulation {
         if let Some(cp) = checkpoint {
             self.restore_checkpoint(cp)?;
         } else {
-            self.apply_instructions(None, false);
+            self.apply_instructions(self.runtime.clone(), None, false)?;
         }
         self.state = State::Active;
         for node in self.nodes.values_mut() {
@@ -766,7 +847,7 @@ impl Simulation {
         if let Some(cp) = checkpoint {
             self.restore_checkpoint(cp)?;
         } else {
-            self.runtime = self
+            let runtime = self
                 .nodes
                 .values()
                 .map(|n| {
@@ -779,7 +860,7 @@ impl Simulation {
                     )
                 })
                 .collect();
-            self.apply_instructions(None, true);
+            self.apply_instructions(runtime, None, true)?;
         }
         for n in self.nodes.values_mut() {
             n.generation += 1;
@@ -798,21 +879,21 @@ impl Simulation {
         for node in nodes {
             self.node(node)?;
         }
-        for node in nodes {
-            let n = self.nodes.get_mut(node).unwrap();
-            n.generation += 1;
-            if rebuild {
-                self.runtime.insert(
+        if rebuild {
+            let mut runtime = self.runtime.clone();
+            for node in nodes {
+                runtime.insert(
                     node.clone(),
                     NodeRuntime {
-                        hostname: n.spec.name.clone(),
+                        hostname: self.nodes[node].spec.name.clone(),
                         files: BTreeMap::new(),
                     },
                 );
             }
+            self.apply_instructions(runtime, Some(&unique), true)?;
         }
-        if rebuild {
-            self.apply_instructions(Some(&unique), true);
+        for node in nodes {
+            self.nodes.get_mut(node).unwrap().generation += 1;
         }
         // Reset cancels all scheduled traffic, including transit reservations.
         if !nodes.is_empty() {
@@ -827,6 +908,29 @@ impl Simulation {
         Ok(())
     }
     pub fn create_checkpoint(&mut self, name: &str) -> Result<String> {
+        crate::limits::capacity(
+            "checkpoints",
+            self.checkpoints.len(),
+            1,
+            self.limits.checkpoints,
+        )?;
+        if name.len() > 256 {
+            return Err(Error::Invalid("checkpoint name exceeds 256 bytes".into()));
+        }
+        let configuration = self.checkpoint_configuration()?;
+        let instruction_states: BTreeMap<_, _> = self
+            .instructions
+            .values()
+            .map(|i| (i.id.clone(), i.state.clone()))
+            .collect();
+        let retained_bytes =
+            crate::limits::size(&(&self.runtime, &configuration, &instruction_states, name))?;
+        crate::limits::capacity(
+            "checkpoint bytes",
+            self.usage()?.checkpoint_bytes,
+            retained_bytes,
+            self.limits.checkpoint_bytes,
+        )?;
         let key = id();
         self.checkpoints.insert(
             key.clone(),
@@ -837,12 +941,9 @@ impl Simulation {
                 state: "COMPLETE".into(),
                 created: Utc::now(),
                 runtime: self.runtime.clone(),
-                configuration: self.checkpoint_configuration()?,
-                instruction_states: self
-                    .instructions
-                    .values()
-                    .map(|i| (i.id.clone(), i.state.clone()))
-                    .collect(),
+                configuration,
+                instruction_states,
+                retained_bytes,
             },
         );
         self.event("checkpoint created");
@@ -854,11 +955,27 @@ impl Simulation {
         name: String,
         favorite: bool,
     ) -> Result<()> {
+        if name.len() > 256 {
+            return Err(Error::Invalid("checkpoint name exceeds 256 bytes".into()));
+        }
+        let old = self
+            .checkpoints
+            .get(checkpoint)
+            .ok_or_else(|| Error::NotFound(checkpoint.into()))?;
+        let retained_bytes =
+            old.retained_bytes - crate::limits::size(&old.name)? + crate::limits::size(&name)?;
+        crate::limits::capacity(
+            "checkpoint bytes",
+            self.usage()?.checkpoint_bytes - old.retained_bytes,
+            retained_bytes,
+            self.limits.checkpoint_bytes,
+        )?;
         let cp = self
             .checkpoints
             .get_mut(checkpoint)
             .ok_or_else(|| Error::NotFound(checkpoint.into()))?;
         cp.name = name;
+        cp.retained_bytes = retained_bytes;
         cp.favorite = favorite;
         self.event("checkpoint updated");
         Ok(())
@@ -905,10 +1022,16 @@ impl Simulation {
             .get(checkpoint)
             .ok_or_else(|| Error::NotFound(checkpoint.into()))?;
         self.validate_checkpoint(cp)?;
-        self.runtime = cp.runtime.clone();
+        let mut instructions = self.instructions.clone();
         for (id, state) in &cp.instruction_states {
-            self.instructions.get_mut(id).unwrap().state = state.clone();
+            instructions.get_mut(id).unwrap().state = state.clone();
         }
+        self.data_change(
+            &(&self.runtime, &self.instructions),
+            &(&cp.runtime, &instructions),
+        )?;
+        self.runtime = cp.runtime.clone();
+        self.instructions = instructions;
         self.available.clear();
         self.scheduling_frontier_ns = self.clock_ns;
         Ok(())

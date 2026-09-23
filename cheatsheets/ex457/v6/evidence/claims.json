@@ -22,11 +22,12 @@
   {
     "id": "C003",
     "section": "01_lab_baseline.md#backend-trust",
-    "claim": "network_cli explicitly selects libssh, enables host-key checking, disables automatic trust and passes a dedicated libssh config file.",
+    "claim": "network_cli selects libssh, enables host-key checking and disables automatic trust. A checked local patch maps an explicit known-hosts file to the pinned binding's supported knownhosts argument.",
     "sources": [
       "NETCLI",
       "LIBSSH",
-      "LIBSSH-SRC"
+      "LIBSSH-SRC",
+      "PYLIBSSH-SRC"
     ],
     "evidence_type": "documentation mapping; implementation/acceptance stated in section"
   },

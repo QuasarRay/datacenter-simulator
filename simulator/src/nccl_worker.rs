@@ -24,6 +24,8 @@ use std::io::{BufRead, Read, Write};
 pub(crate) const MESSAGE_LIMIT: u64 = 512 * 1024 * 1024;
 #[derive(Serialize, Deserialize)]
 pub(crate) struct Ready {
+    pub nonce: String,
+    pub device_identity: serde_json::Value,
     pub unique_id: Option<Vec<u8>>,
     pub nccl_version: i32,
 }
@@ -131,8 +133,8 @@ pub fn run(args: &[String]) -> Result<()> {
         "nccl-check cannot execute NCCL"
     );
     ensure!(
-        args.len() == 3,
-        "worker requires rank, rank count and CUDA ordinal"
+        args.len() == 5,
+        "worker requires rank, rank count, CUDA ordinal, session and pinned libraries"
     );
     let rank: usize = args[0].parse()?;
     let nranks: usize = args[1].parse()?;
@@ -141,7 +143,11 @@ pub fn run(args: &[String]) -> Result<()> {
         (1..=4096).contains(&nranks) && rank < nranks,
         "invalid NCCL ranks"
     );
-    let cuda = Cuda::open(device)?;
+    crate::evidence::reject_loader_injection()?;
+    let libraries: crate::evidence::NcclLibraries = serde_json::from_str(&args[4])?;
+    libraries.verify()?;
+    let cuda = Cuda::open(device, &libraries.cuda.path)?;
+    libraries.verify_mapped(std::process::id(), true)?;
     // Generate the bootstrap listener INSIDE rank zero's network namespace.
     let unique_id = if rank == 0 {
         Some(nccl::UniqueId::generate()?.to_bytes().to_vec())
@@ -149,6 +155,8 @@ pub fn run(args: &[String]) -> Result<()> {
         None
     };
     emit(&Ready {
+        nonce: args[3].clone(),
+        device_identity: cuda.identity.clone(),
         unique_id,
         nccl_version: nccl::version()?,
     })?;

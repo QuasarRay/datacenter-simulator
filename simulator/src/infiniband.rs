@@ -90,7 +90,8 @@ pub fn topology(sim: &Simulation) -> Result<(IbTopology, IbPlan)> {
 pub struct IbSimulation {
     backend: IbFabric,
     model: Simulation,
-    pub plan: IbPlan,
+    plan: IbPlan,
+    stopped: bool,
 }
 impl IbSimulation {
     pub async fn build(sim: &Simulation, options: IbOptions) -> Result<Self> {
@@ -104,15 +105,50 @@ impl IbSimulation {
             backend,
             model: sim.clone(),
             plan,
+            stopped: false,
         })
     }
     pub fn model(&self) -> &Simulation {
         &self.model
     }
-    pub fn backend(&mut self) -> &mut IbFabric {
-        &mut self.backend
+    pub fn plan(&self) -> &IbPlan {
+        &self.plan
+    }
+    fn native_node(&self, node: &str) -> Result<String> {
+        if self.stopped {
+            bail!("InfiniBand backend has been shut down");
+        }
+        self.plan
+            .nodes
+            .get(node)
+            .cloned()
+            .context("unknown model node")
+    }
+    pub async fn start_subnet_manager(&mut self, node: &str, program: &str) -> Result<()> {
+        let native = self.native_node(node)?;
+        self.backend.start_subnet_manager(&native, program).await
+    }
+    pub fn port_status(&mut self, node: &str) -> Result<patchbay::infiniband::IbPortStatus> {
+        let native = self.native_node(node)?;
+        self.backend.port_status(&native)
+    }
+    pub async fn wait_active(
+        &mut self,
+        node: &str,
+        deadline: Duration,
+    ) -> Result<patchbay::infiniband::IbPortStatus> {
+        let native = self.native_node(node)?;
+        self.backend.wait_active(&native, deadline).await
+    }
+    pub async fn shutdown(&mut self) -> Result<()> {
+        self.stopped = true;
+        self.model.shutdown(false)?;
+        self.backend.shutdown().await
     }
     pub async fn set_link_up(&mut self, id: &str, up: bool) -> Result<()> {
+        if self.stopped {
+            bail!("InfiniBand backend has been shut down");
+        }
         let mut spec = self
             .model
             .links()
@@ -132,12 +168,7 @@ impl IbSimulation {
         command: tokio::process::Command,
         deadline: Duration,
     ) -> Result<Output> {
-        let native = self
-            .plan
-            .nodes
-            .get(node)
-            .context("unknown model node")?
-            .clone();
+        let native = self.native_node(node)?;
         self.backend.run(&native, command, deadline).await
     }
 }

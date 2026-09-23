@@ -191,7 +191,9 @@ fn mokka_failed_second_release_rolls_back_only_owned_releases() {
     fs::write(
         bin.join("kubectl"),
         r#"#!/bin/sh
+printf '%s\n' "$*" >> "$FIXTURES/kubectl-calls"
 case "$*" in
+  *"get namespace simulator-gpus "*) printf '{"metadata":{"name":"simulator-gpus"},"status":{"phase":"Active"}}';;
   *"get node simulator-worker2 "*) cat "$FIXTURES/simulator-worker2.json";;
   *"get node simulator-worker "*) cat "$FIXTURES/simulator-worker.json";;
   *"wait --for=condition=Ready pod "*) touch "$FIXTURES/ready";;
@@ -245,5 +247,15 @@ esac
         "sim-gpu-0\n"
     );
     assert!(!state.join("result.json").exists());
+    let calls = fs::read_to_string(fixtures.join("kubectl-calls")).unwrap();
+    assert!(!calls.contains("create namespace") && !calls.contains("delete namespace"));
+    let tools: serde_json::Value =
+        serde_json::from_slice(&fs::read(state.join("tools.json")).unwrap()).unwrap();
+    assert!(
+        tools["helm"]["path"]
+            .as_str()
+            .unwrap()
+            .starts_with(bin.to_str().unwrap())
+    );
     fs::remove_dir_all(root).unwrap();
 }

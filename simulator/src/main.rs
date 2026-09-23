@@ -29,11 +29,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if args.len() != 3 {
                 return Err("usage: netbox-import config.json NEW_DIR | netbox-compile config.json snapshot.json".into());
             }
-            let config: NetBoxConfig = serde_json::from_slice(&std::fs::read(&args[1])?)?;
+            let config: NetBoxConfig = serde_json::from_slice(&datacenter_simulator::input::read(
+                &args[1],
+                datacenter_simulator::input::CONFIG_LIMIT,
+            )?)?;
             match args[0].as_str() {
                 "netbox-import" => netbox::import(&config, std::path::Path::new(&args[2]))?,
                 "netbox-compile" => {
-                    let snapshot: Snapshot = serde_json::from_slice(&std::fs::read(&args[2])?)?;
+                    let snapshot: Snapshot =
+                        serde_json::from_slice(&datacenter_simulator::input::read(
+                            &args[2],
+                            datacenter_simulator::input::SNAPSHOT_LIMIT,
+                        )?)?;
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&netbox::compile(&config, &snapshot)?)?
@@ -113,7 +120,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     match args.first().map(String::as_str) {
-        Some("run") if args.len() == 2 || args.len() == 4 => {
+        Some("run") if args.len() >= 2 && args.len() % 2 == 0 => {
             let mut api = Simulator::new();
             let id = api.import(Manifest::read(&args[1])?, true)?;
             let sim = api.get_mut(&id)?;
@@ -126,14 +133,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ids: Vec<_> = ranks.iter().map(|(_, id)| id.clone()).collect();
             let inputs: Vec<_> = (1..=ids.len()).map(|i| vec![i as f64; 8]).collect();
             let mut options = NcclOptions::default();
-            if args.len() == 4 {
-                if args[2] != "--devices" {
-                    return Err("expected --devices 0,1,...".into());
+            for pair in args[2..].as_chunks::<2>().0 {
+                match pair[0].as_str() {
+                    "--devices" => {
+                        options.devices = pair[1]
+                            .split(',')
+                            .map(str::parse)
+                            .collect::<Result<_, _>>()?
+                    }
+                    "--libraries" => {
+                        options.libraries =
+                            Some(serde_json::from_slice(&datacenter_simulator::input::read(
+                                &pair[1],
+                                datacenter_simulator::input::CONFIG_LIMIT,
+                            )?)?)
+                    }
+                    _ => {
+                        return Err(
+                            "expected --devices 0,1,... or --libraries pinned-libraries.json"
+                                .into(),
+                        );
+                    }
                 }
-                options.devices = args[3]
-                    .split(',')
-                    .map(str::parse)
-                    .collect::<Result<_, _>>()?;
             }
             let result = sim.collective(
                 &ids,

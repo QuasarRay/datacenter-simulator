@@ -21,6 +21,7 @@ type Status = i32;
 type Handle = *mut c_void;
 
 pub(crate) struct Cuda {
+    pub(crate) identity: serde_json::Value,
     device: i32,
     release: unsafe extern "C" fn(i32) -> Status,
     alloc: unsafe extern "C" fn(*mut u64, usize) -> Status,
@@ -41,16 +42,19 @@ fn check(status: Status, operation: &str) -> Result<()> {
     Ok(())
 }
 impl Cuda {
-    pub(crate) fn open(ordinal: i32) -> Result<Self> {
+    pub(crate) fn open(ordinal: i32, library: &std::path::Path) -> Result<Self> {
         // SAFETY: fixed CUDA Driver library and documented C ABI signatures. The
         // library remains loaded until after every context, stream and buffer drops.
         unsafe {
-            let lib = Library::new("libcuda.so.1")
-                .context("load real NVIDIA CUDA driver libcuda.so.1")?;
+            let lib = Library::new(library).context("load real NVIDIA CUDA driver libcuda.so.1")?;
             let init: unsafe extern "C" fn(u32) -> Status = *lib.get(b"cuInit\0")?;
             let count: unsafe extern "C" fn(*mut i32) -> Status =
                 *lib.get(b"cuDeviceGetCount\0")?;
             let get: unsafe extern "C" fn(*mut i32, i32) -> Status = *lib.get(b"cuDeviceGet\0")?;
+            let version: unsafe extern "C" fn(*mut i32) -> Status =
+                *lib.get(b"cuDriverGetVersion\0")?;
+            let uuid: unsafe extern "C" fn(*mut [u8; 16], i32) -> Status =
+                *lib.get(b"cuDeviceGetUuid\0")?;
             let retain: unsafe extern "C" fn(*mut Handle, i32) -> Status =
                 *lib.get(b"cuDevicePrimaryCtxRetain\0")?;
             let set: unsafe extern "C" fn(Handle) -> Status = *lib.get(b"cuCtxSetCurrent\0")?;
@@ -58,6 +62,7 @@ impl Cuda {
                 *lib.get(b"cuDevicePrimaryCtxRelease_v2\0")?;
             // Resolve everything before retaining a context, so a missing symbol leaks nothing.
             let mut cuda = Self {
+                identity: serde_json::Value::Null,
                 device: -1,
                 release,
                 alloc: *lib.get(b"cuMemAlloc_v2\0")?,
@@ -78,6 +83,12 @@ impl Cuda {
             }
             let mut device = 0;
             check(get(&mut device, ordinal), "cuDeviceGet")?;
+            let mut driver = 0;
+            let mut identifier = [0u8; 16];
+            check(version(&mut driver), "cuDriverGetVersion")?;
+            check(uuid(&mut identifier, device), "cuDeviceGetUuid")?;
+            cuda.identity = serde_json::json!({"ordinal":ordinal, "driver_version":driver,
+                "uuid":identifier.iter().map(|b| format!("{b:02x}")).collect::<String>()});
             let mut ctx = std::ptr::null_mut();
             check(retain(&mut ctx, device), "cuDevicePrimaryCtxRetain")?;
             cuda.device = device;

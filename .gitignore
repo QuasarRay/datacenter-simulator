@@ -12,3 +12,5 @@ cheatsheets/ex457/*/controller/site.yml
 cheatsheets/ex457/*/controller/secrets.yml
 *.zip
 pytest-of-*/
+
+/integrations/deepops/.galaxy-cache/

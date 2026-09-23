@@ -17,7 +17,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     io::Read,
     path::Path,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -62,6 +62,93 @@ pub struct NetBoxConfig {
     pub image: String,
     #[serde(default)]
     pub resources: Resources,
+    #[serde(default)]
+    pub acquisition: AcquisitionLimits,
+    /// Explicit offline relocation; the override is recorded on emitted nodes.
+    #[serde(default)]
+    pub replay_allow_origin_change: bool,
+    #[serde(default)]
+    pub snapshot_max_age_secs: Option<u64>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct AcquisitionLimits {
+    pub records: usize,
+    pub bytes: usize,
+    pub requests: usize,
+    pub duration_secs: u64,
+}
+impl Default for AcquisitionLimits {
+    fn default() -> Self {
+        Self {
+            records: 100_000,
+            bytes: 64 * 1024 * 1024,
+            requests: 256,
+            duration_secs: 120,
+        }
+    }
+}
+struct Budget {
+    limits: AcquisitionLimits,
+    records: usize,
+    bytes: usize,
+    requests: usize,
+    began: Instant,
+}
+impl Budget {
+    fn new(limits: &AcquisitionLimits) -> Result<Self> {
+        ensure!(
+            limits.records > 0
+                && limits.bytes > 0
+                && limits.requests > 0
+                && (1..=3600).contains(&limits.duration_secs),
+            "invalid NetBox acquisition budget"
+        );
+        Ok(Self {
+            limits: limits.clone(),
+            records: 0,
+            bytes: 0,
+            requests: 0,
+            began: Instant::now(),
+        })
+    }
+    fn request(&mut self) -> Result<Duration> {
+        ensure!(
+            self.requests < self.limits.requests,
+            "NetBox aggregate request budget exceeded"
+        );
+        let remaining = Duration::from_secs(self.limits.duration_secs)
+            .checked_sub(self.began.elapsed())
+            .context("NetBox aggregate duration exceeded")?;
+        ensure!(!remaining.is_zero(), "NetBox aggregate duration exceeded");
+        self.requests += 1;
+        Ok(remaining.min(Duration::from_secs(30)))
+    }
+    fn records(&mut self, n: usize) -> Result<()> {
+        self.records = self
+            .records
+            .checked_add(n)
+            .context("record count overflow")?;
+        ensure!(
+            self.records <= self.limits.records,
+            "NetBox aggregate record budget exceeded"
+        );
+        Ok(())
+    }
+}
+fn api_root(value: &str, allow_http: bool) -> Result<Url> {
+    let root = Url::parse(value)?;
+    ensure!(
+        (root.scheme() == "https" || (root.scheme() == "http" && allow_http))
+            && root.username().is_empty()
+            && root.password().is_none()
+            && root.query().is_none()
+            && root.fragment().is_none()
+            && root.path().ends_with("/api/"),
+        "api_url must end in /api/, without credentials/query; HTTP requires allow_http"
+    );
+    Ok(root)
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -173,6 +260,39 @@ fn unique<T>(items: &[T], id: impl Fn(&T) -> u64) -> Result<BTreeMap<u64, &T>> {
 /// being replaced by direct links. This never changes a running model in place.
 pub fn compile(config: &NetBoxConfig, snapshot: &Snapshot) -> Result<Manifest> {
     config.resources.validate()?;
+    let expected = api_root(&config.api_url, config.allow_http)?;
+    let origin = api_root(&snapshot.api_url, config.allow_http)?;
+    ensure!(
+        expected == origin || config.replay_allow_origin_change,
+        "snapshot origin differs from configured NetBox; explicit replay_allow_origin_change required"
+    );
+    let fetched = chrono::DateTime::parse_from_rfc3339(&snapshot.fetched_at)
+        .context("invalid snapshot fetched_at")?;
+    let age = chrono::Utc::now().signed_duration_since(fetched);
+    ensure!(
+        age.num_seconds() >= -300,
+        "snapshot fetched_at is in the future"
+    );
+    if let Some(max) = config.snapshot_max_age_secs {
+        ensure!(
+            age.num_seconds().max(0) as u64 <= max,
+            "snapshot exceeds maximum age"
+        );
+    }
+    let total = snapshot
+        .devices
+        .len()
+        .checked_add(snapshot.interfaces.len())
+        .and_then(|n| n.checked_add(snapshot.cables.len()))
+        .context("snapshot count overflow")?;
+    ensure!(
+        total <= config.acquisition.records,
+        "snapshot record budget exceeded"
+    );
+    ensure!(
+        crate::limits::size(snapshot)? <= config.acquisition.bytes,
+        "snapshot byte budget exceeded"
+    );
     let devices = unique(&snapshot.devices, |d| d.id)?;
     let interfaces = unique(&snapshot.interfaces, |i| i.id)?;
     let cables = unique(&snapshot.cables, |c| c.id)?;
@@ -234,6 +354,7 @@ pub fn compile(config: &NetBoxConfig, snapshot: &Snapshot) -> Result<Manifest> {
                 role,
                 interfaces: BTreeMap::new(),
                 labels: BTreeMap::from([
+                    ("netbox.snapshot".into(), serde_json::json!({"api_url":snapshot.api_url, "configured_api_url":config.api_url, "fetched_at":snapshot.fetched_at, "origin_override":expected != origin})),
                     ("netbox.device_id".into(), Value::from(d.id)),
                     ("netbox.device_name".into(), Value::from(d.name.clone())),
                     ("netbox.interfaces".into(), serde_json::json!({})),
@@ -347,16 +468,7 @@ pub struct NetBoxClient {
 }
 impl NetBoxClient {
     pub fn new(config: &NetBoxConfig) -> Result<Self> {
-        let root = Url::parse(&config.api_url)?;
-        ensure!(
-            (root.scheme() == "https" || (root.scheme() == "http" && config.allow_http))
-                && root.username().is_empty()
-                && root.password().is_none()
-                && root.query().is_none()
-                && root.fragment().is_none()
-                && root.path().ends_with("/api/"),
-            "api_url must end in /api/, without credentials/query; HTTP requires allow_http"
-        );
+        let root = api_root(&config.api_url, config.allow_http)?;
         let token = std::env::var(&config.token_env)
             .with_context(|| format!("set {} for read-only NetBox access", config.token_env))?;
         ensure!(!token.is_empty(), "empty NetBox token");
@@ -379,6 +491,7 @@ impl NetBoxClient {
         &self,
         endpoint: &str,
         query: &[(String, String)],
+        budget: &mut Budget,
     ) -> Result<Vec<T>> {
         let mut url = self.root.join(endpoint)?;
         url.query_pairs_mut()
@@ -401,21 +514,28 @@ impl NetBoxClient {
                 seen.len() < 1000 && seen.insert(url.as_str().to_owned()),
                 "NetBox pagination cycle or page limit"
             );
-            let response = self.client.get(url.clone()).send()?;
+            let duration = budget.request()?;
+            let response = self.client.get(url.clone()).timeout(duration).send()?;
             ensure!(
                 response.status().is_success(),
                 "NetBox GET failed: {}",
                 response.status()
             );
             let mut bytes = Vec::new();
-            response.take(8 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
-            ensure!(bytes.len() <= 8 * 1024 * 1024, "NetBox page exceeds 8 MiB");
+            let limit = (8 * 1024 * 1024).min(budget.limits.bytes.saturating_sub(budget.bytes));
+            response.take(limit as u64 + 1).read_to_end(&mut bytes)?;
+            ensure!(
+                bytes.len() <= limit,
+                "NetBox page or aggregate byte budget exceeded"
+            );
+            budget.bytes += bytes.len();
             let page: Page = serde_json::from_slice(&bytes)?;
             ensure!(
                 page.count <= 100_000 && expected.is_none_or(|n| n == page.count),
                 "NetBox count changed or exceeds scope limit"
             );
             expected = Some(page.count);
+            budget.records(page.results.len())?;
             for value in page.results {
                 records.push(serde_json::from_value(value)?);
             }
@@ -435,15 +555,24 @@ impl NetBoxClient {
         Ok(records)
     }
     pub fn snapshot(&self, config: &NetBoxConfig) -> Result<Snapshot> {
-        let first = self.read_snapshot(config)?;
-        let second = self.read_snapshot(config)?;
+        ensure!(
+            self.root == api_root(&config.api_url, config.allow_http)?,
+            "client/config NetBox origin mismatch"
+        );
+        let mut budget = Budget::new(&config.acquisition)?;
+        let first = self.read_snapshot(config, &mut budget)?;
+        let second = self.read_snapshot(config, &mut budget)?;
         ensure!(
             same_intent(&first, &second)?,
             "NetBox intent changed during acquisition; retry in a change window"
         );
+        ensure!(
+            budget.began.elapsed() <= Duration::from_secs(budget.limits.duration_secs),
+            "NetBox aggregate duration exceeded"
+        );
         Ok(second)
     }
-    fn read_snapshot(&self, config: &NetBoxConfig) -> Result<Snapshot> {
+    fn read_snapshot(&self, config: &NetBoxConfig, budget: &mut Budget) -> Result<Snapshot> {
         ensure!(
             !config.device_filter.keys().any(|k| [
                 "limit", "offset", "brief", "fields", "exclude", "omit"
@@ -458,6 +587,7 @@ impl NetBoxClient {
                 .iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect::<Vec<_>>(),
+            budget,
         )?;
         ensure!(!devices.is_empty(), "empty NetBox device scope");
         let mut interfaces = Vec::<Interface>::new();
@@ -469,6 +599,7 @@ impl NetBoxClient {
                         .iter()
                         .map(|d| ("device_id".into(), d.id.to_string()))
                         .collect::<Vec<_>>(),
+                    budget,
                 )?,
             );
         }
@@ -487,6 +618,7 @@ impl NetBoxClient {
                         .iter()
                         .map(|id| ("id".into(), id.to_string()))
                         .collect::<Vec<_>>(),
+                    budget,
                 )?,
             );
         }
@@ -546,5 +678,138 @@ mod snapshot_tests {
         assert!(same_intent(&first, &second).unwrap());
         second.interfaces[0].enabled = !second.interfaces[0].enabled;
         assert!(!same_intent(&first, &second).unwrap());
+    }
+}
+
+#[cfg(test)]
+mod budget_tests {
+    use super::*;
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+    };
+    fn fixture() -> (NetBoxConfig, Snapshot) {
+        (
+            serde_json::from_str(include_str!(
+                "../../integrations/netbox/config.example.json"
+            ))
+            .unwrap(),
+            serde_json::from_str(include_str!(
+                "../../integrations/netbox/snapshot.example.json"
+            ))
+            .unwrap(),
+        )
+    }
+    fn serve(pages: Vec<Value>) -> (NetBoxClient, std::thread::JoinHandle<()>) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let root = Url::parse(&format!("http://{}/api/", listener.local_addr().unwrap())).unwrap();
+        let handle = std::thread::spawn(move || {
+            for page in pages {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(3)))
+                    .unwrap();
+                let mut request = Vec::new();
+                while !request.ends_with(b"\r\n\r\n") {
+                    let mut b = [0];
+                    stream.read_exact(&mut b).unwrap();
+                    request.push(b[0]);
+                }
+                let body = page.to_string();
+                write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body).unwrap();
+            }
+        });
+        (
+            NetBoxClient {
+                client: Client::builder().no_proxy().build().unwrap(),
+                root,
+            },
+            handle,
+        )
+    }
+    fn page(records: impl Serialize) -> Value {
+        let records = serde_json::to_value(records).unwrap();
+        serde_json::json!({"count":records.as_array().unwrap().len(),"next":null,"results":records})
+    }
+    #[test]
+    fn one_record_budget_spans_both_observations() {
+        let (mut config, snapshot) = fixture();
+        let pages = vec![
+            page(&snapshot.devices),
+            page(&snapshot.interfaces),
+            page(&snapshot.cables),
+            page(&snapshot.devices),
+        ];
+        let (client, server) = serve(pages);
+        config.api_url = client.root.to_string();
+        config.allow_http = true;
+        config.acquisition.records =
+            snapshot.devices.len() + snapshot.interfaces.len() + snapshot.cables.len();
+        assert!(
+            client
+                .snapshot(&config)
+                .unwrap_err()
+                .to_string()
+                .contains("aggregate record")
+        );
+        server.join().unwrap();
+    }
+    #[test]
+    fn request_budget_spans_device_chunks_and_byte_budget_spans_pages() {
+        let (mut config, snapshot) = fixture();
+        let devices: Vec<_> = (1..=51)
+            .map(|id| {
+                let mut d = snapshot.devices[0].clone();
+                d.id = id;
+                d
+            })
+            .collect();
+        let (client, server) = serve(vec![page(devices), page(Vec::<Interface>::new())]);
+        config.api_url = client.root.to_string();
+        config.allow_http = true;
+        config.acquisition.requests = 2;
+        assert!(
+            client
+                .snapshot(&config)
+                .unwrap_err()
+                .to_string()
+                .contains("aggregate request")
+        );
+        server.join().unwrap();
+        let device_page = page(&snapshot.devices);
+        let interface_page = page(&snapshot.interfaces);
+        config.acquisition.bytes =
+            device_page.to_string().len() + interface_page.to_string().len() - 1;
+        let (client, server) = serve(vec![device_page, interface_page]);
+        config.api_url = client.root.to_string();
+        config.acquisition.requests = 20;
+        assert!(
+            client
+                .snapshot(&config)
+                .unwrap_err()
+                .to_string()
+                .contains("aggregate byte")
+        );
+        server.join().unwrap();
+    }
+    #[test]
+    fn acquisition_deadline_and_offline_provenance_are_enforced() {
+        let mut budget = Budget::new(&AcquisitionLimits::default()).unwrap();
+        budget.began = Instant::now() - Duration::from_secs(121);
+        assert!(budget.request().is_err());
+        let (mut config, mut snapshot) = fixture();
+        snapshot.api_url = "https://other.invalid/api/".into();
+        assert!(compile(&config, &snapshot).is_err());
+        config.replay_allow_origin_change = true;
+        let manifest = compile(&config, &snapshot).unwrap();
+        assert_eq!(
+            manifest.content.nodes["nb1"].labels["netbox.snapshot"]["origin_override"],
+            true
+        );
+        snapshot.fetched_at = "not a timestamp".into();
+        assert!(compile(&config, &snapshot).is_err());
+        snapshot.fetched_at = "2000-01-01T00:00:00Z".into();
+        config.snapshot_max_age_secs = Some(60);
+        assert!(compile(&config, &snapshot).is_err());
     }
 }
