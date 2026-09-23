@@ -300,10 +300,33 @@ pub fn validate_nccl(value: &Value, collective: &str, compute: &[String]) -> Res
         return Err(fail());
     }
     let args = value["args"].as_array().ok_or_else(fail)?;
-    if !args
-        .first()
-        .and_then(Value::as_str)
-        .is_some_and(|s| s.ends_with(&format!("/{collective}_perf")))
+    let reductions = ["all_reduce", "reduce", "reduce_scatter"].contains(&collective);
+    let rooted = ["broadcast", "reduce", "scatter", "gather"].contains(&collective);
+    // Exact invocation in integrations/deepops/files/nccl-rank.sh. Reject
+    // omitted, duplicate or overriding flags before interpreting result rows.
+    let mut expected_args = vec![format!("/opt/simulator/nccl-tests/build/{collective}_perf")];
+    expected_args.extend(
+        [
+            "-g", "1", "-t", "1", "-b", "256", "-e", "1M", "-f", "2", "-n", "5", "-w", "1", "-c",
+            "1", "-d", "double", "-T", "60",
+        ]
+        .map(String::from),
+    );
+    if reductions {
+        expected_args.extend(["-o", "all"].map(String::from));
+    }
+    if rooted {
+        expected_args.extend(["-r", "-1"].map(String::from));
+    }
+    expected_args.extend([
+        "-J".into(),
+        format!("/var/tmp/simulator-nccl/{collective}.json"),
+    ]);
+    if args
+        != &expected_args
+            .iter()
+            .map(|s| Value::String(s.clone()))
+            .collect::<Vec<_>>()
     {
         return Err(fail());
     }
@@ -348,48 +371,93 @@ pub fn validate_nccl(value: &Value, collective: &str, compute: &[String]) -> Res
     if rows.is_empty() {
         return Err(fail());
     }
-    if ["all_reduce", "reduce", "reduce_scatter"].contains(&collective) {
-        let operations: BTreeSet<_> = rows
-            .iter()
-            .filter_map(|row| row["redop"].as_str())
-            .collect();
-        if ["sum", "prod", "min", "max", "avg", "mulsum"]
-            .iter()
-            .any(|op| !operations.contains(op))
-        {
-            return Err(fail());
-        }
+    if compute.is_empty() {
+        return Err(fail());
     }
-    if ["broadcast", "reduce", "scatter", "gather"].contains(&collective) {
-        let roots: BTreeSet<u64> = rows
-            .iter()
-            .filter_map(|row| row["root"].as_str()?.trim().parse().ok())
-            .collect();
-        if roots != (0..compute.len() as u64).collect() {
-            return Err(fail());
+    let split_count = [
+        "all_gather",
+        "reduce_scatter",
+        "alltoall",
+        "alltoallv",
+        "scatter",
+        "gather",
+        "hypercube",
+    ]
+    .contains(&collective);
+    let operations: &[&str] = if reductions {
+        &["sum", "prod", "min", "max", "avg", "mulsum"]
+    } else if collective == "hypercube" {
+        &[""]
+    } else if collective == "sendrecv" {
+        &["sum"]
+    } else {
+        &["none"]
+    };
+    let roots: Vec<i64> = if rooted {
+        (0..compute.len() as i64).collect()
+    } else {
+        vec![-1]
+    };
+    // common.cu reports the collective's paramCount, which for divided
+    // collectives is rounded down to a 16-byte boundary per rank. alltoallv's
+    // reported size varies with its generated pattern, so use count to identify
+    // its requested size. Multiset accounting also handles rounded duplicates.
+    let mut expected = std::collections::BTreeMap::new();
+    for shift in 8..=20 {
+        let bytes = 1u64 << shift;
+        let count = if split_count {
+            (bytes / 8 / compute.len() as u64) & !1
+        } else {
+            bytes / 8
+        };
+        for &op in operations {
+            for &root in &roots {
+                *expected.entry((count, op, root)).or_insert(0usize) += 1;
+            }
         }
     }
     let mut nonzero = false;
     for row in rows {
-        nonzero |= row["size"].as_u64().unwrap_or(0) > 0;
-        let mut checked = false;
+        let count = row["count"].as_u64().ok_or_else(fail)?;
+        let op = row["redop"].as_str().ok_or_else(fail)?;
+        let root: i64 = row["root"]
+            .as_str()
+            .ok_or_else(fail)?
+            .trim()
+            .parse()
+            .map_err(|_| fail())?;
+        let remaining = expected.get_mut(&(count, op, root)).ok_or_else(fail)?;
+        if *remaining == 0 || row["type"] != "double" {
+            return Err(fail());
+        }
+        *remaining -= 1;
+        let size = row["size"].as_u64().ok_or_else(fail)?;
+        nonzero |= size > 0;
+        if collective != "alltoallv"
+            && size != count * 8 * if split_count { compute.len() as u64 } else { 1 }
+        {
+            return Err(fail());
+        }
         for kind in ["out_of_place", "in_place"] {
             let result = &row[kind];
-            if result.is_null() {
-                continue;
-            }
-            if result["nwrong"].as_f64() != Some(0.0)
+            // Pinned upstream explicitly disables in-place correctness checks
+            // for these three tests and emits nwrong:null (not a checked zero).
+            let unchecked =
+                kind == "in_place" && ["alltoall", "alltoallv", "sendrecv"].contains(&collective);
+            if !result.is_object()
+                || result.get("nwrong").is_none()
+                || (unchecked && !result["nwrong"].is_null())
+                || (!unchecked && result["nwrong"].as_f64() != Some(0.0))
                 || result["time"]
                     .as_f64()
                     .is_none_or(|t| !t.is_finite() || t < 0.0)
             {
                 return Err(fail());
             }
-            checked = true;
         }
-        if !checked {
-            return Err(fail());
-        }
+    }
+    if expected.values().any(|&left| left != 0) {
+        return Err(fail());
     }
     if !nonzero
         || value["errors"]

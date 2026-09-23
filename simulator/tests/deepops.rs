@@ -23,16 +23,66 @@ fn config() -> DeepOpsConfig {
     )
     .unwrap()
 }
-fn report() -> Value {
-    // JSON v4 schema from pinned nccl-tests/src/util.cu, including string booleans.
-    let rows: Vec<_> = ["sum", "prod", "min", "max", "avg", "mulsum"].iter().map(|op| json!({"redop":op,"size":256,"out_of_place":{"nwrong":0.0,"time":32.0},"in_place":{"nwrong":0.0,"time":30.0}})).collect();
-    json!({"version":4,"nccl_version":23102,"end_time":"2026-09-15T00:00:00",
-        "args":["/opt/simulator/nccl-tests/build/all_reduce_perf","-c","1"],
+fn report_for(collective: &str) -> Value {
+    let reduction = ["all_reduce", "reduce", "reduce_scatter"].contains(&collective);
+    let rooted = ["reduce", "broadcast", "scatter", "gather"].contains(&collective);
+    let split = [
+        "all_gather",
+        "reduce_scatter",
+        "alltoall",
+        "alltoallv",
+        "scatter",
+        "gather",
+        "hypercube",
+    ]
+    .contains(&collective);
+    let ops = if reduction {
+        vec!["sum", "prod", "min", "max", "avg", "mulsum"]
+    } else if collective == "hypercube" {
+        vec![""]
+    } else if collective == "sendrecv" {
+        vec!["sum"]
+    } else {
+        vec!["none"]
+    };
+    let roots = if rooted { vec![0, 1] } else { vec![-1] };
+    let mut rows = Vec::new();
+    for size in [
+        256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576,
+    ] {
+        for op in &ops {
+            for root in &roots {
+                rows.push(json!({"redop":op,"root":root.to_string(),"size":size,"count":size / if split {16} else {8},"type":"double",
+                "out_of_place":{"nwrong":0.0,"time":32.0},
+                "in_place":{"nwrong":if ["alltoall","alltoallv","sendrecv"].contains(&collective) {Value::Null} else {json!(0.0)},"time":30.0}}));
+            }
+        }
+    }
+    let mut args = vec![format!("/opt/simulator/nccl-tests/build/{collective}_perf")];
+    args.extend(
+        "-g 1 -t 1 -b 256 -e 1M -f 2 -n 5 -w 1 -c 1 -d double -T 60"
+            .split_whitespace()
+            .map(String::from),
+    );
+    if reduction {
+        args.extend(["-o", "all"].map(String::from));
+    }
+    if rooted {
+        args.extend(["-r", "-1"].map(String::from));
+    }
+    args.extend([
+        "-J".into(),
+        format!("/var/tmp/simulator-nccl/{collective}.json"),
+    ]);
+    json!({"version":4,"nccl_version":23102,"end_time":"2026-09-15T00:00:00", "args":args,
         "env":["NCCL_NET=Socket","NCCL_NET_PLUGIN=none","NCCL_SOCKET_IFNAME==simnccl","NCCL_IB_DISABLE=1","NCCL_P2P_DISABLE=1","NCCL_SHM_DISABLE=1","OMPI_MCA_pml=ob1","OMPI_MCA_btl=self,tcp","OMPI_MCA_btl_tcp_if_include=simnccl","OMPI_MCA_oob_tcp_if_include=simnccl"],
         "config":{"validation":1,"ngpus":1,"nthreads":1,"devices":[{"rank":0,"hostname":"gpu1","device_info":"NVIDIA GPU"},{"rank":1,"hostname":"gpu2","device_info":"NVIDIA GPU"}]},
-        "results":rows,
-        "out_of_bounds":{"count":0,"okay":"true"},"errors":[""]})
+        "results":rows,"out_of_bounds":{"count":0,"okay":"true"},"errors":[""]})
 }
+fn report() -> Value {
+    report_for("all_reduce")
+}
+
 #[test]
 fn inventory_contains_only_isolated_guests() {
     let (_, plan) = config().plan().unwrap();
@@ -127,12 +177,19 @@ fn root_and_reduction_coverage_cannot_be_silently_skipped() {
     let mut r = report();
     r["results"].as_array_mut().unwrap().pop();
     assert!(validate_nccl(&r, "all_reduce", &compute).is_err());
-    let mut r = report();
-    r["args"][0] = json!("/opt/simulator/nccl-tests/build/broadcast_perf");
-    for row in r["results"].as_array_mut().unwrap() {
-        row["root"] = json!("     0");
+    for collective in datacenter_simulator::deepops::COLLECTIVES {
+        let r = report_for(collective);
+        validate_nccl(&r, collective, &compute).unwrap();
+        let rows = r["results"].as_array().unwrap();
+        // Remove each grid cell in turn: marginal sets can remain complete.
+        for i in 0..rows.len() {
+            let mut missing = r.clone();
+            missing["results"].as_array_mut().unwrap().remove(i);
+            assert!(validate_nccl(&missing, collective, &compute).is_err());
+        }
     }
-    assert!(validate_nccl(&r, "broadcast", &compute).is_err());
-    r["results"][1]["root"] = json!("     1");
-    validate_nccl(&r, "broadcast", &compute).unwrap();
+    let mut duplicate = report_for("reduce");
+    let row = duplicate["results"][0].clone();
+    duplicate["results"].as_array_mut().unwrap().push(row);
+    assert!(validate_nccl(&duplicate, "reduce", &compute).is_err());
 }

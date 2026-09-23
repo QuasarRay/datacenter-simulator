@@ -4,6 +4,29 @@ use crate::{Error, Result, Simulation};
 use serde::Serialize;
 use std::io::{self, Write};
 
+#[derive(Debug, Default)]
+pub(crate) struct DataBytesCache(std::sync::atomic::AtomicUsize);
+impl Clone for DataBytesCache {
+    fn clone(&self) -> Self {
+        let copy = Self::default();
+        copy.set(self.get());
+        copy
+    }
+}
+impl DataBytesCache {
+    pub(crate) fn get(&self) -> Option<usize> {
+        self.0
+            .load(std::sync::atomic::Ordering::Relaxed)
+            .checked_sub(1)
+    }
+    pub(crate) fn set(&self, bytes: Option<usize>) {
+        self.0.store(
+            bytes.and_then(|n| n.checked_add(1)).unwrap_or(0),
+            std::sync::atomic::Ordering::Relaxed,
+        );
+    }
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct Limits {
     pub interfaces: usize,
@@ -64,6 +87,17 @@ pub(crate) fn capacity(label: &str, used: usize, added: usize, limit: usize) -> 
     Ok(())
 }
 impl Simulation {
+    pub(crate) fn retained_transaction<T>(
+        &mut self,
+        change: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        let mut candidate = self.clone();
+        let result = change(&mut candidate)?;
+        candidate.data_bytes_cache.set(None);
+        candidate.validate_limits(&candidate.limits)?;
+        *self = candidate;
+        Ok(result)
+    }
     pub fn limits(&self) -> &Limits {
         &self.limits
     }
@@ -102,7 +136,15 @@ impl Simulation {
         }
         Ok(())
     }
-    fn data_bytes(&self) -> Result<usize> {
+    pub(crate) fn data_bytes(&self) -> Result<usize> {
+        if let Some(bytes) = self.data_bytes_cache.get() {
+            return Ok(bytes);
+        }
+        let bytes = self.recompute_data_bytes()?;
+        self.data_bytes_cache.set(Some(bytes));
+        Ok(bytes)
+    }
+    pub(crate) fn recompute_data_bytes(&self) -> Result<usize> {
         // Fixed-width interfaces/links are bounded by counts. Include every
         // variable-size payload, including files left by deleted instructions.
         size(&(
@@ -122,5 +164,50 @@ impl Simulation {
             size(new)?,
             self.limits.data_bytes,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Simulator, model::*};
+    #[test]
+    fn incremental_accounting_and_indexes_match_full_reference_after_edits() {
+        let mut api = Simulator::new();
+        let id = api.create("accounting").unwrap().id().to_owned();
+        let sim = api.get_mut(&id).unwrap();
+        sim.set_auto_oob(true, true).unwrap();
+        for i in 0..128 {
+            let mut spec = NodeSpec::host(&format!("host-{i}"));
+            spec.labels
+                .insert("escaped".into(), format!("a\"b\n{i}").into());
+            let node = sim.create_node(spec).unwrap();
+            sim.create_interface(&node, "eth0", InterfaceType::Data)
+                .unwrap();
+            assert_eq!(
+                sim.usage().unwrap().data_bytes,
+                sim.recompute_data_bytes().unwrap()
+            );
+            assert_eq!(sim.node_named(&format!("host-{i}")).unwrap().id, node);
+            if i % 5 == 0 {
+                sim.delete_node(&node).unwrap();
+                assert!(sim.node_named(&format!("host-{i}")).is_err());
+                assert_eq!(
+                    sim.usage().unwrap().data_bytes,
+                    sim.recompute_data_bytes().unwrap()
+                );
+            }
+        }
+        sim.start(None).unwrap();
+        sim.shutdown(false).unwrap();
+        sim.rebuild(None).unwrap();
+        assert_eq!(
+            sim.usage().unwrap().data_bytes,
+            sim.recompute_data_bytes().unwrap()
+        );
+        let leases: std::collections::BTreeSet<_> = sim
+            .nodes()
+            .filter_map(|n| n.management_ip.clone())
+            .collect();
+        assert_eq!(leases.len(), sim.nodes().count());
     }
 }

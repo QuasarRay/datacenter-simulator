@@ -233,17 +233,37 @@ impl ProcessGroup {
         &mut self,
         child: &mut tokio::process::Child,
     ) -> std::io::Result<std::process::ExitStatus> {
-        let result = child.wait().await;
-        // No fallible work or suspension is allowed between reap and disarm.
-        if result.is_ok() || child.id().is_none() {
-            self.disarm();
+        loop {
+            if let Some(status) = self.try_wait(child)? {
+                return Ok(status);
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
         }
-        result
     }
+
     pub(crate) fn try_wait(
         &mut self,
         child: &mut tokio::process::Child,
     ) -> std::io::Result<Option<std::process::ExitStatus>> {
+        if child.id().is_none() {
+            self.disarm();
+            return child.try_wait();
+        }
+        if let Some(pid) = self.0 {
+            let exited = match crate::process_group::exited(pid) {
+                Ok(exited) => exited,
+                Err(error) => {
+                    if error.raw_os_error() == Some(libc::ECHILD) {
+                        self.disarm();
+                    }
+                    return Err(error);
+                }
+            };
+            if !exited {
+                return Ok(None);
+            }
+            crate::process_group::terminate(pid);
+        }
         let result = child.try_wait();
         if matches!(result, Ok(Some(_))) || child.id().is_none() {
             self.disarm();
@@ -255,9 +275,7 @@ impl Drop for ProcessGroup {
     fn drop(&mut self) {
         // The ID belongs to a child we started with process_group(0).
         if let Some(pid) = self.0 {
-            unsafe {
-                libc::kill(-(pid as i32), libc::SIGKILL);
-            }
+            crate::process_group::terminate(pid);
         }
     }
 }
@@ -668,6 +686,26 @@ impl VmLab {
 #[cfg(test)]
 mod supervision_tests {
     use super::*;
+    #[tokio::test(flavor = "current_thread")]
+    async fn exited_leader_cannot_leave_a_pipe_holding_descendant() {
+        use tokio::io::AsyncReadExt;
+        let mut command = Command::new("sh");
+        command
+            .args(["-c", "sleep 30 & printf leader-done"])
+            .process_group(0)
+            .stdout(Stdio::piped());
+        let mut child = command.spawn().unwrap();
+        let mut output = child.stdout.take().unwrap();
+        let mut guard = ProcessGroup::new(&child).unwrap();
+        assert!(guard.wait(&mut child).await.unwrap().success());
+        let mut bytes = Vec::new();
+        tokio::time::timeout(Duration::from_secs(2), output.read_to_end(&mut bytes))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(bytes, b"leader-done");
+        assert!(guard.0.is_none());
+    }
     #[tokio::test(flavor = "current_thread")]
     async fn reaping_disarms_group_before_guard_can_drop() {
         let mut command = Command::new("sh");

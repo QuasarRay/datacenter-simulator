@@ -92,7 +92,7 @@ def test_fresh_runtime_failure_replaces_success(failure):
 
 def test_export_conditional_write_and_readback(tmp_path, monkeypatch):
     folder=capture(tmp_path/'backups','export'); objects={}; calls=[]
-    def service(base, run, filename, token, method='GET', body=None, cafile=None):
+    def service(base, run, filename, token, method='GET', body=None, cafile=None, limit=None):
         calls.append((method,filename))
         if method=='PUT':
             if filename in objects: raise FileExistsError('conditional write')

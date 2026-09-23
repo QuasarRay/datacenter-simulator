@@ -28,6 +28,12 @@
               "name": "mlx5_0/1"
             }
           },
+          "netbox.snapshot": {
+            "api_url": "http://127.0.0.1:8000/api/",
+            "configured_api_url": "http://127.0.0.1:8000/api/",
+            "fetched_at": "2026-09-22T00:00:00Z",
+            "origin_override": false
+          },
           "simulator.medium": "infiniband"
         },
         "user_data": null,
@@ -56,6 +62,12 @@
               "id": 2,
               "name": "mlx5_0/1"
             }
+          },
+          "netbox.snapshot": {
+            "api_url": "http://127.0.0.1:8000/api/",
+            "configured_api_url": "http://127.0.0.1:8000/api/",
+            "fetched_at": "2026-09-22T00:00:00Z",
+            "origin_override": false
           },
           "simulator.medium": "infiniband"
         },
@@ -90,6 +102,12 @@
               "id": 4,
               "name": "IB1/2"
             }
+          },
+          "netbox.snapshot": {
+            "api_url": "http://127.0.0.1:8000/api/",
+            "configured_api_url": "http://127.0.0.1:8000/api/",
+            "fetched_at": "2026-09-22T00:00:00Z",
+            "origin_override": false
           },
           "simulator.medium": "infiniband"
         },

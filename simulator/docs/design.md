@@ -28,10 +28,10 @@ The deadline bounds startup, bootstrap, submission, synchronization and teardown
 | CPU fallback reintroduced | Default and nccl-check builds reject every collective API, JSON command and scenario CLI; empty/single-rank paths also reject |
 | Invalid shapes/unsafe allocations | Equal counts, root bounds, finite values, reduce-scatter divisibility, aggregate memory and unique device validation |
 | Native API mismatch | Compile all targets with linux, rdma and nccl-check against pinned forks |
-| Wrong CUDA/NCCL values | Manual nccl-runtime gate on two GPUs: every collective and reduction, uneven all-reduce count, empty and single-rank calls |
+| Wrong CUDA/NCCL values | Trusted main/scheduled/manual nccl-runtime gate on two GPUs: every collective and reduction, uneven all-reduce count, empty and single-rank calls |
 | Namespace bypass or leaked rank after failure | Hardware gate checks real interface counters, cuts only a kernel link while keeping the graph connected, requires failure and then successful recovery |
 | Missing GPU accepted | Hardware gate requires an unavailable device ordinal to error |
-| Actual RDMA work submission | Separate manual rdma-runtime gate on a configured RDMA runner |
+| Actual RDMA work submission | Separate trusted main/scheduled/manual rdma-runtime gate on a configured RDMA runner |
 
 Native compilation does not validate GPU execution. Hosted CPU runners validate contracts and Linux networking; actual NCCL and RDMA need their explicit hardware gates. Namespace wall time is affected by host scheduling and is not a calibrated GPU datacenter performance model.
 

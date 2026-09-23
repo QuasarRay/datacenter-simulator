@@ -6,7 +6,7 @@ The [Rust simulator](simulator/README.md) implements local NVIDIA Air-inspired l
 
 The [EX457 cheatsheet v6](cheatsheets/ex457/v6/README.md) contains the current study pack, runnable automation, a mapping to all 23 public exam objectives, official documentation references and dispositions for all 103 available historical audit findings.
 
-Start in `cheatsheets/ex457/v6` and follow its setup instructions. The v6 lab uses its own topology name and a public-key-only FRR adapter. Its subnet must be free before deployment.
+Start with the [backend selection and setup guide](docs/GETTING_STARTED.md). For the EX457 exercises, use `cheatsheets/ex457/v6` and its setup instructions. The v6 lab uses its own topology name and a public-key-only FRR adapter. Its subnet must be free before deployment.
 
 Review [tests and CI](cheatsheets/ex457/v6/21_v6_tests_ci.md) and the [official-document audit](cheatsheets/ex457/v6/evidence/official-doc-audit.json) before treating the pack as exam-ready. The source-grounding layer keeps direct Red Hat/Ansible quotations separate from repository policy and live compatibility evidence; a citation alone is not a pass.
 

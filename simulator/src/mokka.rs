@@ -3,10 +3,6 @@
 //! Real NCCL and RDMA execution are never delegated to this backend.
 use crate::{Simulator, manifest::Manifest, model::Role};
 use anyhow::{Context, Result, bail, ensure};
-use nix::{
-    sys::signal::{Signal, killpg},
-    unistd::Pid,
-};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{
@@ -232,19 +228,47 @@ pub fn render(config: &MokkaConfig, directory: &Path) -> Result<MokkaPlan> {
     Ok(plan)
 }
 
-struct Process(Child);
+struct Process {
+    child: Child,
+    group: Option<u32>,
+}
+impl Process {
+    fn try_wait(&mut self) -> std::io::Result<Option<std::process::ExitStatus>> {
+        if let Some(pid) = self.group {
+            let exited = match crate::process_group::exited(pid) {
+                Ok(exited) => exited,
+                Err(error) => {
+                    if error.raw_os_error() == Some(nix::errno::Errno::ECHILD as i32) {
+                        self.group = None;
+                    }
+                    return Err(error);
+                }
+            };
+            if !exited {
+                return Ok(None);
+            }
+            // Leader is still a zombie and owns this PGID. Kill descendants
+            // before reaping, including those still holding log pipe writers.
+            crate::process_group::terminate(pid);
+        }
+        let result = self.child.try_wait();
+        if matches!(result, Ok(Some(_))) {
+            self.group = None;
+        }
+        result
+    }
+}
 impl Drop for Process {
     fn drop(&mut self) {
-        // Reap normally completed commands before considering their process group.
-        if self.0.try_wait().ok().flatten().is_none() {
-            let _ = killpg(Pid::from_raw(self.0.id() as i32), Signal::SIGKILL);
-            let _ = self.0.kill();
+        if let Some(pid) = self.group.take() {
+            crate::process_group::terminate(pid);
+            let _ = self.child.kill();
             let deadline = Instant::now() + Duration::from_secs(2);
-            while self.0.try_wait().ok().flatten().is_none() && Instant::now() < deadline {
+            while self.child.try_wait().ok().flatten().is_none() && Instant::now() < deadline {
                 std::thread::sleep(Duration::from_millis(10));
             }
-            if self.0.try_wait().ok().flatten().is_none() {
-                eprintln!("Mokka cleanup left unreaped PID {}", self.0.id());
+            if self.child.try_wait().ok().flatten().is_none() {
+                eprintln!("Mokka cleanup left unreaped PID {}", self.child.id());
             }
         }
     }
@@ -281,11 +305,15 @@ fn execute(mut cmd: Command, directory: &Path, label: &str, seconds: u64) -> Res
     ] {
         cmd.env_remove(name);
     }
-    let mut child = Process(cmd.spawn().with_context(|| format!("spawn {label}"))?);
+    let child = cmd.spawn().with_context(|| format!("spawn {label}"))?;
+    let mut child = Process {
+        group: Some(child.id()),
+        child,
+    };
     drop(cmd);
     let end = Instant::now() + Duration::from_secs(seconds);
     let status = loop {
-        if let Some(status) = child.0.try_wait()? {
+        if let Some(status) = child.try_wait()? {
             break status;
         }
         if Instant::now() >= end {
@@ -496,14 +524,29 @@ pub fn apply(config: &MokkaConfig, directory: &Path) -> Result<()> {
         );
         observations.push(json!({"node":release.kubernetes_node,"gpu_inventory":lines,"container_images":image_ids}));
     }
-    batch.record("complete", &[])?;
-    batch.armed = false;
-    fs::write(
+    durable_json(
         directory.join("result.json"),
         serde_json::to_vec_pretty(
             &json!({"ok":true,"scope":plan.scope,"upstream_revision":REVISION,"nccl_tested":false,"rdma_payload_tested":false,"observations":observations}),
         )?,
     )?;
+    batch.record("complete", &[])?;
+    batch.armed = false;
+    Ok(())
+}
+
+fn durable_json(path: impl AsRef<Path>, bytes: Vec<u8>) -> Result<()> {
+    use std::io::Write;
+    let path = path.as_ref();
+    let temporary = path.with_extension(format!("json.{}.tmp", crate::id()));
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary)?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    fs::rename(&temporary, path)?;
+    fs::File::open(path.parent().context("report parent")?)?.sync_all()?;
     Ok(())
 }
 
@@ -523,7 +566,7 @@ struct Batch<'a> {
 }
 impl Batch<'_> {
     fn record(&self, status: &str, errors: &[String]) -> Result<()> {
-        fs::write(
+        durable_json(
             self.directory.join("batch-state.json"),
             serde_json::to_vec_pretty(&json!({
                 "status":status,"owned_releases":self.releases,"owner":self.owner,"cleanup_errors":errors,
@@ -538,6 +581,7 @@ impl Drop for Batch<'_> {
         if !self.armed {
             return;
         }
+        let _ = fs::remove_file(self.directory.join("result.json"));
         let mut errors = Vec::new();
         // Only uninstall releases bearing this run's ownership token, including
         // partial installs. A competing install between preflight and install is safe.
@@ -597,13 +641,17 @@ impl Drop for Batch<'_> {
 }
 
 fn has_no_gpu_capacity(node: &Value) -> bool {
-    node["status"]["capacity"]
-        .as_object()
-        .is_some_and(|capacity| match capacity.get("nvidia.com/gpu") {
-            None => true,
-            Some(Value::String(quantity)) => quantity == "0",
-            Some(_) => false,
+    // Reject every vendor resource, including MIG and renamed time-sliced GPU
+    // resources. Unknown vendor quantities fail closed. Bare CPU nodes need no
+    // NVIDIA resources; the separate explicit opt-in remains mandatory.
+    let safe = |field: &str| {
+        node["status"][field].as_object().is_some_and(|resources| {
+            resources.iter().all(|(name, value)| {
+                !name.starts_with("nvidia.com/") || value.as_str() == Some("0")
+            })
         })
+    };
+    safe("capacity") && (node["status"]["allocatable"].is_null() || safe("allocatable"))
 }
 #[cfg(test)]
 mod tests {
@@ -629,5 +677,27 @@ mod tests {
             ));
         }
         assert!(!has_no_gpu_capacity(&json!({})));
+    }
+}
+
+#[cfg(test)]
+mod capacity_regressions {
+    use super::*;
+    #[test]
+    fn gpu_resources_in_either_capacity_map_fail_closed() {
+        for key in [
+            "nvidia.com/gpu",
+            "nvidia.com/mig-1g.5gb",
+            "nvidia.com/gpu.shared",
+            "nvidia.com/mig-1g.5gb.shared",
+        ] {
+            for field in ["capacity", "allocatable"] {
+                let mut node = json!({"status":{"capacity":{},"allocatable":{}}});
+                node["status"][field][key] = json!("1");
+                assert!(!has_no_gpu_capacity(&node));
+                node["status"][field][key] = json!("0");
+                assert!(has_no_gpu_capacity(&node));
+            }
+        }
     }
 }

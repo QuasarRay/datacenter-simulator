@@ -55,6 +55,11 @@ impl Simulator {
         let now = Utc::now();
         let mut sim = Simulation {
             limits: crate::limits::Limits::default(),
+            data_bytes_cache: crate::limits::DataBytesCache::default(),
+            node_names: BTreeMap::new(),
+            interface_names: BTreeMap::new(),
+            management_leases: BTreeSet::new(),
+            next_management_host: 2,
             id: id.clone(),
             name: name.into(),
             state: State::Inactive,
@@ -187,6 +192,13 @@ impl Simulator {
                 instruction.state = states.remove(index).3;
             }
         }
+        let sim = self.get_mut(&cloned)?;
+        sim.data_bytes_cache.set(None);
+        sim.management_leases = sim
+            .nodes
+            .values()
+            .filter_map(|n| n.management_ip.clone())
+            .collect();
         if let Err(error) = self
             .get(&cloned)?
             .validate_limits(self.get(&cloned)?.limits())
@@ -267,7 +279,6 @@ impl Simulation {
     }
     pub fn create_node(&mut self, spec: NodeSpec) -> Result<String> {
         self.inactive()?;
-        self.data_change(&(), &(&spec, &spec.name, "x".repeat(1024)))?;
         name(&spec.name)?;
         spec.resources.validate()?;
         if spec.image.trim().is_empty() {
@@ -276,33 +287,50 @@ impl Simulation {
         if self.nodes.len() >= 4096 {
             return Err(Error::Invalid("4096 node limit".into()));
         }
-        if self.nodes.values().any(|n| n.spec.name == spec.name) {
+        if self.node_names.contains_key(&spec.name) {
             return Err(Error::Conflict(spec.name));
         }
         let key = id();
-        self.runtime.insert(
-            key.clone(),
-            NodeRuntime {
-                hostname: spec.name.clone(),
-                files: BTreeMap::new(),
-            },
-        );
-        self.nodes.insert(
-            key.clone(),
-            Node {
-                id: key.clone(),
-                simulation: self.id.clone(),
-                spec,
-                state: State::Inactive,
-                generation: 0,
-                user_data: None,
-                meta_data: None,
-                management_ip: None,
-                manifest_fields: BTreeMap::new(),
-            },
-        );
-        self.assign_management_addresses();
+        let runtime = NodeRuntime {
+            hostname: spec.name.clone(),
+            files: BTreeMap::new(),
+        };
+        let management_ip = if self.auto_oob_enabled && self.enable_dhcp {
+            (self.next_management_host..65535)
+                .map(|host| format!("172.31.{}.{}/16", host / 256, host % 256))
+                .find(|ip| !self.management_leases.contains(ip))
+        } else {
+            None
+        };
+        let node = Node {
+            id: key.clone(),
+            simulation: self.id.clone(),
+            spec,
+            state: State::Inactive,
+            generation: 0,
+            user_data: None,
+            meta_data: None,
+            management_ip,
+            manifest_fields: BTreeMap::new(),
+        };
+        let added = crate::limits::size(&key)? * 2
+            + crate::limits::size(&node)?
+            + crate::limits::size(&runtime)?
+            + 2
+            + usize::from(!self.nodes.is_empty())
+            + usize::from(!self.runtime.is_empty());
+        let bytes = self.data_bytes()?;
+        crate::limits::capacity("retained data bytes", bytes, added, self.limits.data_bytes)?;
+        self.node_names.insert(node.spec.name.clone(), key.clone());
+        if let Some(ip) = &node.management_ip {
+            self.management_leases.insert(ip.clone());
+            let address: std::net::Ipv4Addr = ip.trim_end_matches("/16").parse().unwrap();
+            self.next_management_host = u32::from(address) % 65536 + 1;
+        }
+        self.runtime.insert(key.clone(), runtime);
+        self.nodes.insert(key.clone(), node);
         self.event("node created");
+        self.data_bytes_cache.set(Some(bytes + added));
         Ok(key)
     }
     pub fn update_node(&mut self, node: &str, spec: NodeSpec) -> Result<()> {
@@ -314,13 +342,11 @@ impl Simulation {
         if spec.image.trim().is_empty() {
             return Err(Error::Invalid("image is empty".into()));
         }
-        if self
-            .nodes
-            .values()
-            .any(|n| n.id != node && n.spec.name == spec.name)
-        {
+        if self.node_names.get(&spec.name).is_some_and(|id| id != node) {
             return Err(Error::Conflict(spec.name));
         }
+        self.node_names.remove(&self.nodes[node].spec.name);
+        self.node_names.insert(spec.name.clone(), node.into());
         self.nodes.get_mut(node).unwrap().spec = spec;
         self.event("node updated");
         Ok(())
@@ -339,7 +365,12 @@ impl Simulation {
         }
         self.instructions.retain(|_, i| i.node != node);
         self.runtime.remove(node);
-        self.nodes.remove(node);
+        let removed = self.nodes.remove(node).unwrap();
+        self.node_names.remove(&removed.spec.name);
+        if let Some(ip) = removed.management_ip {
+            self.management_leases.remove(&ip);
+            self.next_management_host = 2;
+        }
         // Saved runtime of a different topology cannot be restored.
         self.checkpoints.clear();
         self.event("node deleted");
@@ -366,9 +397,8 @@ impl Simulation {
             ));
         }
         if self
-            .interfaces
-            .values()
-            .any(|i| i.node == node && i.name == interface_name)
+            .interface_names
+            .contains_key(&(node.into(), interface_name.into()))
         {
             return Err(Error::Conflict(interface_name.into()));
         }
@@ -396,7 +426,11 @@ impl Simulation {
                 split_children: Vec::new(),
             },
         );
+        self.interface_names
+            .insert((node.into(), interface_name.into()), key.clone());
+        let cached = self.data_bytes_cache.get();
         self.event("interface created");
+        self.data_bytes_cache.set(cached);
         Ok(key)
     }
     fn remove_interface(&mut self, interface: &str) {
@@ -410,7 +444,9 @@ impl Simulation {
             self.remove_link(&l);
         }
         self.services.retain(|_, s| s.interface != interface);
-        self.interfaces.remove(interface);
+        if let Some(i) = self.interfaces.remove(interface) {
+            self.interface_names.remove(&(i.node, i.name));
+        }
     }
     pub fn delete_interface(&mut self, interface: &str) -> Result<()> {
         self.inactive()?;
@@ -558,10 +594,19 @@ impl Simulation {
         Ok(())
     }
     pub fn set_auto_oob(&mut self, enabled: bool, dhcp: bool) -> Result<()> {
+        self.retained_transaction(|candidate| candidate.set_auto_oob_inner(enabled, dhcp))
+    }
+    fn set_auto_oob_inner(&mut self, enabled: bool, dhcp: bool) -> Result<()> {
         self.inactive()?;
         self.auto_oob_enabled = enabled;
         self.enable_dhcp = enabled && dhcp;
         self.assign_management_addresses();
+        self.management_leases = self
+            .nodes
+            .values()
+            .filter_map(|n| n.management_ip.clone())
+            .collect();
+        self.next_management_host = 2;
         self.event("OOB updated");
         Ok(())
     }
@@ -791,6 +836,9 @@ impl Simulation {
         Ok(())
     }
     pub fn start(&mut self, checkpoint: Option<&str>) -> Result<()> {
+        self.retained_transaction(|candidate| candidate.start_inner(checkpoint))
+    }
+    fn start_inner(&mut self, checkpoint: Option<&str>) -> Result<()> {
         self.inactive()?;
         if self.nodes.is_empty() {
             return Err(Error::Invalid("simulation has no nodes".into()));
@@ -826,6 +874,9 @@ impl Simulation {
         Ok(())
     }
     pub fn shutdown(&mut self, create_checkpoint: bool) -> Result<Option<String>> {
+        self.retained_transaction(|candidate| candidate.shutdown_inner(create_checkpoint))
+    }
+    fn shutdown_inner(&mut self, create_checkpoint: bool) -> Result<Option<String>> {
         self.active()?;
         let checkpoint = if create_checkpoint {
             Some(self.create_checkpoint("shutdown")?)
@@ -835,7 +886,10 @@ impl Simulation {
         self.state = State::Inactive;
         for n in self.nodes.values_mut() {
             n.state = State::Inactive;
-            n.generation += 1;
+            n.generation = n
+                .generation
+                .checked_add(1)
+                .ok_or_else(|| Error::Invalid("generation overflow".into()))?;
         }
         self.available.clear();
         self.scheduling_frontier_ns = self.clock_ns;
@@ -843,6 +897,9 @@ impl Simulation {
         Ok(checkpoint)
     }
     pub fn rebuild(&mut self, checkpoint: Option<&str>) -> Result<()> {
+        self.retained_transaction(|candidate| candidate.rebuild_inner(checkpoint))
+    }
+    fn rebuild_inner(&mut self, checkpoint: Option<&str>) -> Result<()> {
         self.inactive()?;
         if let Some(cp) = checkpoint {
             self.restore_checkpoint(cp)?;
@@ -863,7 +920,10 @@ impl Simulation {
             self.apply_instructions(runtime, None, true)?;
         }
         for n in self.nodes.values_mut() {
-            n.generation += 1;
+            n.generation = n
+                .generation
+                .checked_add(1)
+                .ok_or_else(|| Error::Invalid("generation overflow".into()))?;
         }
         self.available.clear();
         self.scheduling_frontier_ns = self.clock_ns;
@@ -871,6 +931,9 @@ impl Simulation {
         Ok(())
     }
     pub fn reset_nodes(&mut self, nodes: &[String], rebuild: bool) -> Result<()> {
+        self.retained_transaction(|candidate| candidate.reset_nodes_inner(nodes, rebuild))
+    }
+    fn reset_nodes_inner(&mut self, nodes: &[String], rebuild: bool) -> Result<()> {
         self.active()?;
         let unique: BTreeSet<_> = nodes.iter().cloned().collect();
         if unique.len() != nodes.len() {
@@ -893,7 +956,11 @@ impl Simulation {
             self.apply_instructions(runtime, Some(&unique), true)?;
         }
         for node in nodes {
-            self.nodes.get_mut(node).unwrap().generation += 1;
+            let n = self.nodes.get_mut(node).unwrap();
+            n.generation = n
+                .generation
+                .checked_add(1)
+                .ok_or_else(|| Error::Invalid("generation overflow".into()))?;
         }
         // Reset cancels all scheduled traffic, including transit reservations.
         if !nodes.is_empty() {

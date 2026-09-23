@@ -74,12 +74,12 @@ impl RoutingGraph {
         links.sort_by_key(|l| {
             let a = &sim.interfaces[&l.interfaces[0]];
             let b = &sim.interfaces[&l.interfaces[1]];
-            (
-                sim.nodes[&a.node].spec.name.clone(),
-                a.name.clone(),
-                sim.nodes[&b.node].spec.name.clone(),
-                b.name.clone(),
-            )
+            let mut ends = [
+                (sim.nodes[&a.node].spec.name.clone(), a.name.clone()),
+                (sim.nodes[&b.node].spec.name.clone(), b.name.clone()),
+            ];
+            ends.sort();
+            ends
         });
         for link in links {
             link.spec.validate()?;
@@ -240,12 +240,17 @@ impl Simulation {
         destination: &str,
         bytes: usize,
     ) -> Result<Transmission> {
-        let trace = self.schedule_transfer(source, destination, bytes, self.clock_ns)?;
+        let trace = self.schedule_transfer(
+            source,
+            destination,
+            bytes,
+            self.clock_ns.max(self.scheduling_frontier_ns),
+        )?;
         self.clock_ns = trace.completed_ns;
         Ok(trace)
     }
-    /// Submit in nondecreasing timestamp order; equal times model concurrent contention.
-    /// Work is store-and-forward, full duplex, and FIFO on each directed link.
+    /// Finalize one transfer. Use `schedule_transfers` for overlapping traffic:
+    /// an already returned trace cannot be revised by a later submission.
     pub fn schedule_transfer(
         &mut self,
         source: &str,
@@ -253,49 +258,90 @@ impl Simulation {
         bytes: usize,
         at_ns: u64,
     ) -> Result<Transmission> {
-        if at_ns < self.clock_ns.max(self.scheduling_frontier_ns) {
-            return Err(Error::Invalid(
-                "submission precedes completed time or the monotonic scheduling frontier".into(),
-            ));
+        Ok(self
+            .schedule_transfers(&[(source, destination, bytes, at_ns)])?
+            .remove(0))
+    }
+    /// Finalize a bounded batch in arrival order at every directed link.
+    /// Entries are (source, destination, bytes, submission_ns); output preserves
+    /// input order. Equal arrivals use input order as an explicit stable tie-break.
+    /// Each transfer is one store-and-forward message, not a packet-level model.
+    /// All validation and scheduling is atomic; later batches must start after
+    /// this batch completes. No pending traces are retained between batches.
+    pub fn schedule_transfers(
+        &mut self,
+        requests: &[(&str, &str, usize, u64)],
+    ) -> Result<Vec<Transmission>> {
+        crate::limits::capacity("transfer batch", 0, requests.len(), 4096)?;
+        let graph = RoutingGraph::new(self)?;
+        let mut routes = Vec::new();
+        let mut traces = Vec::new();
+        let mut pending = BinaryHeap::new();
+        let mut hop_count = 0;
+        for (index, &(source, destination, bytes, at_ns)) in requests.iter().enumerate() {
+            if at_ns < self.clock_ns.max(self.scheduling_frontier_ns) {
+                return Err(Error::Invalid(
+                    "overlapping finalized traffic; submit concurrent transfers in one batch"
+                        .into(),
+                ));
+            }
+            self.node(source)?;
+            self.node(destination)?;
+            if bytes > 16 * 1024 * 1024 {
+                return Err(Error::Invalid("transfer exceeds 16 MiB".into()));
+            }
+            let route = graph.route(source, destination)?;
+            hop_count += route.len();
+            crate::limits::capacity("transfer batch hops", 0, hop_count, 65536)?;
+            if !route.is_empty() {
+                pending.push(Reverse((at_ns, index, 0usize)));
+            }
+            routes.push(route);
+            traces.push(Transmission {
+                source: source.into(),
+                destination: destination.into(),
+                bytes,
+                submitted_ns: at_ns,
+                completed_ns: at_ns,
+                hops: Vec::new(),
+            });
         }
-        let route = self.route(source, destination, bytes)?;
-        let mut available = self.available.clone();
-        let mut time = at_ns;
-        let mut current = source.to_string();
-        let mut hops = Vec::new();
-        for link_id in route {
-            let link = &self.links[&link_id];
+        let mut available = BTreeMap::new();
+        while let Some(Reverse((arrival, index, hop))) = pending.pop() {
+            let trace = &mut traces[index];
+            let current = trace.hops.last().map_or(&trace.source, |h| &h.to).clone();
+            let link_id = &routes[index][hop];
+            let link = &self.links[link_id];
             let a = &self.interfaces[&link.interfaces[0]].node;
             let b = &self.interfaces[&link.interfaces[1]].node;
             let next = if &current == a { b } else { a };
             let key = (link_id.clone(), current.clone());
-            let start = time.max(*available.get(&key).unwrap_or(&0));
+            let start = arrival.max(*available.get(&key).unwrap_or(&0));
             let serialized = start
-                .checked_add(serialization_ns(bytes, link.spec.bandwidth_bps)?)
+                .checked_add(serialization_ns(trace.bytes, link.spec.bandwidth_bps)?)
                 .ok_or_else(|| Error::Invalid("simulation clock overflow".into()))?;
-            time = serialized
+            let time = serialized
                 .checked_add(link.spec.latency_ns)
                 .ok_or_else(|| Error::Invalid("simulation clock overflow".into()))?;
             available.insert(key, serialized);
-            hops.push(Hop {
-                link: link_id,
+            trace.hops.push(Hop {
+                link: link_id.clone(),
                 from: current,
                 to: next.clone(),
                 start_ns: start,
                 serialized_ns: serialized,
                 arrival_ns: time,
             });
-            current = next.clone();
+            trace.completed_ns = time;
+            if hop + 1 < routes[index].len() {
+                pending.push(Reverse((time, index, hop + 1)));
+            }
         }
-        self.available = available;
-        self.scheduling_frontier_ns = at_ns;
-        Ok(Transmission {
-            source: source.into(),
-            destination: destination.into(),
-            bytes,
-            submitted_ns: at_ns,
-            completed_ns: time,
-            hops,
-        })
+        self.scheduling_frontier_ns = traces
+            .iter()
+            .map(|t| t.completed_ns)
+            .max()
+            .unwrap_or(self.scheduling_frontier_ns);
+        Ok(traces)
     }
 }

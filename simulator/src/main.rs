@@ -22,6 +22,25 @@ use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "--help" | "-h" | "help"))
+    {
+        print_help();
+        return Ok(());
+    }
+    if args.first().map(String::as_str) == Some("doctor") {
+        if args.len() > 2 {
+            return Err("usage: doctor [portable|nccl|ibsim|vm|mokka|netbox]".into());
+        }
+        let report =
+            datacenter_simulator::doctor::inspect(args.get(1).map_or("portable", String::as_str))?;
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        if report["ok"] != true {
+            return Err("prerequisites missing; see doctor report".into());
+        }
+        return Ok(());
+    }
     if args.first().is_some_and(|s| s.starts_with("netbox-")) {
         #[cfg(feature = "netbox")]
         {
@@ -214,4 +233,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
+}
+
+fn print_help() {
+    println!("datacenter-simulator
+  json                              JSON-lines command API
+  run MANIFEST [--devices 0,1,...] --libraries LIBRARIES.json
+                                    Native NCCL; pinned absolute CUDA/NCCL paths and SHA-256 required
+  deepops-plan CONFIG               Validate a VM/GPU deployment plan
+  deepops-run CONFIG                Deploy and validate DeepOps (vm feature)
+  deepops-vm-smoke CONFIG           Test the VM fabric (vm feature)
+  netbox-import CONFIG NEW_DIR      Fetch and compile NetBox intent (netbox feature)
+  netbox-compile CONFIG SNAPSHOT    Replay a checked snapshot (netbox feature)
+  mokka-plan CONFIG                 Inspect mock GPU contracts (mokka feature)
+  mokka-render CONFIG NEW_DIR       Render Mokka values (mokka feature)
+  mokka-apply CONFIG NEW_DIR        Apply to explicitly opted-in CPU nodes (mokka feature)
+  ibsim-plan MANIFEST               Inspect IB management topology (ibsim feature)
+  doctor [MODE]                    Read-only prerequisite discovery (default: portable)
+  --help                           Show this help
+See simulator/README.md and docs/GETTING_STARTED.md for prerequisites and fidelity limits.");
+    println!(
+        "Compiled features: linux={} nccl={} nccl-check={} netbox={} mokka={} ibsim={} vm={}",
+        cfg!(feature = "linux"),
+        cfg!(feature = "nccl"),
+        cfg!(feature = "nccl-check"),
+        cfg!(feature = "netbox"),
+        cfg!(feature = "mokka"),
+        cfg!(feature = "ibsim"),
+        cfg!(feature = "vm")
+    );
 }
