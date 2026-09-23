@@ -63,15 +63,46 @@ struct Qp {
     receives: VecDeque<Receive>,
     completions: VecDeque<Completion>,
 }
+/// Aggregate per-fabric budgets, separate from the simulation's serialized state.
+#[derive(Debug, Clone)]
+pub struct FabricLimits {
+    pub queue_pairs: usize,
+    pub memory_regions: usize,
+    pub queued_entries: usize,
+    pub payload_bytes: usize,
+}
+impl Default for FabricLimits {
+    fn default() -> Self {
+        Self {
+            queue_pairs: 4096,
+            memory_regions: 4096,
+            queued_entries: 65536,
+            payload_bytes: 64 * 1024 * 1024,
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FabricUsage {
+    pub queue_pairs: usize,
+    pub memory_regions: usize,
+    pub queued_entries: usize,
+    pub payload_bytes: usize,
+}
 #[derive(Debug, Clone)]
 pub struct Fabric {
     simulation: String,
     memory: BTreeMap<String, Memory>,
     qps: BTreeMap<String, Qp>,
     capacity: usize,
+    limits: FabricLimits,
+    queued_entries: usize,
+    payload_bytes: usize,
 }
 impl Fabric {
     pub fn new(sim: &Simulation, capacity: usize) -> Result<Self> {
+        Self::with_limits(sim, capacity, FabricLimits::default())
+    }
+    pub fn with_limits(sim: &Simulation, capacity: usize, limits: FabricLimits) -> Result<Self> {
         if !(1..=65536).contains(&capacity) {
             return Err(Error::Invalid("queue capacity must be 1..65536".into()));
         }
@@ -80,7 +111,26 @@ impl Fabric {
             memory: BTreeMap::new(),
             qps: BTreeMap::new(),
             capacity,
+            limits,
+            queued_entries: 0,
+            payload_bytes: 0,
         })
+    }
+    pub fn usage(&self) -> FabricUsage {
+        FabricUsage {
+            queue_pairs: self.qps.len(),
+            memory_regions: self.memory.len(),
+            queued_entries: self.queued_entries,
+            payload_bytes: self.payload_bytes,
+        }
+    }
+    fn queue_capacity(&self, additional: usize) -> Result<()> {
+        crate::limits::capacity(
+            "aggregate fabric queue entries",
+            self.queued_entries,
+            additional,
+            self.limits.queued_entries,
+        )
     }
     fn check_sim(&self, sim: &Simulation) -> Result<()> {
         if sim.id() != self.simulation {
@@ -126,11 +176,19 @@ impl Fabric {
                 "memory region must be 1 byte..16 MiB".into(),
             ));
         }
-        if self.memory.values().map(|m| m.bytes.len()).sum::<usize>() + bytes.len()
-            > 64 * 1024 * 1024
-        {
-            return Err(Error::Invalid("fabric memory exceeds 64 MiB".into()));
-        }
+        crate::limits::capacity(
+            "fabric memory regions",
+            self.memory.len(),
+            1,
+            self.limits.memory_regions,
+        )?;
+        crate::limits::capacity(
+            "fabric payload bytes",
+            self.payload_bytes,
+            bytes.len(),
+            self.limits.payload_bytes,
+        )?;
+        self.payload_bytes += bytes.len();
         let key = id();
         self.memory.insert(
             key.clone(),
@@ -158,13 +216,21 @@ impl Fabric {
         {
             return Err(Error::Conflict("memory has a posted receive".into()));
         }
-        self.memory
+        let removed = self
+            .memory
             .remove(mr)
             .ok_or_else(|| Error::NotFound(mr.into()))?;
+        self.payload_bytes -= removed.bytes.len();
         Ok(())
     }
     pub fn create_qp(&mut self, sim: &Simulation, node: &str) -> Result<String> {
         self.check_sim(sim)?;
+        crate::limits::capacity(
+            "fabric queue pairs",
+            self.qps.len(),
+            1,
+            self.limits.queue_pairs,
+        )?;
         let n = sim.node(node)?;
         let key = id();
         self.qps.insert(
@@ -203,6 +269,7 @@ impl Fabric {
             .qps
             .remove(qp)
             .ok_or_else(|| Error::NotFound(qp.into()))?;
+        self.queued_entries -= q.receives.len() + q.completions.len();
         if let Some(peer) = q.peer
             && let Some(peer) = self.qps.get_mut(&peer)
         {
@@ -230,6 +297,8 @@ impl Fabric {
         if q.state != QpState::Rts || q.receives.len() >= self.capacity {
             return Err(Error::State("QP not ready or receive queue full".into()));
         }
+        self.queue_capacity(1)?;
+        self.queued_entries += 1;
         self.qps.get_mut(qp).unwrap().receives.push_back(Receive {
             mr: mr.into(),
             range,
@@ -275,8 +344,10 @@ impl Fabric {
         if range.len() > receive.range.len() {
             return Err(Error::Invalid("receive buffer too small".into()));
         }
+        self.queue_capacity(1)?; // one receive is consumed, two completions are added
         let bytes = source.bytes[range.clone()].to_vec();
         let transfer = sim.transfer(&sender.node, &receiver.node, bytes.len())?;
+        self.queued_entries += 1;
         let destination = &mut self.memory.get_mut(&receive.mr).unwrap().bytes;
         destination[receive.range.start..receive.range.start + bytes.len()].copy_from_slice(&bytes);
         self.qps
@@ -340,8 +411,10 @@ impl Fabric {
         if q.completions.len() >= self.capacity {
             return Err(Error::Conflict("completion queue full".into()));
         }
+        self.queue_capacity(1)?;
         let bytes = source.bytes[source_range].to_vec();
         let transfer = sim.transfer(&q.node, &peer.node, bytes.len())?;
+        self.queued_entries += 1;
         self.memory.get_mut(target_mr).unwrap().bytes[target_offset..end].copy_from_slice(&bytes);
         self.qps
             .get_mut(qp)
@@ -357,7 +430,9 @@ impl Fabric {
     }
     pub fn poll(&mut self, sim: &Simulation, qp: &str) -> Result<Option<Completion>> {
         self.qp(sim, qp)?;
-        Ok(self.qps.get_mut(qp).unwrap().completions.pop_front())
+        let result = self.qps.get_mut(qp).unwrap().completions.pop_front();
+        self.queued_entries -= usize::from(result.is_some());
+        Ok(result)
     }
 }
 fn check_range(range: &Range<usize>, len: usize) -> Result<()> {

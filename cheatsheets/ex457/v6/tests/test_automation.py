@@ -258,15 +258,17 @@ UsePAM no
                 with socket.create_connection(('127.0.0.1',port),timeout=.1): break
             except OSError: time.sleep(.02)
         trust=tmp_path/'known_hosts'
+        marker = tmp_path/'remote-command-ran'
         command=['ansible','all','-i','127.0.0.1,','-c','ansible.netcommon.libssh','-u','root',
-                 '--private-key',str(tmp_path/'client'),'-m','ansible.builtin.raw','-a','printf trusted',
+                 '--private-key',str(tmp_path/'client'),'-m','ansible.builtin.raw','-a',f'touch {marker}; printf trusted',
                  '-e',json.dumps({'ansible_port':port,'ansible_libssh_known_hosts':str(trust),
                                  'ansible_host_key_checking':True,'ansible_libssh_host_key_auto_add':False})]
-        for key,success in [('server',True),('wrong',False)]:
+        for key,success in [('server',True),('wrong',False),('server',True)]:
+            marker.unlink(missing_ok=True)
             trust.write_text(f'[127.0.0.1]:{port} '+(tmp_path/(key+'.pub')).read_text())
             run=subprocess.run(command,capture_output=True,text=True,timeout=30)
             assert (run.returncode==0)==success,run.stdout+run.stderr
             if success: assert 'trusted' in run.stdout
-            else: assert 'Host key' in run.stdout+run.stderr
+            assert marker.exists() == success, run.stdout+run.stderr
     finally:
         server.terminate(); server.wait(timeout=5); log.close()

@@ -11,27 +11,6 @@
     topology_file: "{{ project_root }}/build/{{ dc.name }}.clab.yml"
 
   tasks:
-    - name: Ensure build directory exists
-      ansible.builtin.file:
-        path: "{{ project_root }}/build"
-        state: directory
-        mode: "0755"
-
-    - name: Render containerlab topology
-      ansible.builtin.template:
-        src: "../templates/datacenter.clab.yml.j2"
-        dest: "{{ topology_file }}"
-        mode: "0644"
-
-    - name: Validate containerlab topology
-      ansible.builtin.command:
-        argv:
-          - containerlab
-          - validate
-          - --topo
-          - "{{ topology_file }}"
-      changed_when: false
-
     - name: Inspect resources already owned by this lab
       become: true
       ansible.builtin.command:
@@ -43,6 +22,46 @@
       ansible.builtin.assert:
         that: existing_lab.stdout_lines | length == 0
         fail_msg: "Lab resources already exist. Verify them or run destroy.yml before redeployment."
+
+    - name: Ensure build directory exists
+      ansible.builtin.file:
+        path: "{{ project_root }}/build"
+        state: directory
+        mode: "0755"
+
+    - name: Allocate candidate topology
+      ansible.builtin.tempfile:
+        state: file
+        path: "{{ project_root }}/build"
+        suffix: .clab.yml
+      register: candidate_topology
+
+    - name: Render containerlab topology
+      ansible.builtin.template:
+        src: "../templates/datacenter.clab.yml.j2"
+        dest: "{{ candidate_topology.path }}"
+        mode: "0644"
+
+    - name: Validate containerlab topology
+      ansible.builtin.command:
+        argv:
+          - containerlab
+          - validate
+          - --topo
+          - "{{ candidate_topology.path }}"
+      changed_when: false
+
+    - name: Publish validated deployment descriptor atomically
+      ansible.builtin.copy:
+        src: "{{ candidate_topology.path }}"
+        dest: "{{ topology_file }}"
+        remote_src: true
+        mode: "0644"
+
+    - name: Remove candidate topology
+      ansible.builtin.file:
+        path: "{{ candidate_topology.path }}"
+        state: absent
 
     - name: Deploy a new lab with failure cleanup
       block:

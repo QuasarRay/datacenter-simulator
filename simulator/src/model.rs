@@ -258,6 +258,16 @@ pub struct Checkpoint {
 #[derive(Debug, Clone, Serialize)]
 pub struct Simulation {
     pub(crate) limits: crate::limits::Limits,
+    #[serde(skip)]
+    pub(crate) data_bytes_cache: crate::limits::DataBytesCache,
+    #[serde(skip)]
+    pub(crate) node_names: BTreeMap<String, String>,
+    #[serde(skip)]
+    pub(crate) interface_names: BTreeMap<(String, String), String>,
+    #[serde(skip)]
+    pub(crate) management_leases: BTreeSet<String>,
+    #[serde(skip)]
+    pub(crate) next_management_host: u32,
     pub(crate) id: String,
     pub(crate) name: String,
     pub(crate) state: State,
@@ -349,9 +359,9 @@ impl Simulation {
         self.nodes.get(id).ok_or_else(|| Error::NotFound(id.into()))
     }
     pub fn node_named(&self, name: &str) -> Result<&Node> {
-        self.nodes
-            .values()
-            .find(|n| n.spec.name == name)
+        self.node_names
+            .get(name)
+            .and_then(|id| self.nodes.get(id))
             .ok_or_else(|| Error::NotFound(name.into()))
     }
     pub fn interface(&self, id: &str) -> Result<&Interface> {
@@ -361,9 +371,9 @@ impl Simulation {
     }
     pub fn interface_named(&self, node: &str, name: &str) -> Result<&Interface> {
         self.node(node)?;
-        self.interfaces
-            .values()
-            .find(|i| i.node == node && i.name == name)
+        self.interface_names
+            .get(&(node.into(), name.into()))
+            .and_then(|id| self.interfaces.get(id))
             .ok_or_else(|| Error::NotFound(format!("{node}:{name}")))
     }
     pub fn runtime(&self, node: &str) -> Result<&NodeRuntime> {
@@ -385,6 +395,7 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn event(&mut self, description: &str) {
+        self.data_bytes_cache.set(None);
         self.modified = Utc::now();
         if self.history_limit == 0 {
             return;

@@ -188,18 +188,16 @@ fn hosts_are_not_transit_routers() {
 fn link_serialization_contention_and_full_duplex() {
     let (mut api, id, ranks, _) = star(2);
     let sim = api.get_mut(&id).unwrap();
-    let first = sim
-        .schedule_transfer(&ranks[0], &ranks[1], 1000, 0)
+    let traces = sim
+        .schedule_transfers(&[
+            (&ranks[0], &ranks[1], 1000, 0),
+            (&ranks[0], &ranks[1], 1000, 0),
+            (&ranks[1], &ranks[0], 1000, 0),
+        ])
         .unwrap();
-    assert_eq!(first.completed_ns, 2200);
-    let second = sim
-        .schedule_transfer(&ranks[0], &ranks[1], 1000, 0)
-        .unwrap();
-    assert_eq!(second.completed_ns, 3200);
-    let reverse = sim
-        .schedule_transfer(&ranks[1], &ranks[0], 1000, 0)
-        .unwrap();
-    assert_eq!(reverse.completed_ns, 2200);
+    assert_eq!(traces[0].completed_ns, 2200);
+    assert_eq!(traces[1].completed_ns, 3200);
+    assert_eq!(traces[2].completed_ns, 2200);
 }
 #[test]
 fn parallel_links_and_fault_rerouting() {
@@ -246,7 +244,12 @@ fn disconnected_collective_is_rejected_without_mutation() {
     .unwrap();
     let before = snapshot(sim);
     assert!(matches!(
-        sim.all_reduce(&ranks, &vec![vec![1.0; 7]; 3], Reduction::Sum),
+        sim.all_reduce(
+            &ranks,
+            &vec![vec![1.0; 7]; 3],
+            Reduction::Sum,
+            &Default::default()
+        ),
         Err(Error::NoRoute(..))
     ));
     assert_eq!(snapshot(sim), before);
@@ -376,12 +379,22 @@ fn every_collective_requires_native_execution_including_empty_and_single_rank() 
     let sim = api.get(&id).unwrap();
     let before = snapshot(sim);
     for result in [
-        sim.all_reduce(&ranks, &[vec![1.0], vec![2.0]], Reduction::Sum),
-        sim.broadcast(&ranks, 1, &[4.0]),
-        sim.all_gather(&ranks, &[vec![1.0], vec![2.0]]),
-        sim.reduce_scatter(&ranks, &[vec![1.0, 2.0], vec![3.0, 4.0]], Reduction::Sum),
-        sim.all_reduce(&ranks[..1], &[vec![]], Reduction::Sum),
-        sim.all_gather(&ranks, &[vec![], vec![]]),
+        sim.all_reduce(
+            &ranks,
+            &[vec![1.0], vec![2.0]],
+            Reduction::Sum,
+            &Default::default(),
+        ),
+        sim.broadcast(&ranks, 1, &[4.0], &Default::default()),
+        sim.all_gather(&ranks, &[vec![1.0], vec![2.0]], &Default::default()),
+        sim.reduce_scatter(
+            &ranks,
+            &[vec![1.0, 2.0], vec![3.0, 4.0]],
+            Reduction::Sum,
+            &Default::default(),
+        ),
+        sim.all_reduce(&ranks[..1], &[vec![]], Reduction::Sum, &Default::default()),
+        sim.all_gather(&ranks, &[vec![], vec![]], &Default::default()),
     ] {
         assert!(matches!(result, Err(Error::Unsupported(_))));
     }
@@ -740,10 +753,12 @@ fn audit_native_queue_accounts_for_high_bdp() {
 fn audit_collective_admission_scales_without_reconstructing_all_pairs() {
     let (api, id, ranks, _) = star(1024);
     let start = std::time::Instant::now();
-    let result =
-        api.get(&id)
-            .unwrap()
-            .all_reduce(&ranks, &vec![vec![]; ranks.len()], Reduction::Sum);
+    let result = api.get(&id).unwrap().all_reduce(
+        &ranks,
+        &vec![vec![]; ranks.len()],
+        Reduction::Sum,
+        &Default::default(),
+    );
     assert!(matches!(result, Err(Error::Unsupported(_))));
     assert!(start.elapsed() < std::time::Duration::from_secs(10));
 }

@@ -142,8 +142,11 @@ impl IbSimulation {
     }
     pub async fn shutdown(&mut self) -> Result<()> {
         self.stopped = true;
-        self.model.shutdown(false)?;
-        self.backend.shutdown().await
+        self.backend.shutdown().await?;
+        if self.model.state() == crate::model::State::Active {
+            self.model.shutdown(false)?;
+        }
+        Ok(())
     }
     pub async fn set_link_up(&mut self, id: &str, up: bool) -> Result<()> {
         if self.stopped {

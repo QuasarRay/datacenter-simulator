@@ -30,6 +30,7 @@ jobs:
         run: |
           simulator/target/debug/datacenter-simulator netbox-compile integrations/netbox/config.example.json integrations/netbox/snapshot.example.json > /tmp/manifest.json
           diff -u integrations/netbox/manifest.example.json /tmp/manifest.json
+          python3 simulator/tests/mokka_cli.py "$PWD"
           simulator/target/debug/datacenter-simulator ibsim-plan /tmp/manifest.json
           simulator/target/debug/datacenter-simulator mokka-plan integrations/k8s-test-infra/config.example.json
   netbox-ibsim:

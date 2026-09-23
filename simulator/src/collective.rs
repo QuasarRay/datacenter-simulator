@@ -220,6 +220,7 @@ impl Simulation {
         ranks: &[String],
         inputs: &[Vec<f64>],
         reduction: Reduction,
+        options: &NcclOptions,
     ) -> Result<CollectiveResult> {
         self.collective(
             ranks,
@@ -227,7 +228,7 @@ impl Simulation {
                 inputs: inputs.to_vec(),
                 reduction,
             },
-            &NcclOptions::default(),
+            options,
         )
     }
     pub fn broadcast(
@@ -235,6 +236,7 @@ impl Simulation {
         ranks: &[String],
         root: usize,
         input: &[f64],
+        options: &NcclOptions,
     ) -> Result<CollectiveResult> {
         self.collective(
             ranks,
@@ -242,16 +244,21 @@ impl Simulation {
                 root,
                 input: input.to_vec(),
             },
-            &NcclOptions::default(),
+            options,
         )
     }
-    pub fn all_gather(&self, ranks: &[String], inputs: &[Vec<f64>]) -> Result<CollectiveResult> {
+    pub fn all_gather(
+        &self,
+        ranks: &[String],
+        inputs: &[Vec<f64>],
+        options: &NcclOptions,
+    ) -> Result<CollectiveResult> {
         self.collective(
             ranks,
             &Collective::AllGather {
                 inputs: inputs.to_vec(),
             },
-            &NcclOptions::default(),
+            options,
         )
     }
     pub fn reduce_scatter(
@@ -259,6 +266,7 @@ impl Simulation {
         ranks: &[String],
         inputs: &[Vec<f64>],
         reduction: Reduction,
+        options: &NcclOptions,
     ) -> Result<CollectiveResult> {
         self.collective(
             ranks,
@@ -266,7 +274,7 @@ impl Simulation {
                 inputs: inputs.to_vec(),
                 reduction,
             },
-            &NcclOptions::default(),
+            options,
         )
     }
 }

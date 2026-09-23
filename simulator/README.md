@@ -4,6 +4,8 @@ A Rust datacenter control plane based on the [NVIDIA Air SDK specification snaps
 
 **Every collective executes NCCL.** All-reduce, broadcast, all-gather and reduce-scatter invoke the pinned project's native Rust bindings and CUDA kernels. There is no CPU collective, emulated ring, software-verbs substitute, or automatic fallback. A build without native NCCL returns `Unsupported`, including for empty buffers and single-rank requests.
 
+For a consumer-hardware starting point and backend prerequisites, see the [setup guide](../docs/GETTING_STARTED.md). `--help` lists commands; `doctor MODE` checks local prerequisites without deploying resources.
+
 ## Control plane and CPU-only validation
 
 ```sh
@@ -121,3 +123,24 @@ independent of UUIDs, link ordering and endpoint orientation.
 
 See [the 4121cb83 audit response](docs/audit-4121cb83-response.md) for claim-by-claim
 results and validation limitations.
+
+## Concurrent analytical transfers and explicit native options
+
+Use `schedule_transfers(&[(source, destination, bytes, at_ns), ...])` for concurrent
+traffic. The bounded batch is finalized with an event queue ordered by each hop's
+arrival time. Equal arrivals use input order. A later batch or individual
+`schedule_transfer` must start after the preceding batch completes, because
+returned traces are immutable. `transfer` runs sequentially after finalized work.
+This is message-level, lossless store-and-forward timing, without packet queues,
+ECMP or congestion control. Batch limits are 4,096 messages and 65,536 total hops.
+
+The Rust convenience methods `all_reduce`, `broadcast`, `all_gather`, and
+`reduce_scatter` now require `&NcclOptions` as their final argument. Supply
+`libraries: Some(NcclLibraries { .. })` with verified absolute paths and hashes,
+as with `collective`. Defaults never bypass native library identity checks.
+
+Software `Fabric::with_limits` accepts aggregate limits for queue pairs, memory
+regions, queued entries and retained payload. Defaults are 4,096 QPs, 4,096 MRs,
+65,536 combined receive/completion entries and 64 MiB of payload; the constructor's
+queue capacity still limits each individual queue. `Fabric::usage` reports these
+separate budgets; they are not part of `Simulation::usage`.

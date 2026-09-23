@@ -25,6 +25,7 @@ mod cuda;
 pub mod deepops;
 #[cfg(feature = "vm")]
 pub mod deepops_runtime;
+pub mod doctor;
 pub mod evidence;
 pub mod fabric;
 #[cfg(feature = "ibsim")]
@@ -43,6 +44,8 @@ pub mod nccl_backend;
 pub mod nccl_worker;
 #[cfg(feature = "netbox")]
 pub mod netbox;
+#[cfg(any(feature = "vm", feature = "mokka"))]
+mod process_group;
 #[cfg(feature = "mokka")]
 mod provenance;
 #[cfg(feature = "rdma")]

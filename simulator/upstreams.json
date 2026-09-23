@@ -16,7 +16,7 @@
     },
     "patchbay": {
       "repository": "https://github.com/QuasarRay/patchbay",
-      "revision": "9b637fc522fa5c70a83c105e45ac23f38e6e0325",
+      "revision": "3d3c577c4b49ba23cb6b14f6b48aacbec933a93e",
       "path": "vendor/patchbay"
     },
     "petgraph": {

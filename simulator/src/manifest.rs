@@ -176,6 +176,7 @@ impl Simulator {
             })?;
             let node = sim.nodes.get_mut(&id).unwrap();
             node.manifest_fields = m.image_metadata.clone();
+            sim.data_bytes_cache.set(None);
             node.user_data = m.user_data.clone();
             node.meta_data = m.meta_data.clone();
             for (iface, spec) in &m.interfaces {

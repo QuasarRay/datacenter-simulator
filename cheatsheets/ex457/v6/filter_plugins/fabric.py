@@ -21,10 +21,16 @@ def interface(value):
     return str(ipaddress.IPv4Interface(value))
 
 
+def usable_unicast(ip):
+    return not (ip.is_unspecified or ip.is_multicast or ip.is_loopback
+                or ip.is_reserved or ip.is_link_local or int(ip) >> 24 == 0)
+
+
 def model(dc):
     nodes = dc['nodes']
     require(len(nodes) >= 2, 'at least two nodes required')
     subnet = ipaddress.IPv4Network(dc['mgmt']['subnet'])
+    require(usable_unicast(subnet.network_address) and usable_unicast(subnet.broadcast_address), 'management subnet must be usable unicast')
     mgmt, loops, used, addresses, networks, asns = set(), set(), set(), set(), set(), set()
     gateway = ipaddress.IPv4Address(dc['mgmt'].get('gateway', str(subnet.network_address + 1)))
     require(gateway in subnet and gateway not in (subnet.network_address, subnet.broadcast_address), 'invalid management gateway')
@@ -38,7 +44,7 @@ def model(dc):
         require(ip not in mgmt, 'duplicate mgmt IP')
         require(ip != gateway, 'management gateway collision')
         require(lo.network.prefixlen == 32 and lo.ip not in loops, 'duplicate or non-/32 loopback')
-        require(not (lo.ip.is_unspecified or lo.ip.is_multicast or lo.ip.is_loopback or lo.ip.is_reserved or lo.ip.is_link_local), 'loopback must be a usable unicast router ID')
+        require(usable_unicast(lo.ip), 'loopback must be a usable unicast router ID')
         require(lo.ip not in subnet, 'loopback overlaps management')
         require(isinstance(node['asn'], int) and not isinstance(node['asn'], bool) and 1 <= node['asn'] <= 4294967295, 'ASN range/type')
         require(node['asn'] not in asns, 'unique ASNs required by this eBGP design')
@@ -58,6 +64,7 @@ def model(dc):
             used.add(key)
             ip = ipaddress.IPv4Interface(end['address'])
             require(ip.network.prefixlen == 31, 'link must be /31')
+            require(usable_unicast(ip.ip), 'link must use usable unicast addresses')
             require(ip.ip not in addresses and ip.ip not in loops and ip.ip not in subnet, 'duplicate/overlapping link address')
             addresses.add(ip.ip); ips.append(ip)
         require(ips[0].network == ips[1].network, 'endpoints not same /31')
@@ -158,8 +165,20 @@ def config(text):
             # Cosmetic/default operational output only. Policies, peer groups,
             # other AFs and route maps are outside this small managed grammar.
             require(line == 'bgp log-neighbor-changes', 'unsupported managed BGP statement: ' + line)
-        elif line.startswith(('neighbor ', 'no neighbor ', 'bgp ', 'no router ', 'no network ', 'no ip address ')):
-            raise ValueError('managed statement in wrong scope: ' + line)
+        elif context == 'interface':
+            # eth0 addresses are outside the fabric grammar; other statements
+            # can still alter forwarding and are not certified by ignoring them.
+            require(line.startswith('description ') or line == 'no shutdown',
+                    'unsupported interface statement: ' + line)
+        else:
+            # Positive allowlist for FRR's generated, non-policy scaffolding.
+            require(line in ('service integrated-vtysh-config', 'no ipv6 forwarding',
+                             'ip forwarding', 'line vty')
+                    or re.fullmatch(r'frr version [0-9A-Za-z.+_-]+', line)
+                    or line in ('frr defaults traditional', 'frr defaults datacenter')
+                    or re.fullmatch(r'hostname [A-Za-z0-9_.-]+', line)
+                    or line in ('log syslog informational', 'log syslog', 'log stdout'),
+                    'unsupported global statement: ' + line)
     for key in result['interfaces']:
         result['interfaces'][key].sort()
     result['networks'].sort()
