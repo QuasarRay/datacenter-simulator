@@ -18,6 +18,13 @@ import time
 import urllib.error
 import urllib.request
 
+REQUIRED_TESTS = {
+    'tls-client-proof-and-bearer-rbac',
+    'api-create-get-list',
+    'runtime-subresources-refuse-fabricated-execution',
+    'kwok-selected-node-ready-unselected-node-unchanged',
+}
+
 def run(*args, **kwargs):
     return subprocess.run(list(map(str,args)), check=True, capture_output=True, timeout=60, **kwargs)
 
@@ -38,7 +45,10 @@ def qualify(output, kwok_source):
             stream=(output/(name+'.log')).open('w');streams.append(stream)
             child=subprocess.Popen(list(map(str,args)),stdout=stream,stderr=subprocess.STDOUT,cwd=private)
             children.append(child);return child
-        def record(name):tests.append({'test':name,'passed':True})
+        def record(name):
+            if name not in REQUIRED_TESTS or any(row['test']==name for row in tests):
+                raise ValueError('unknown or repeated qualification obligation')
+            tests.append({'test':name,'passed':True})
         def eventually(predicate, seconds=45):
             deadline=time.monotonic()+seconds
             while time.monotonic()<deadline:
@@ -102,6 +112,13 @@ def qualify(output, kwok_source):
                       'spec':{'taints':[{'key':'ncp.simulated','value':'true','effect':'NoSchedule'}]},
                       'status':{'capacity':{'cpu':'2','memory':'1Gi','pods':'10'},'allocatable':{'cpu':'2','memory':'1Gi','pods':'10'}}}
                 if api('POST','/api/v1/nodes',node)[0]!=201:raise RuntimeError('node creation failed')
+                code, observed=api('GET','/api/v1/nodes/'+name)
+                if code!=200 or observed['metadata']['labels']['ncp.simulated']!=str(selected).lower():
+                    raise RuntimeError('stored node does not match intent')
+            code, listing=api('GET','/api/v1/nodes')
+            if code!=200 or not {'ncp-selected','ncp-unselected'}.issubset({n['metadata']['name'] for n in listing['items']}):
+                raise RuntimeError('created nodes missing from listing')
+            record('api-create-get-list')
             pod={'apiVersion':'v1','kind':'Pod','metadata':{'name':'ncp-synthetic','namespace':'default'},
                  'spec':{'nodeName':'ncp-selected','containers':[{'name':'placeholder','image':'ncp.invalid/synthetic-only'}]}}
             if api('POST','/api/v1/namespaces/default/pods',pod)[0]!=201:raise RuntimeError('synthetic pod creation failed')
@@ -128,10 +145,12 @@ def qualify(output, kwok_source):
                     try:child.wait(timeout=5)
                     except subprocess.TimeoutExpired:child.kill();child.wait(timeout=5)
             for stream in streams:stream.close()
-            report={'tier':'api-emulated','tests':tests,'required_tests':4,'complete':len(tests)==4,
+            report={'tier':'api-emulated','tests':tests,'required_tests':sorted(REQUIRED_TESTS),
+                    'complete':{row['test'] for row in tests}==REQUIRED_TESTS,
                     'hardware_execution':False,'kubernetes_conformance':False,
                     'assets':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in assets.iterdir() if p.is_file()}}
             (output/'qualification.json').write_text(json.dumps(report,indent=2)+'\n')
+    if not report['complete']:raise RuntimeError('native qualification obligations incomplete')
     print(json.dumps(report,indent=2))
 
 if __name__=='__main__':

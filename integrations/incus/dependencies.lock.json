@@ -1,6 +1,29 @@
 {
-  "deepops": {"repository":"https://github.com/NVIDIA/deepops.git","revision":"dc80499ea34b3f36563ed039421076de15071517"},
-  "rusternetes": {"repository":"https://github.com/calfonso/rusternetes.git","revision":"64b56a4ac3b33b1a5cbd33313ed033f15605d294","components":["rusternetes-api-server","rusternetes-scheduler","rusternetes-controller-manager"],"worker_runtime":"KWOK only; no kubelet component"},
-  "kwok": {"repository":"https://github.com/kubernetes-sigs/kwok.git","revision":"a0b1730f9ee1a4b41a43cd7945c04372ceb37c61","component":"kwok"},
-  "ansible_core":"2.19.8"
+  "deepops": {
+    "repository": "https://github.com/NVIDIA/deepops.git",
+    "revision": "dc80499ea34b3f36563ed039421076de15071517"
+  },
+  "rusternetes": {
+    "repository": "https://github.com/calfonso/rusternetes.git",
+    "revision": "64b56a4ac3b33b1a5cbd33313ed033f15605d294",
+    "components": [
+      "rusternetes-api-server",
+      "rusternetes-scheduler",
+      "rusternetes-controller-manager"
+    ],
+    "worker_runtime": "KWOK only; no kubelet component",
+    "native_profile": "integrations/rusternetes/apply_profile.py"
+  },
+  "kwok": {
+    "repository": "https://github.com/kubernetes-sigs/kwok.git",
+    "revision": "a0b1730f9ee1a4b41a43cd7945c04372ceb37c61",
+    "component": "kwok"
+  },
+  "ansible_core": "2.19.8",
+  "netbox": {
+    "repository": "https://github.com/netbox-community/netbox.git",
+    "revision": "00791344e68213bde942218283dce03cc3941c30",
+    "version": "4.6.0",
+    "runtime": "native PostgreSQL, Redis and Gunicorn"
+  }
 }
