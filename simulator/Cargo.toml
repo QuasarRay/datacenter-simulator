@@ -12,6 +12,7 @@ exclude = ["vendor/nccl", "vendor/patchbay", "vendor/petgraph", "vendor/rust-ibv
 [features]
 default = []
 linux = ["dep:patchbay", "dep:tokio", "dep:anyhow"]
+incus = ["linux"]
 ibsim = ["linux", "patchbay/ibsim"]
 netbox = ["dep:reqwest", "dep:anyhow"]
 mokka = ["dep:serde_yaml", "dep:anyhow", "dep:nix"]

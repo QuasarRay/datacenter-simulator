@@ -22,6 +22,22 @@ use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|s| s.starts_with("incus-")) {
+        #[cfg(feature = "incus")]
+        {
+            use datacenter_simulator::incus::{self, Config};
+            use std::path::Path;
+            match args[0].as_str() {
+                "incus-plan" if args.len() == 2 => println!("{}", serde_json::to_string_pretty(&Config::read(Path::new(&args[1]))?.plan()?)?),
+                "incus-up" if args.len() == 3 => incus::up(Config::read(Path::new(&args[1]))?, Path::new(&args[2]))?,
+                "incus-down" if args.len() == 2 => incus::down(Path::new(&args[1]))?,
+                _ => return Err("usage: incus-plan config.json | incus-up config.json NEW_DIR | incus-down STATE_DIR".into()),
+            }
+            return Ok(());
+        }
+        #[cfg(not(feature = "incus"))]
+        return Err("Incus requires --features incus".into());
+    }
     if args
         .first()
         .is_some_and(|arg| matches!(arg.as_str(), "--help" | "-h" | "help"))
