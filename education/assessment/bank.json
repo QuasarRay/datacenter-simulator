@@ -1,0 +1,2792 @@
+[
+  {
+    "id": 0,
+    "name": "e01a",
+    "facets": [
+      {
+        "id": "AIO-W-2.2/design",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.3/architecture",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/BlueField",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/scalable-unit",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/switch",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.4/simulation",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.4/diagnosis",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.1/deployment",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.1/validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "e01b",
+    "facets": [
+      {
+        "id": "AIO-W-2.2/design",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.3/architecture",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/BlueField",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/scalable-unit",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.1/switch",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.4/simulation",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.4/diagnosis",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.1/deployment",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.1/validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "e02a",
+    "facets": [
+      {
+        "id": "AIN-1.2/topology",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.2/design",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/BMC",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/OOB",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/TPM",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.5/power",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.5/cooling",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.6/SMI",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.7/validation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.8/cable",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.8/transceiver",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.9/physical-installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.4/quality",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.5/correctness",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "e02b",
+    "facets": [
+      {
+        "id": "AIN-1.2/topology",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.2/design",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/BMC",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/OOB",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.3/TPM",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.5/power",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.5/cooling",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.6/SMI",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.7/validation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.8/cable",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.8/transceiver",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.9/physical-installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.4/quality",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.5/correctness",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "e03a",
+    "facets": [
+      {
+        "id": "AIO-W-3.7/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.1/daemon",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.6/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.3/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.1/daemon",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.2/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/DOCA",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/install",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/update",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/remove",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.5/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.6/demonstration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.7/host-installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "e03b",
+    "facets": [
+      {
+        "id": "AIO-W-3.7/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.1/daemon",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.6/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.3/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.1/daemon",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.2/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/DOCA",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/install",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/update",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.4/remove",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.5/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.6/demonstration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.7/host-installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "e04a",
+    "facets": [
+      {
+        "id": "AIO-W-1.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/utilization",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/health",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/Slurm",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/Kubernetes",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/allocation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/account",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/role",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/permission",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/node",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/DPU",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/switch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.8/hardware",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.8/workload",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.3/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.3/provisioning",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.1/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.1/configuration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/HA-configuration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/HA-verification",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "e04b",
+    "facets": [
+      {
+        "id": "AIO-W-1.1/toolkit",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/utilization",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.2/health",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/Slurm",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/Kubernetes",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.3/allocation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/account",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/role",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.5/permission",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/node",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/DPU",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.6/switch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.8/hardware",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.8/workload",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.3/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.3/provisioning",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.1/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.1/configuration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/installation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/HA-configuration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.1/HA-verification",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "e05a",
+    "facets": [
+      {
+        "id": "AIN-2.3/BGP",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.3/EVPN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.3/isolation",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.1/templates",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.2/VLAN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.2/RoCE",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "e05b",
+    "facets": [
+      {
+        "id": "AIN-2.3/BGP",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.3/EVPN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.3/isolation",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.1/templates",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.2/VLAN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-6.2/RoCE",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "e06a",
+    "facets": [
+      {
+        "id": "AIN-2.1/configuration",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/QoS",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/ECN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/PFC",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/adaptive-routing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/telemetry",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "e06b",
+    "facets": [
+      {
+        "id": "AIN-2.1/configuration",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/QoS",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/ECN",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/PFC",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/adaptive-routing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.2/telemetry",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "e07a",
+    "facets": [
+      {
+        "id": "AIN-3.1/provisioning",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.1/HA",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.2/multi-tenancy",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.3/QoS",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.3/adaptive-routing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.4/link-state",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.4/bandwidth",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ib_write_lat",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ib_write_bw",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibping",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibstat",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibdiagnet",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibnodes",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/iblinkinfo",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "e07b",
+    "facets": [
+      {
+        "id": "AIN-3.1/provisioning",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.1/HA",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.2/multi-tenancy",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.3/QoS",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.3/adaptive-routing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.4/link-state",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-3.4/bandwidth",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ib_write_lat",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ib_write_bw",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibping",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibstat",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibdiagnet",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/ibnodes",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.5/iblinkinfo",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "e08a",
+    "facets": [
+      {
+        "id": "AIO-W-1.11/DOCA",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.6/DOCA",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.7/host",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.7/DPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.8/packet-processing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.8/congestion",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.1/configuration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.1/management",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "e08b",
+    "facets": [
+      {
+        "id": "AIO-W-1.11/DOCA",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.6/DOCA",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.7/host",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.7/DPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.8/packet-processing",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.8/congestion",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.1/configuration",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.1/management",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "e09a",
+    "facets": [
+      {
+        "id": "AIO-W-1.10/install",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.10/initialize",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.4/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.1/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.2/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.2/initialization",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.1/RDMA",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.1/InfiniBand",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.2/verification",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "e09b",
+    "facets": [
+      {
+        "id": "AIO-W-1.10/install",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.10/initialize",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.4/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.1/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.2/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.2/initialization",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.1/RDMA",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.1/InfiniBand",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-4.2/verification",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "name": "e10a",
+    "facets": [
+      {
+        "id": "AIO-W-1.13/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.3/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.2/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/category",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/interface",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Slurm",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Enroot",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Pyxis",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": "e10b",
+    "facets": [
+      {
+        "id": "AIO-W-1.13/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.3/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.2/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/category",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/interface",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Slurm",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Enroot",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-3.3/Pyxis",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "e11a",
+    "facets": [
+      {
+        "id": "AIO-W-1.12/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.3/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.2/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.4/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Run:ai",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Slurm",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Kubernetes",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.4/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "e11b",
+    "facets": [
+      {
+        "id": "AIO-W-1.12/installation",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-2.3/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.2/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.4/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Run:ai",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Slurm",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.6/Kubernetes",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.4/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "e12a",
+    "facets": [
+      {
+        "id": "AIO-W-2.5/configuration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.5/AI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.5/HPC",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.2/AI",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.2/HPC",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "e12b",
+    "facets": [
+      {
+        "id": "AIO-W-2.5/configuration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.5/AI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-1.5/HPC",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.2/AI",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-2.2/HPC",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": "e13a",
+    "facets": [
+      {
+        "id": "AIO-W-4.4/data-path",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.5/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.5/requirements",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.4/data-path",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.5/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.11/third-party-parameters",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.14/testing",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.5/optimization",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "name": "e13b",
+    "facets": [
+      {
+        "id": "AIO-W-4.4/data-path",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.5/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.5/requirements",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.4/data-path",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.5/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.11/third-party-parameters",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.14/testing",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.5/optimization",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "name": "e14a",
+    "facets": [
+      {
+        "id": "AIO-W-4.2/Fabric Manager",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.2/NVLink",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.2/NVSwitch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/Fabric Manager",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/NVLink",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/NVSwitch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.3/intra-node",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.3/inter-node",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.3/NCCL",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.3/NVLink-Switch",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.10/NCCL",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.10/bandwidth",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": "e14b",
+    "facets": [
+      {
+        "id": "AIO-W-4.2/Fabric Manager",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.2/NVLink",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.2/NVSwitch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/Fabric Manager",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/NVLink",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.2/NVSwitch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.3/intra-node",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-1.3/inter-node",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.3/NCCL",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.3/NVLink-Switch",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.10/NCCL",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.10/bandwidth",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": "e15a",
+    "facets": [
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.1/execution",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.2/execution",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.9/assessment",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.11/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.12/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.13/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "name": "e15b",
+    "facets": [
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.1/execution",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.2/execution",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.9/assessment",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.11/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.12/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.13/burn-in",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": "e16a",
+    "facets": [
+      {
+        "id": "AIO-W-1.9/usage",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.9/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.9/incident",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.5/in-band-telemetry",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.5/WJH",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.6/congestion",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.6/latency",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.2/WJH",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/fan",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/NIC",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": "e16b",
+    "facets": [
+      {
+        "id": "AIO-W-1.9/usage",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.9/performance",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.9/incident",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-2.2/SMI",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.5/in-band-telemetry",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.5/WJH",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.6/congestion",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-2.6/latency",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.2/WJH",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/fan",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.1/NIC",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "name": "e17a",
+    "facets": [
+      {
+        "id": "AIO-W-1.4/patch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.4/firmware",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.4/image",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/HGX",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/upgrade",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/fault-detection",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.6/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.6/software",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.7/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.7/software",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.8/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/card",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/PSU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/card",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/PSU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "name": "e17b",
+    "facets": [
+      {
+        "id": "AIO-W-1.4/patch",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.4/firmware",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.4/image",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/HGX",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/upgrade",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.4/fault-detection",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.6/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.6/software",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.7/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.7/software",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-4.8/firmware",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/card",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.2/PSU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/card",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/GPU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.3/PSU",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "name": "e18a",
+    "facets": [
+      {
+        "id": "AIN-5.1/cl-resource-query",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.4/AMD",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.4/Intel",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": "e18b",
+    "facets": [
+      {
+        "id": "AIN-5.1/cl-resource-query",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.4/AMD",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AII-5.4/Intel",
+        "domain": 2,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/DCGM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/NVSM",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-3.5/SMI",
+        "domain": 0,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "name": "e19a",
+    "facets": [
+      {
+        "id": "AIO-G-1.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.4/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "name": "e19b",
+    "facets": [
+      {
+        "id": "AIO-G-1.1/administration",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-3.4/deployment",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/GPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/CPU",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.3/storage",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "name": "e20a",
+    "facets": [
+      {
+        "id": "AIO-W-1.7/job",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.7/node",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.7/bottleneck",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.3/control-plane",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.3/control-plane",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.4/health",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": "e20b",
+    "facets": [
+      {
+        "id": "AIO-W-1.7/job",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.7/node",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-1.7/bottleneck",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-W-4.3/control-plane",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIO-G-4.3/control-plane",
+        "domain": 0,
+        "tier": 4
+      },
+      {
+        "id": "AIN-5.4/health",
+        "domain": 1,
+        "tier": 4
+      },
+      {
+        "id": "AII-1.10/hardware-validation",
+        "domain": 2,
+        "tier": 4
+      }
+    ]
+  }
+]
