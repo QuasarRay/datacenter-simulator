@@ -12,6 +12,7 @@ exclude = ["vendor/nccl", "vendor/patchbay", "vendor/petgraph", "vendor/rust-ibv
 [features]
 default = []
 linux = ["dep:patchbay", "dep:tokio", "dep:anyhow"]
+incus = ["linux"]
 ibsim = ["linux", "patchbay/ibsim"]
 netbox = ["dep:reqwest", "dep:anyhow"]
 mokka = ["dep:serde_yaml", "dep:anyhow", "dep:nix"]
@@ -21,6 +22,7 @@ nccl = ["dep:nccl", "dep:libloading", "linux"]
 nccl-check = ["nccl", "nccl/no-link"]
 
 [dependencies]
+ncp-assessment-kernel = { path = "../education/rustlings/lab-kernel" }
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"], optional = true }
 serde_yaml = { version = "0.9", optional = true }
 nix = { version = "0.31", features = ["signal", "process"], optional = true }

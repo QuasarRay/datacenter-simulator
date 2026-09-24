@@ -1,10 +1,10 @@
-> **AGENT INSTRUCTION: DO NOT IMPLEMENT THIS DOCUMENT.** This is a documentation-only migration proposal. Do not change code, configuration, dependencies, infrastructure, or runtime state from these instructions unless the user separately requests implementation. Documentation review and correction are permitted.
+> Implementation authorized by the project owner on 2026-09-24. The former implementation prohibition is withdrawn. See integrations/incus for implemented behavior and validation boundaries.
 
 # Full replacement with Incus, patchbay, and petgraph
 
 This collection specifies how to replace the project's Docker/Containerlab infrastructure with **CachyOS Incus system containers**, with **patchbay controlling the emulated fabric** and **petgraph representing topology and calculating model routes**. It also specifies an Ansible-based curriculum covering every public objective enumerated for EX200, EX294, EX457, and EX342 on 2026-09-23.
 
-**Status: instructions only.** No Incus backend, new playbook, image, CI job, service, or troubleshooting exercise is implemented by this change. Examples inside Markdown are designs or illustrative tasks; new names are explicitly proposed. Do not copy a proposed CLI invocation into the existing binary and expect it to work.
+**Status: implementation authorized and underway.** The Incus lifecycle, patchbay host cables, native provisioning adapters and NCP learning route are implemented in the current PR stack. See `integrations/incus` and `education/ncp-metablueprint`. Live qualification remains pending; older design examples are not execution evidence.
 
 Repository baseline: [`c6aedddfbb9ac569b5e0eb68acc616452bf66136`](https://github.com/QuasarRay/datacenter-simulator/tree/c6aedddfbb9ac569b5e0eb68acc616452bf66136). Re-inventory changes after this commit before implementation. Existing code already uses petgraph and patchbay; this is a lifecycle/network integration replacement, not a proposal to introduce those libraries for the first time.
 
@@ -39,7 +39,7 @@ Repository baseline: [`c6aedddfbb9ac569b5e0eb68acc616452bf66136`](https://github
 3. The root connectivity example and the active EX457 lab use the same new lifecycle implementation. There is no `backend=docker` fallback, dual deployment mode, or permanent translation shim.
 4. patchbay owns fabric wiring and impairments; Incus owns container namespaces and its NIC devices; FRR or the static-route compiler owns a routing table, never both. petgraph does not forward real packets.
 5. CachyOS is the host and node OS. DeepOps and package/service roles must be ported and tested. Renaming an Ubuntu image does not meet this requirement.
-6. Kubernetes pods still require a CRI runtime such as containerd **inside** Incus nodes. OCI image formats are not Incus system images. This preserves Kubernetes semantics while replacing Docker/Kind infrastructure. Navigator EEs and VS Code development-container requirements are explicitly addressed in [10](10-exam-coverage-contract.md); an Incus shell is not falsely described as an OCI development container.
+6. The current NCP project/exercise architecture uses Rusternetes + KWOK and native Incus services. KWOK does not execute pods. Original Kubernetes/Docker objectives may be taught at course stations; a project/exercise exception requires a tested unavoidable NVIDIA dependency. Older Kubernetes/CRI design passages in these migration chapters are background and do not override this delivery constraint. OCI artifacts and Incus system images remain distinct.
 
 ## What full coverage means
 

@@ -1,55 +1,12 @@
 ---
-- name: Destroy virtual datacenter
+- name: Remove exactly the resources recorded by the Incus lifecycle
   hosts: labhost
   gather_facts: false
-
-  vars_files:
-    - ../vars/datacenter.yml
-
-  vars:
-    project_root: "{{ playbook_dir }}/.."
-    topology_file: "{{ project_root }}/build/{{ dc.name }}.clab.yml"
-
   tasks:
-    - name: Check whether generated topology exists
-      ansible.builtin.stat:
-        path: "{{ topology_file }}"
-      register: topology_file_status
-
-    - name: Destroy containerlab datacenter
-      become: true
+    - name: Require explicit inputs
+      ansible.builtin.assert:
+        that: [ncp_state is defined, ncp_simulator is defined]
+    - name: Verify ownership and remove cables before instances
       ansible.builtin.command:
-        argv:
-          - containerlab
-          - destroy
-          - --topo
-          - "{{ topology_file }}"
-          - --cleanup
-      register: containerlab_destroy
-      when: topology_file_status.stat.exists
-
-    - name: Show destroy output
-      ansible.builtin.debug:
-        msg: "{{ containerlab_destroy.stdout_lines + containerlab_destroy.stderr_lines }}"
-      when:
-        - topology_file_status.stat.exists
-        - containerlab_destroy is defined
-
-    - name: Verify release of the empty owned management network
-      become: true
-      ansible.builtin.command:
-        argv:
-          - "{{ ansible_playbook_python }}"
-          - "{{ project_root }}/ci/cleanup_network.py"
-          - --name
-          - "{{ dc.mgmt.network }}"
-          - --subnet
-          - "{{ dc.mgmt.subnet }}"
-      register: management_cleanup
-      changed_when: "'Management network released:' in management_cleanup.stdout"
-      when: topology_file_status.stat.exists
-
-    - name: Report when topology does not exist
-      ansible.builtin.debug:
-        msg: "Topology {{ topology_file }} does not exist; nothing to destroy."
-      when: not topology_file_status.stat.exists
+        argv: ["{{ ncp_simulator }}", incus-down, "{{ ncp_state }}"]
+      changed_when: true

@@ -22,6 +22,50 @@ use std::io::{self, BufRead, Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|s| s == "fabric-plan") {
+        #[cfg(all(feature = "incus", feature = "netbox"))]
+        {
+            use datacenter_simulator::{native_fabric, netbox};
+            use std::path::Path;
+            if args.len() != 3 && args.len() != 4 {
+                return Err("fabric-plan CONFIG NEW_DIR [SNAPSHOT]".into());
+            }
+            let config: native_fabric::FabricConfig =
+                serde_json::from_slice(&datacenter_simulator::input::read(
+                    &args[1],
+                    datacenter_simulator::input::CONFIG_LIMIT,
+                )?)?;
+            let snapshot = if args.len() == 4 {
+                serde_json::from_slice(&datacenter_simulator::input::read(
+                    &args[3],
+                    datacenter_simulator::input::SNAPSHOT_LIMIT,
+                )?)?
+            } else {
+                netbox::NetBoxClient::new(&config.netbox)?.snapshot(&config.netbox)?
+            };
+            native_fabric::render(&config, &snapshot, Path::new(&args[2]))?;
+            return Ok(());
+        }
+        #[cfg(not(all(feature = "incus", feature = "netbox")))]
+        return Err("fabric-plan requires --features incus,netbox".into());
+    }
+    if args.first().is_some_and(|s| s.starts_with("incus-")) {
+        #[cfg(feature = "incus")]
+        {
+            use datacenter_simulator::incus::{self, Config};
+            use std::path::Path;
+            match args[0].as_str() {
+                "incus-plan" if args.len() == 2 => println!("{}", serde_json::to_string_pretty(&Config::read(Path::new(&args[1]))?.plan()?)?),
+                "incus-up" if args.len() == 3 => incus::up(Config::read(Path::new(&args[1]))?, Path::new(&args[2]))?,
+                "incus-down" if args.len() == 2 => incus::down(Path::new(&args[1]))?,
+                "incus-link" if args.len() == 4 && matches!(args[3].as_str(), "up" | "down") => incus::set_link(Path::new(&args[1]), args[2].parse()?, args[3]=="up")?,
+                _ => return Err("usage: incus-plan config.json | incus-up config.json NEW_DIR | incus-down STATE_DIR".into()),
+            }
+            return Ok(());
+        }
+        #[cfg(not(feature = "incus"))]
+        return Err("Incus requires --features incus".into());
+    }
     if args
         .first()
         .is_some_and(|arg| matches!(arg.as_str(), "--help" | "-h" | "help"))

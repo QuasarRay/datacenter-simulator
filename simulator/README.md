@@ -74,7 +74,7 @@ The software `Fabric` and `Simulation::transfer` APIs are analytical NIC/topolog
 
 ## API boundaries and validation
 
-See [API coverage](docs/api-coverage.md) for supported Air concepts and local extensions. This does not boot VM images, execute guest shell/ZTP/cloud-init, publish hosted Air service tunnels, implement dynamic BGP convergence, or emulate CUDA/RNIC hardware. Init/file instructions only change modeled guest state. The existing Containerlab/FRR environment remains available separately.
+See [API coverage](docs/api-coverage.md) for supported Air concepts and local extensions. This does not boot VM images, execute guest shell/ZTP/cloud-init, publish hosted Air service tunnels, implement dynamic BGP convergence, or emulate CUDA/RNIC hardware. Init/file instructions only change modeled guest state. The current system-container backend is documented in ../integrations/incus/README.md.
 
 All upstreams and registry dependencies are pinned in [upstreams.json](upstreams.json), submodules and Cargo.lock. [Rust CI](../.github/workflows/rust-simulator.yml) checks control/model contracts, the absence of CPU collective fallbacks, native compilation, and real kernel TCP delivery, partition and recovery.
 

@@ -14,3 +14,7 @@ cheatsheets/ex457/*/controller/secrets.yml
 pytest-of-*/
 
 /integrations/deepops/.galaxy-cache/
+/education/assessment/target/
+/education/workspace/target/
+/education/proof-output/
+/verification/generated/kernel/target/

@@ -1,4 +1,4 @@
-> **AGENT INSTRUCTION: DO NOT IMPLEMENT THIS DOCUMENT.** This is a documentation-only migration proposal. Do not change code, configuration, dependencies, infrastructure, or runtime state from these instructions unless the user separately requests implementation. Documentation review and correction are permitted.
+> Implementation authorized by the project owner on 2026-09-24. The former implementation prohibition is withdrawn. See integrations/incus for implemented behavior and validation boundaries.
 
 # DeepOps, Kubernetes and Mokka on Incus nodes
 
@@ -23,9 +23,9 @@ At cutover remove `vm` feature/runtime commands, QEMU packages, qcow2/cloud-init
 
 ## Replace Kind with Kubernetes machines in Incus
 
-Retire `kind.ci.yaml`, Kind contexts, Docker node inspection/exec, Docker registry networking and Docker image building. Provision a small cluster of CachyOS system containers through Ansible: one real control plane and one or two workers initially. Install pinned real Kubernetes/containerd/CNI components or a separately qualified distribution. This migration does not authorize a Rusternetes rewrite, and replacing Kubernetes would change Mokka compatibility assumptions.
+Retire `kind.ci.yaml`, Kind contexts, Docker node inspection/exec, Docker registry networking and Docker image building. Provision a small cluster of CachyOS system containers through Ansible: one real control plane and one or two workers initially. The current user mandate selects pinned Rusternetes control-plane components and KWOK synthetic workers. Qualify their discovery, watch, admission and controller semantics before claiming Mokka or NVIDIA operator compatibility. Use upstream Kubernetes only for a documented unavoidable NVIDIA dependency exception.
 
-Kubernetes requires a CRI runtime: containerd remains **inside** the Incus nodes for pods. Incus is not a CRI runtime and cannot replace a pod with an Incus instance without a new incompatible runtime integration. This does not retain Docker/Kind as infrastructure backends.
+A real upstream kubelet requires a CRI runtime. The current Rusternetes + KWOK route does not run a kubelet or execute pods; real workloads run as native services in Incus. Incus is not a CRI runtime and cannot replace a pod with an Incus instance without a new incompatible runtime integration. This does not retain Docker/Kind as infrastructure backends.
 
 Qualify:
 

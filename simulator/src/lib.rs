@@ -28,6 +28,8 @@ pub mod deepops_runtime;
 pub mod doctor;
 pub mod evidence;
 pub mod fabric;
+#[cfg(feature = "incus")]
+pub mod incus;
 #[cfg(feature = "ibsim")]
 pub mod infiniband;
 pub mod input;
@@ -38,6 +40,8 @@ pub mod manifest;
 pub mod model;
 #[cfg(feature = "mokka")]
 pub mod mokka;
+#[cfg(all(feature = "netbox", feature = "incus"))]
+pub mod native_fabric;
 #[cfg(feature = "nccl")]
 pub mod nccl_backend;
 #[cfg(feature = "nccl")]

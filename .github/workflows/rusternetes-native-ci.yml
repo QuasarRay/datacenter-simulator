@@ -1,0 +1,67 @@
+name: Rusternetes native capability qualification
+on:
+  pull_request:
+    paths: ['integrations/rusternetes/**', 'tools/qualify_control_plane.py', '.github/workflows/rusternetes-native-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-control-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  control-plane:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Build dependencies and exact sources
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev protobuf-compiler etcd-server etcd-client
+          sudo systemctl stop etcd
+          rustup toolchain install 1.98.0 --profile minimal
+          git init /tmp/ncp-rusternetes
+          git -C /tmp/ncp-rusternetes remote add origin https://github.com/calfonso/rusternetes.git
+          git -C /tmp/ncp-rusternetes fetch --depth=1 origin 64b56a4ac3b33b1a5cbd33313ed033f15605d294
+          git -C /tmp/ncp-rusternetes checkout --detach FETCH_HEAD
+          git init /tmp/ncp-kwok
+          git -C /tmp/ncp-kwok remote add origin https://github.com/kubernetes-sigs/kwok.git
+          git -C /tmp/ncp-kwok fetch --depth=1 origin a0b1730f9ee1a4b41a43cd7945c04372ceb37c61
+          git -C /tmp/ncp-kwok checkout --detach FETCH_HEAD
+          mkdir -p artifacts/control-plane/assets
+      - name: Derive the explicit native profile and inspect production dependencies
+        run: |
+          python3 integrations/rusternetes/apply_profile.py /tmp/ncp-rusternetes
+          cargo +1.98.0 tree --locked --manifest-path /tmp/ncp-rusternetes/Cargo.toml -p rusternetes-api-server -p rusternetes-scheduler -p rusternetes-controller-manager --edges normal > artifacts/control-plane/dependencies.txt
+          python3 -c 'from pathlib import Path; assert "bollard" not in Path("artifacts/control-plane/dependencies.txt").read_text()'
+          cp /tmp/ncp-rusternetes/ncp-profile.json artifacts/control-plane/
+      - name: Compile the actual control-plane binaries
+        run: |
+          cargo +1.98.0 build --locked --manifest-path /tmp/ncp-rusternetes/Cargo.toml --bins -p rusternetes-api-server -p rusternetes-scheduler -p rusternetes-controller-manager
+          cargo +1.98.0 test --locked --manifest-path /tmp/ncp-rusternetes/Cargo.toml -p rusternetes-api-server --lib unavailable_is_failure_and_never_a_synthetic_log
+          cp /tmp/ncp-rusternetes/target/debug/api-server artifacts/control-plane/assets/rusternetes-api-server
+          cp /tmp/ncp-rusternetes/target/debug/scheduler artifacts/control-plane/assets/rusternetes-scheduler
+          cp /tmp/ncp-rusternetes/target/debug/controller-manager artifacts/control-plane/assets/rusternetes-controller-manager
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: Build the pinned native KWOK controller
+        working-directory: /tmp/ncp-kwok
+        run: go build -trimpath -o "$GITHUB_WORKSPACE/artifacts/control-plane/assets/kwok" ./cmd/kwok
+      - name: Test authentication, API state, unavailable execution and KWOK selection
+        run: python3 tools/qualify_control_plane.py artifacts/control-plane /tmp/ncp-kwok
+      - name: Retain capability evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-control-plane-${{ github.sha }}
+          path: |
+            artifacts/control-plane/*.json
+            artifacts/control-plane/*.log
+            artifacts/control-plane/*.txt

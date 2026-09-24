@@ -1,0 +1,70 @@
+name: Incus native qualification
+on:
+  pull_request:
+    paths: ['simulator/**', 'integrations/incus/**', 'integrations/netbox/**', 'tools/*netbox*.py', 'tools/qualify_incus.py', '.github/workflows/incus-native-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: incus-qualification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ethernet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Native dependencies on disposable VM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y incus btrfs-progs iproute2 iputils-ping python3-venv postgresql redis-server libpq-dev
+          sudo incus admin init --auto --storage-backend btrfs --storage-create-loop 8
+      - name: Build a labeled Ubuntu qualification image
+        run: |
+          sudo incus launch images:ubuntu/24.04 ncp-ci-image-builder -c user.ncp.owner=ci-image-builder
+          sudo incus exec ncp-ci-image-builder -- apt-get update
+          sudo incus exec ncp-ci-image-builder -- apt-get install -y python3 iproute2 iputils-ping procps
+          sudo incus stop ncp-ci-image-builder
+          sudo incus publish ncp-ci-image-builder --alias ncp-ci-qualified
+          sudo incus delete ncp-ci-image-builder
+          sudo incus image list ncp-ci-qualified --format=json > /tmp/ncp-image.json
+          sudo incus version > /tmp/ncp-incus-version.txt
+      - name: Compile and prepare pinned Ansible
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          cargo +1.98.0 build --locked --manifest-path simulator/Cargo.toml --features incus,netbox
+          python3 -m venv /tmp/ncp-ci-env
+          /tmp/ncp-ci-env/bin/pip install ansible-core==2.19.8
+      - name: Install the pinned native NetBox source
+        run: |
+          git init /tmp/ncp-native-netbox
+          git -C /tmp/ncp-native-netbox remote add origin https://github.com/netbox-community/netbox.git
+          git -C /tmp/ncp-native-netbox fetch --depth=1 origin 00791344e68213bde942218283dce03cc3941c30
+          git -C /tmp/ncp-native-netbox checkout --detach FETCH_HEAD
+          sudo systemctl start postgresql redis-server
+          python3 tools/configure_native_netbox_ci.py /tmp/ncp-native-netbox
+          python3 -m venv /tmp/ncp-netbox-env
+          /tmp/ncp-netbox-env/bin/pip install -r /tmp/ncp-native-netbox/requirements.txt
+          /tmp/ncp-netbox-env/bin/python /tmp/ncp-native-netbox/netbox/manage.py migrate --no-input
+          NCP_NETBOX_TOKEN_FILE=/tmp/ncp-netbox-read-token /tmp/ncp-netbox-env/bin/python /tmp/ncp-native-netbox/netbox/manage.py shell < tools/seed_native_netbox.py
+          /tmp/ncp-netbox-env/bin/gunicorn --chdir /tmp/ncp-native-netbox/netbox --bind 127.0.0.1:8000 --daemon --pid /tmp/ncp-netbox.pid --error-logfile /tmp/ncp-netbox.log netbox.wsgi
+      - name: Qualify two concurrent native labs
+        run: |
+          ncp_image_fingerprint=$(python3 -c 'import json; images=json.load(open("/tmp/ncp-image.json")); assert len(images)==1; print(images[0]["fingerprint"])')
+          sudo env PATH="/tmp/ncp-ci-env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" PYTHONPATH="$PWD" /tmp/ncp-ci-env/bin/python tools/qualify_incus.py "$ncp_image_fingerprint"
+      - name: Realize topology read from actual native NetBox
+        run: |
+          ncp_image_fingerprint=$(python3 -c 'import json; print(json.load(open("/tmp/ncp-image.json"))[0]["fingerprint"])')
+          sudo env PATH="/tmp/ncp-ci-env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" PYTHONPATH="$PWD" /tmp/ncp-ci-env/bin/python tools/qualify_netbox.py "$ncp_image_fingerprint" /tmp/ncp-netbox-read-token
+      - name: Export fixed qualification reports without changing lab permissions
+        if: always()
+        run: sudo python3 tools/export_native_evidence.py
+      - name: Retain exact-host evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: incus-qualification-${{ github.sha }}
+          path: artifacts/native-evidence.tar.gz

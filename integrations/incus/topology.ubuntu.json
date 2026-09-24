@@ -1,0 +1,99 @@
+{
+  "format": "JSON",
+  "name": "ncp-incus",
+  "content": {
+    "nodes": {
+      "control": {
+        "os": "ubuntu-24.04",
+        "cpu": 2,
+        "memory": 1536,
+        "storage": 8,
+        "interfaces": {
+          "data0": {}
+        }
+      },
+      "compute-a": {
+        "os": "ubuntu-24.04",
+        "cpu": 1,
+        "memory": 1024,
+        "storage": 8,
+        "interfaces": {
+          "data0": {}
+        }
+      },
+      "compute-b": {
+        "os": "ubuntu-24.04",
+        "cpu": 1,
+        "memory": 1024,
+        "storage": 8,
+        "interfaces": {
+          "data0": {}
+        }
+      },
+      "services": {
+        "os": "ubuntu-24.04",
+        "cpu": 2,
+        "memory": 2048,
+        "storage": 16,
+        "interfaces": {
+          "data0": {}
+        }
+      },
+      "leaf": {
+        "os": "ubuntu-24.04",
+        "role": "switch",
+        "cpu": 1,
+        "memory": 512,
+        "storage": 4,
+        "interfaces": {
+          "swp1": {},
+          "swp2": {},
+          "swp3": {},
+          "swp4": {}
+        }
+      }
+    },
+    "links": [
+      {
+        "endpoints": [
+          "control:data0",
+          "leaf:swp1"
+        ],
+        "condition": {
+          "bandwidth_bps": 1000000000,
+          "latency_ns": 100000
+        }
+      },
+      {
+        "endpoints": [
+          "compute-a:data0",
+          "leaf:swp2"
+        ],
+        "condition": {
+          "bandwidth_bps": 1000000000,
+          "latency_ns": 100000
+        }
+      },
+      {
+        "endpoints": [
+          "compute-b:data0",
+          "leaf:swp3"
+        ],
+        "condition": {
+          "bandwidth_bps": 1000000000,
+          "latency_ns": 100000
+        }
+      },
+      {
+        "endpoints": [
+          "services:data0",
+          "leaf:swp4"
+        ],
+        "condition": {
+          "bandwidth_bps": 1000000000,
+          "latency_ns": 100000
+        }
+      }
+    ]
+  }
+}
