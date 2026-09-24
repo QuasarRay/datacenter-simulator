@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo incus launch images:ubuntu/24.04 ncp-ci-image-builder -c user.ncp.owner=ci-image-builder
           sudo incus exec ncp-ci-image-builder -- apt-get update
-          sudo incus exec ncp-ci-image-builder -- apt-get install -y python3 iproute2 iputils-ping
+          sudo incus exec ncp-ci-image-builder -- apt-get install -y python3 iproute2 iputils-ping procps
           sudo incus stop ncp-ci-image-builder
           sudo incus publish ncp-ci-image-builder --alias ncp-ci-qualified
           sudo incus delete ncp-ci-image-builder

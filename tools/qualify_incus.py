@@ -40,7 +40,8 @@ def qualify(fingerprint):
                     'manifest':str(manifest),'max_memory_mib':8192}
             path=workspace/f'config-{suffix}.json';path.write_text(json.dumps(config))
             state=workspace/f'lab-{suffix}'
-            command(binary,'incus-up',path,state);states.append(state)
+            states.append(state)
+            command(binary,'incus-up',path,state)
             interfaces={};names=['control','compute-a','compute-b','services']
             for i,name in enumerate(names,1):
                 interfaces[name]=[{'name':'data0','content':
@@ -86,6 +87,8 @@ def qualify(fingerprint):
     finally:
         cleanup=[]
         for state in reversed(states):
+            if not (state/'incus.json').exists():
+                continue # preflight failed before any owned resources existed
             outcome=command(binary,'incus-down',state,success=False)
             cleanup.append({'state':str(state),'returncode':outcome.returncode,'stderr':outcome.stderr})
             if outcome.returncode==0:command(binary,'incus-down',state) # idempotent completed teardown

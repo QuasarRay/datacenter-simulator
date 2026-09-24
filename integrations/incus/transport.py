@@ -68,7 +68,7 @@ class Incus:
         import uuid
         path = self.checked(node)
         started = self.request('POST', path + '/exec', {
-            'command': list(argv), 'environment': {'PATH':'/usr/local/sbin:/usr/local/bin:/usr/bin:/bin'},
+            'command': list(argv), 'environment': {'PATH':'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'},
             'wait-for-websocket': False, 'interactive': False, 'record-output': True,
         })
         operation = started['operation'].split('?')[0]
