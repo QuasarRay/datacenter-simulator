@@ -42,7 +42,10 @@ CA with a positive client plus a rejected untrusted client.
 
 The initial Rusternetes deployment consists of its actual API server, scheduler
 and controller manager, plus native etcd. It deliberately builds/starts no
-Rusternetes kubelet; that inspected component depends on the removed runtime.
+Rusternetes kubelet. Its API server also needs the explicit
+[native source profile](../rusternetes/README.md), which removes runtime clients
+and fabricated pod-log fallback and wires the binary client-CA option correctly.
+Client TLS verification and bearer-token RBAC are separate requirements.
 KWOK owns only nodes selected by `ncp.simulated=true`. Generated workers have a
 NoSchedule taint; only explicitly synthetic workloads may tolerate it.
 They are worker objects, not a thousand control planes or executing GPUs.
@@ -75,7 +78,7 @@ accepts a provisioned NetBox endpoint; automatic native NetBox bootstrap remains
 an unmet integration gate.
 
 The existing `integrations/netbox/config.example.json`, importer and snapshot
-validation are retained. Set the chosen device-role OS mapping to `cachyos`
+validation are retained. Set the chosen device-role OS mapping to `cachyos` or `ubuntu-24.04`
 before compiling an Incus manifest. Retain explicit cable medium; IB snapshots
 must select ibsim instead of being flattened to Ethernet. Keep NetBox as intent:
 measured state must not overwrite desired state merely to make a comparison pass.
@@ -109,6 +112,10 @@ for the new platform. Their FRR/SSH live fixtures need a qualified Incus image a
 owned journal before reuse. Upstream DeepOps source is preserved verbatim, so its
 unselected legacy role definitions remain reference material.
 
-The live CI workflow requires a dedicated CachyOS/Incus runner and is manual. It
-has not run in the development environment, which forbids network namespaces.
-The portable workflow checks source coverage and native plan contracts only.
+The Incus qualification workflow runs real native containers on a disposable
+Ubuntu 24.04 GitHub host. It retains image fingerprints, Ansible transcripts,
+traffic/cut/restore/isolation and cleanup results. A separate native control-plane
+workflow builds the derived Rusternetes and pinned KWOK binaries and probes their
+actual capability boundaries. A workflow definition is not a successful result;
+consult its retained qualification report. CachyOS and NVIDIA hardware remain
+separate host profiles. Portable checks alone cannot qualify a live station.
