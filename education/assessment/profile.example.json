@@ -1,0 +1,12 @@
+{
+  "qualification": "unqualified",
+  "evidence": "/srv/ncp/private/student-01",
+  "state": "/srv/ncp/labs/student-01",
+  "socket": "/run/ncp-assessment/student-01.sock",
+  "learner_host_uid": 1000000,
+  "learner_host_gid": 1000000,
+  "python": "/srv/ncp/venv/bin/python",
+  "collector": "/srv/ncp/private/qualified_site_collector.py",
+  "collector_sha256": "REPLACE_WITH_REVIEWED_QUALIFIED_COLLECTOR_SHA256",
+  "grader": "/srv/ncp/bin/ncp-grade"
+}

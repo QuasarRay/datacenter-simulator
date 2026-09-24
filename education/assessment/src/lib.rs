@@ -72,6 +72,46 @@ pub struct Receipt {
 }
 pub const DEEPOPS: &str = "dc80499ea34b3f36563ed039421076de15071517";
 
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Artifact {
+    pub protocol: String,
+    pub request: Request,
+    pub scope: String,
+    pub case: u8,
+    pub raw: String,
+}
+impl Artifact {
+    pub fn matches(&self, q: &Request, scope: &str, case: u8) -> bool {
+        self.protocol == "ncp-artifact-v1"
+            && self.request.protocol == q.protocol
+            && self.request.name == q.name
+            && self.scope == scope
+            && self.case == case
+            && !self.raw.trim().is_empty()
+            && current_receipt(
+                q.attempt,
+                self.request.attempt,
+                q.exercise,
+                self.request.exercise,
+            )
+    }
+}
+
+pub fn accepted(receipt: &Receipt, station: &Station) -> bool {
+    if station.facets.is_empty() || station.facets.len() > 63 {
+        return false;
+    }
+    triad(
+        receipt.ops,
+        receipt.net,
+        receipt.infra,
+        receipt.coupled,
+        receipt.provenance,
+        facets_complete((1u64 << station.facets.len()) - 1, receipt.observed_facets),
+    )
+}
+
 pub fn validate_bank(bank: &[Station]) -> Result<(), String> {
     if bank.len() != 40 {
         return Err("expected forty stations".into());
@@ -108,7 +148,7 @@ pub fn evaluate(
     s: &Station,
     q: &Request,
     b: Option<&Bundle>,
-    artifact_valid: impl Fn(&str) -> bool,
+    artifact_valid: impl Fn(&str, &str, u8) -> bool,
 ) -> Receipt {
     let mut r = Receipt {
         protocol: "ncp-grade-v1".into(),
@@ -140,7 +180,8 @@ pub fn evaluate(
     {
         return r;
     }
-    r.provenance = b.deepops_revision == DEEPOPS && artifact_valid(&b.deepops_artifact);
+    r.provenance =
+        b.deepops_revision == DEEPOPS && artifact_valid(&b.deepops_artifact, "deepops", 0);
     let mut domains = [true; 3];
     let mut present = [false; 3];
     for (bit, f) in s.facets.iter().enumerate() {
@@ -157,7 +198,7 @@ pub fn evaluate(
             rows.len() == 1
                 && rows[0].passed
                 && tier_matches(f.tier, rows[0].tier)
-                && artifact_valid(&rows[0].artifact)
+                && artifact_valid(&rows[0].artifact, &f.id, case)
         });
         domains[f.domain as usize] &= passed;
         if passed {
@@ -173,7 +214,7 @@ pub fn evaluate(
         rows.len() == 1
             && rows[0].failed_when_removed
             && rows[0].recovered_when_restored
-            && artifact_valid(&rows[0].artifact)
+            && artifact_valid(&rows[0].artifact, &format!("intervention/{domain}"), 0)
     });
     let statuses = std::array::from_fn::<_, 3, _>(|i| if present[i] && domains[i] { 2 } else { 1 });
     [r.ops, r.net, r.infra] = statuses;
@@ -197,6 +238,27 @@ pub fn evaluate(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn raw_artifacts_are_bound_to_attempt_scope_and_case() {
+        let q = Request {
+            protocol: "ncp-grade-v1".into(),
+            name: "e01a".into(),
+            exercise: 0,
+            attempt: 77,
+        };
+        let mut artifact = Artifact {
+            protocol: "ncp-artifact-v1".into(),
+            request: q.clone(),
+            scope: "AII-1.1/deployment".into(),
+            case: 0,
+            raw: "device observation".into(),
+        };
+        assert!(artifact.matches(&q, "AII-1.1/deployment", 0));
+        assert!(!artifact.matches(&q, "AII-1.1/validation", 0));
+        assert!(!artifact.matches(&q, "AII-1.1/deployment", 1));
+        artifact.request.attempt = 76;
+        assert!(!artifact.matches(&q, "AII-1.1/deployment", 0));
+    }
     fn sample(s: &Station) -> (Request, Bundle) {
         let q = Request {
             protocol: "ncp-grade-v1".into(),
@@ -248,31 +310,31 @@ mod tests {
         validate_bank(&bank).unwrap();
         for s in &bank {
             let (q, b) = sample(s);
-            assert!(accepted(evaluate(s, &q, Some(&b), |_| true), s));
-            assert!(!accepted(evaluate(s, &q, None, |_| true), s));
-            assert!(!accepted(evaluate(s, &q, Some(&b), |_| false), s));
+            assert!(accepted(evaluate(s, &q, Some(&b), |_, _, _| true), s));
+            assert!(!accepted(evaluate(s, &q, None, |_, _, _| true), s));
+            assert!(!accepted(evaluate(s, &q, Some(&b), |_, _, _| false), s));
             for i in 0..b.observations.len() {
                 let mut broken = b.clone();
                 broken.observations[i].passed = false;
-                assert!(!accepted(evaluate(s, &q, Some(&broken), |_| true), s));
+                assert!(!accepted(evaluate(s, &q, Some(&broken), |_, _, _| true), s));
                 broken = b.clone();
                 broken.observations[i].tier = 1;
-                assert!(!accepted(evaluate(s, &q, Some(&broken), |_| true), s));
+                assert!(!accepted(evaluate(s, &q, Some(&broken), |_, _, _| true), s));
                 broken = b.clone();
                 broken.observations.remove(i);
-                assert!(!accepted(evaluate(s, &q, Some(&broken), |_| true), s));
+                assert!(!accepted(evaluate(s, &q, Some(&broken), |_, _, _| true), s));
             }
             for d in 0..3 {
                 let mut broken = b.clone();
                 broken.interventions[d].failed_when_removed = false;
-                assert!(!accepted(evaluate(s, &q, Some(&broken), |_| true), s));
+                assert!(!accepted(evaluate(s, &q, Some(&broken), |_, _, _| true), s));
                 broken = b.clone();
                 broken.interventions[d].recovered_when_restored = false;
-                assert!(!accepted(evaluate(s, &q, Some(&broken), |_| true), s));
+                assert!(!accepted(evaluate(s, &q, Some(&broken), |_, _, _| true), s));
             }
             let mut old = b.clone();
             old.request.attempt = 8;
-            assert!(!accepted(evaluate(s, &q, Some(&old), |_| true), s));
+            assert!(!accepted(evaluate(s, &q, Some(&old), |_, _, _| true), s));
         }
     }
 }

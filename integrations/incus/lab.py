@@ -20,13 +20,15 @@ class Lab:
                  for node in self.journal['plan']['nodes']}
         return {'all': {'hosts': nodes}}
 
-    def apply(self, playbook, variables=None):
+    def apply(self, playbook, variables=None, timeout=7200):
         """Run reviewed automation against exactly this lab, recording identity and exit status."""
         playbook = Path(playbook).resolve()
         source = ROOT/'integrations/deepops/upstream'
         revision = subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()
         if revision != DEEPOPS:
             raise ValueError('DeepOps revision mismatch')
+        if subprocess.check_output(['git','-C',str(source),'status','--porcelain','--untracked-files=no'],text=True).strip():
+            raise ValueError('DeepOps tracked source is modified')
         inventory = self.state/'inventory.json'
         inventory.write_text(json.dumps(self.inventory(),indent=2)+'\n')
         extra = self.state/'variables.json'
@@ -37,16 +39,17 @@ class Lab:
           'ANSIBLE_NOCOLOR':'1', 'ANSIBLE_RETRY_FILES_ENABLED':'false'}
         result = subprocess.run(['ansible-playbook','-i',str(inventory),str(playbook),
           '--limit',','.join(self.inventory()['all']['hosts']), '-e','@'+str(extra)],
-          env=env,capture_output=True,timeout=7200)
+          env=env,capture_output=True,timeout=timeout)
         report = {'scope':'upstream-deepops-and-site-adapter','deepops_revision':revision,
           'playbook_sha256':hashlib.sha256(playbook.read_bytes()).hexdigest(),
           'inventory_sha256':hashlib.sha256(inventory.read_bytes()).hexdigest(),
+          'variables_sha256':hashlib.sha256(extra.read_bytes()).hexdigest(),
           'returncode':result.returncode,'stdout':result.stdout.decode(errors='replace'),
           'stderr':result.stderr.decode(errors='replace'),'live_workload_validated':False}
         (self.state/'provisioning.json').write_text(json.dumps(report,indent=2)+'\n')
         result.check_returncode()
         return report
 
-    def reconcile_hosts(self):
+    def reconcile_hosts(self, timeout=7200):
         """Use the real pinned DeepOps hosts role, on every teaching lab."""
-        return self.apply(ROOT/'integrations/incus/provision.yml')
+        return self.apply(ROOT/'integrations/incus/provision.yml', timeout=timeout)
