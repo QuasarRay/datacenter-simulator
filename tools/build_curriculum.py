@@ -176,6 +176,8 @@ Before moving on, explain why your planning example cannot establish the product
 facets in the table. Collect those observations on the appropriate course station.
 The original source references and discrepancy policy are in [the blueprint](../README.md).
 '''
+        if n == 1:
+            course += '\nContinue with [the NetBox native compiler practical](C01-NETBOX.md).\n'
         (base/'courses'/f'{cid}.md').write_text(course)
         prerequisites=[f'C{i:02}' for i in range(1,21)]+([] if n==1 else [f'P{n-1:02}'])
         project=f'''# {pid} · {u['title']} in a production workflow

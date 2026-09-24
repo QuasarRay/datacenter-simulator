@@ -246,6 +246,7 @@ dependencies = [
  "libc",
  "libloading",
  "nccl",
+ "ncp-assessment-kernel",
  "nix 0.31.3",
  "patchbay",
  "petgraph",
@@ -978,6 +979,10 @@ dependencies = [
 
 [[package]]
 name = "nccl-sys"
+version = "0.1.0"
+
+[[package]]
+name = "ncp-assessment-kernel"
 version = "0.1.0"
 
 [[package]]

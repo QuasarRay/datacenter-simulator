@@ -12,6 +12,16 @@ them. Never supply an invented digest to get past a preflight.
 
 ## Code-first entry point
 
+Prefer the [NetBox compiler practical](../../education/ncp-metablueprint/courses/C01-NETBOX.md)
+for new fabrics. `Fabric.compile()` acquires a bounded read-only NetBox snapshot,
+then generates the native manifest, guest addressing, static routes and Ansible
+variables. Its resource reservations call the same Verus/Kani-verified Rust kernel
+used by the assessment system. The graph compiler and OS remain outside that proof.
+The decorator `@native_fabric` turns a parameterized intent function into the full
+acquire/compile/seal operation. `deploy()` and `reconcile()` realize the generated
+plan through Incus, patchbay and actual DeepOps. No hand-written per-node topology
+is required. An offline snapshot must be explicitly selected and is not live evidence.
+
 After the Rust lifecycle creates the lab, trainer code uses:
 
 ```python
