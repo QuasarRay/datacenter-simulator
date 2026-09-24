@@ -1,0 +1,77 @@
+{
+  "subset": {
+    "scope": "Every prerequisite bit is available; an empty chunk is allowed.",
+    "parameters": {
+      "required": "u64",
+      "available": "u64"
+    },
+    "postconditions": 1
+  },
+  "coverage": {
+    "scope": "Nonempty source-facet coverage; absent facets cannot be accepted.",
+    "parameters": {
+      "required": "u64",
+      "observed": "u64"
+    },
+    "postconditions": 1
+  },
+  "learning_ready": {
+    "scope": "Projects require teaching; exercises additionally require prior project practice, per 64-bit chunk.",
+    "parameters": {
+      "required": "u64",
+      "taught": "u64",
+      "practiced": "u64",
+      "exercise": "bool"
+    },
+    "postconditions": 1
+  },
+  "ordered_edge": {
+    "scope": "Every prerequisite precedes its consumer in the finite learning graph.",
+    "parameters": {
+      "parent": "u16",
+      "child": "u16",
+      "total": "u16"
+    },
+    "postconditions": 1
+  },
+  "next_stage": {
+    "scope": "Only the current nonterminal sequential stage is eligible.",
+    "parameters": {
+      "current": "u16",
+      "requested": "u16",
+      "total": "u16"
+    },
+    "postconditions": 1
+  },
+  "evidence_complete": {
+    "scope": "Exact baseline/holdout facet sets, all three causal domains, recovery and provenance are indivisible.",
+    "parameters": {
+      "required": "u64",
+      "baseline": "u64",
+      "holdout": "u64",
+      "domains": "u8",
+      "recovery": "u8",
+      "provenance": "bool"
+    },
+    "postconditions": 1
+  },
+  "report_complete": {
+    "scope": "A proof/report succeeds only with the exact nonempty checklist and no failures.",
+    "parameters": {
+      "required": "u64",
+      "passed": "u64",
+      "failed": "u64"
+    },
+    "postconditions": 1
+  },
+  "receipt_current": {
+    "scope": "An observation belongs to exactly one nonzero attempt and exercise.",
+    "parameters": {
+      "attempt": "u64",
+      "receipt": "u64",
+      "exercise": "u16",
+      "observed": "u16"
+    },
+    "postconditions": 1
+  }
+}
