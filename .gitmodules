@@ -19,3 +19,6 @@
 [submodule "integrations/k8s-test-infra/upstream"]
 	path = integrations/k8s-test-infra/upstream
 	url = https://github.com/NVIDIA/k8s-test-infra.git
+[submodule "education/rustlings"]
+	path = education/rustlings
+	url = https://github.com/QuasarRay/rustlings.git

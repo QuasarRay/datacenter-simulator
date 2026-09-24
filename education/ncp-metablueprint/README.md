@@ -91,7 +91,9 @@ The existing simulator's CUDA/NCCL, native RDMA, ibsim, topology, telemetry,
 NetBox and evidence modules remain the reusable execution components.
 
 The local lab removes Docker and Containerlab. Two source objectives explicitly
-require Docker. They remain in the ledger as **external evidence assessments**;
+require Docker. They are taught in courses, including a separately hosted
+Docker practical when available. They remain in the ledger as **external course
+evidence assessments**;
 an OCI/containerd exercise is not equivalent evidence of Docker mastery. The
 local lab may teach diagnosis from captured evidence, but full live completion
 of those source objectives needs an external assessment. No local runtime is
@@ -154,3 +156,10 @@ changes to `main`. Do not auto-merge or alter protections as part of this work.
 
 Current baseline: simulator `0106893e3e31217c9b2de4af1e445996d45265a5`;
 Rustlings `ffb4eeeba5050970a6ea4655f10df0e954af2128`.
+
+The 2026-09-24 delivery constraint makes Rusternetes + KWOK the default for
+guided projects and independent exercises. Upstream Kubernetes or Docker is
+permitted there only with an explicit, tested, unavoidable NVIDIA dependency
+exception. Each exception must record the vendor component, compatibility
+failure, tested alternative and exact bounded runtime scope. No exception is
+currently qualified. Courses may teach the original products directly.
