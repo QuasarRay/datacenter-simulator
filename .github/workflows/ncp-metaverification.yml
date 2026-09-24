@@ -1,0 +1,63 @@
+name: NCP reusable metaverification
+on:
+  pull_request:
+    paths:
+      - 'verification/**'
+      - 'tools/meta.py'
+      - 'tools/build_*.py'
+      - 'tools/check_curriculum.py'
+      - 'tools/check_metablueprint.py'
+      - 'education/authoring/**'
+      - 'education/ncp-metablueprint/**'
+      - 'education/assessment/bank.json'
+      - '.github/workflows/ncp-metaverification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: metaverification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: python3 tools/meta.py check
+      - run: python3 -m unittest discover -s verification/tests
+      - run: python3 -O -m unittest discover -s verification/tests
+      - run: rustup toolchain install 1.98.1 --profile minimal
+      - run: cargo +1.98.1 test --manifest-path verification/generated/kernel/Cargo.toml
+      - name: Install pinned verification tools
+        run: |
+          cargo +1.98.1 install kani-verifier --locked --version 0.67.0
+          cargo kani setup
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request,zipfile
+          lock=json.loads(pathlib.Path('verification/toolchain.json').read_text())
+          archive=pathlib.Path('/tmp/ncp-verus.zip')
+          urllib.request.urlretrieve(lock['verus_url'],archive)
+          if hashlib.sha256(archive.read_bytes()).hexdigest()!=lock['verus_archive_sha256']:
+              raise SystemExit('Verus archive digest mismatch')
+          with zipfile.ZipFile(archive) as bundle: bundle.extractall('/tmp/ncp-verus')
+          for name in ('verus','rust_verify','z3'):
+              path=pathlib.Path('/tmp/ncp-verus/verus-x86-linux')/name
+              path.chmod(0o755)
+          PY
+      - name: Fresh all-input proofs and mandatory negative controls
+        env:
+          VERUS: /tmp/ncp-verus/verus-x86-linux/verus
+        run: python3 tools/meta.py prove --fresh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: metaverification-${{ github.sha }}
+          path: |
+            artifacts/metaverify/**/*.json
+            artifacts/metaverify/**/*.stdout
+            artifacts/metaverify/**/*.stderr
+            artifacts/metaverify/**/positive/verus.rs
+            artifacts/metaverify/**/mutants/verus.rs
+            !artifacts/metaverify/**/target/**

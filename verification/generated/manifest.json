@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "inputs": {
+    "tools/meta.py": "4ba5c28ed4532d49a41044259c2fa8fc37e01c0da442110a70df4ae52487abde",
+    "verification/__init__.py": "53bc9986466cf44fe39a8fff88b4497aa348a24842fffa9cd270420f0f353c78",
+    "verification/compiler.py": "7195817465f3fd408ab3c07218849d63fd6488e919721148eb955009e201b358",
+    "verification/dsl.py": "276c2e8cf85207d73ca3587328498a7ef8d86e7b8de0104a7403b36b27c14a5a",
+    "verification/io.py": "c732a490c4125f95ca308c580a9ef7b6d19bc6187c0e0f810de6035f147bc9ff",
+    "verification/prove.py": "cf7d19e4e81c8d2d0bad63fc0f0934cb7747212e42b5999910da79f1e23811dd",
+    "verification/specification.py": "a7ae93df764b37282b38b7ab48beb5666eccac1b54c1bb02bd810e5297b48889",
+    "verification/toolchain.json": "71c3b52c9ac142222f05c0e79b7e60bd39dbc0ad5b81fa3c2091bdc336945987"
+  },
+  "outputs": {
+    "verification/generated/kernel/Cargo.lock": "dc9d493eefe346443e0fddb0c4ad0278bae5826e3d16dc1973b010316024e313",
+    "verification/generated/kernel/Cargo.toml": "902407fd60be29dd01429f2e20ad78bc3b45b267f0ff5915343a49153fd11073",
+    "verification/generated/kernel/src/lib.rs": "7f93130da7504601a429f75278321b5b1c6361647a55d0e846981cd0c5ccccee",
+    "verification/generated/scope.json": "8595785e3581dfa14a1c459b63dec2356f4faa6fddf238593a9127cc81a9ef87",
+    "verification/generated/verus.rs": "f7d9cd24ed45a2f95e2f7662c3e47fad5fe1f3acd1044765909537dd18dd787e"
+  }
+}
