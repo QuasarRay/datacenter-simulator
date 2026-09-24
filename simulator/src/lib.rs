@@ -28,6 +28,8 @@ pub mod deepops_runtime;
 pub mod doctor;
 pub mod evidence;
 pub mod fabric;
+#[cfg(feature = "incus")]
+pub mod incus;
 #[cfg(feature = "ibsim")]
 pub mod infiniband;
 pub mod input;
