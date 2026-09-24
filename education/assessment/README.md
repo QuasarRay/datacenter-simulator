@@ -2,7 +2,9 @@
 
 `ncp-grade` consumes a Rustlings `ncp-grade-v1` request on stdin and one absolute
 trainer evidence directory as its argument. It reads `STATION/ATTEMPT.json` and
-raw content-addressed observations under `objects/SHA256`. Missing live evidence
+raw content-addressed observation envelopes under `objects/SHA256`. Each envelope
+binds its nonempty raw output to the exact request, facet/intervention and case.
+Missing live evidence
 returns blocked statuses. A synthetic fixture never completes the blueprint.
 
 The trainer collector must run for the requested attempt **before** calling this
@@ -36,3 +38,47 @@ Live collector implementations for every NVIDIA product are a release gate.
 Until they and the qualified host exist, this bank can specify and reject
 incomplete submissions but cannot award full live mastery. Do not replace a
 missing collector with a constant passing result.
+
+## Isolated delivery
+
+`bridge.py` is a trainer-owned Unix socket service. It accepts only the forty
+known station IDs and validates the peer's host UID with `SO_PEERCRED`. Its
+profile selects the fixed collector, interpreter, grader and lab; no client
+field can choose a command or path. The collector source must match its pinned
+SHA-256 and the profile must have completed live qualification. The example
+profile intentionally stays `unqualified` and has no fictitious collector.
+
+The bridge freshly runs the real DeepOps host role, then invokes the qualified
+site collector with `{request, state}` on stdin. The collector returns exactly
+`observations` and `interventions`, with the Bundle fields from `src/lib.rs`
+except that each `artifact` is replaced by a nonempty `raw` string. The bridge
+wraps, hashes and stores those observations before invoking the Rust grader.
+Collection is not allowed to promote model/emulated output into product tier.
+Hashes are not signatures; truthful product collection remains a trusted,
+independently qualified boundary.
+
+Run one service/profile per learner. Give its evidence directory mode 0700,
+keep the collector/configuration outside learner access, and set the exact host
+UID/GID corresponding to the Incus learner identity. The socket parent must be
+traversable by that group. Mount only this restricted assessment socket into the
+learner context, never the Incus daemon socket. Qualify the UID mapping and socket
+permissions on the actual host before assessment. A disconnected or malformed
+client does not stop the service. An unqualified/failed collector returns blocked.
+
+Point Rustlings' `NCP_GRADER_CONFIG` at Python plus `proxy.py SOCKET`, with a
+480-second timeout and the compiled station masks. The proxy can request an
+assessment; it cannot write the trainer store. A learner can alter their local
+UI or bypass the proxy, but that cannot advance the authoritative trainer ledger.
+Use the release Rustlings binary for community workspaces; debug builds use the
+upstream development manifest. With external assessment enabled, edits to
+`controllers/e01a.py` trigger the corresponding Rustlings watch event.
+
+Successful stations update `progress.json` through the shared proved `advance`
+function. The trainer serializes writes, fsyncs a temporary ledger, renames it
+atomically and syncs the directory. Skips are refused and valid retakes add no
+credit. `next / 2` is the number of complete incident pairs; only `next == 40`
+establishes all station contracts. After a crash, inspect a retained
+`progress.lock` and temporary file before operator reconciliation; the service
+never deletes an unknown lock automatically. Disk/OS behavior is tested, not
+formally proved. Course/project prerequisites additionally need the instructor's
+accepted learning portfolio; this ledger tracks independent stations only.
