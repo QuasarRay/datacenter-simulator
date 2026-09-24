@@ -23,7 +23,8 @@ def identities(root, paths): return {name: sha((root / name).read_bytes()) for n
 def source_paths(root):
     # New reusable helpers and self-tests join the closure automatically.
     return tuple(sorted(set(PROOF_INPUTS + MATERIAL_INPUTS) |
-                        {p.relative_to(root).as_posix() for p in (root / "verification").rglob("*.py")}))
+                        {p.relative_to(root).as_posix() for p in (root / "verification").rglob("*.py")
+                         if not {"generated", "target", "__pycache__"} & set(p.relative_to(root / "verification").parts)}))
 
 
 def load_module(root, path, name):
