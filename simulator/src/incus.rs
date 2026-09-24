@@ -112,8 +112,9 @@ impl Config {
         for (index, node) in nodes.iter().enumerate() {
             ensure!(name(&node.spec.name), "invalid instance name");
             ensure!(
-                node.spec.image == "cachyos",
-                "Incus teaching profile requires os=cachyos and a user-supplied CachyOS image fingerprint"
+                matches!(node.spec.image.as_str(), "cachyos" | "ubuntu-24.04")
+                    && node.spec.image == nodes[0].spec.image,
+                "use one declared cachyos or ubuntu-24.04 OS with its exact imported image fingerprint"
             );
             ensure!(
                 node.spec
@@ -150,7 +151,7 @@ impl Config {
             plans.push(NodePlan { name: node.spec.name.clone(), spec: json!({
                 "name":node.spec.name,"type":"container","profiles":[],
                 "source":{"type":"image","fingerprint":self.image_fingerprint},
-                "config":{"user.ncp.owner":owner,"user.ncp.role":if node.spec.role == Role::Switch {"switch"} else {"host"},
+                "config":{"user.ncp.owner":owner,"user.ncp.os":node.spec.image,"user.ncp.role":if node.spec.role == Role::Switch {"switch"} else {"host"},
                           "security.privileged":"false","security.nesting":"false","limits.cpu":node.spec.resources.cpu.to_string(),"limits.memory":format!("{}MiB",node.spec.resources.memory)},
                 "devices":devices
             }) });
@@ -347,8 +348,8 @@ pub fn up(config: Config, directory: &Path) -> Result<()> {
     save(&path, &journal)?;
     for cable in &journal.plan.cables.clone() {
         let ends = [
-            Endpoint::observe(&cable.peers[0])?,
-            Endpoint::observe(&cable.peers[1])?,
+            Endpoint::prepare_owned(&cable.peers[0])?,
+            Endpoint::prepare_owned(&cable.peers[1])?,
         ];
         let owned = HostCable::connect(&cable.name, &journal.plan.owner, ends)?;
         journal.cables.push(owned.clone());
@@ -374,6 +375,9 @@ pub fn down(directory: &Path) -> Result<()> {
     let path = directory.join("incus.json");
     let mut journal: Journal =
         serde_json::from_slice(&crate::input::read(&path, crate::input::CONFIG_LIMIT)?)?;
+    if journal.phase == "destroyed" {
+        return Ok(());
+    }
     let client = Client(&journal.config);
     let project = client.request(
         "GET",
@@ -424,4 +428,23 @@ pub fn down(directory: &Path) -> Result<()> {
     journal.phase = "destroyed".into();
     save(&path, &journal)?;
     Ok(())
+}
+
+/// Change only an owned, identity-checked cable, retaining its intended state.
+pub fn set_link(directory: &Path, index: usize, up: bool) -> Result<()> {
+    let _lock = Lock::acquire()?;
+    let path = directory.join("incus.json");
+    let mut journal: Journal =
+        serde_json::from_slice(&crate::input::read(&path, crate::input::CONFIG_LIMIT)?)?;
+    ensure!(
+        journal.phase == "active",
+        "fault injection requires an active lab"
+    );
+    ensure!(
+        index < journal.cables.len() && index < journal.plan.cables.len(),
+        "unknown cable"
+    );
+    journal.cables[index].set_up(up)?;
+    journal.plan.cables[index].up = up;
+    save(&path, &journal)
 }

@@ -31,6 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "incus-plan" if args.len() == 2 => println!("{}", serde_json::to_string_pretty(&Config::read(Path::new(&args[1]))?.plan()?)?),
                 "incus-up" if args.len() == 3 => incus::up(Config::read(Path::new(&args[1]))?, Path::new(&args[2]))?,
                 "incus-down" if args.len() == 2 => incus::down(Path::new(&args[1]))?,
+                "incus-link" if args.len() == 4 && matches!(args[3].as_str(), "up" | "down") => incus::set_link(Path::new(&args[1]), args[2].parse()?, args[3]=="up")?,
                 _ => return Err("usage: incus-plan config.json | incus-up config.json NEW_DIR | incus-down STATE_DIR".into()),
             }
             return Ok(());
