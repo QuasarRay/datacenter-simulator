@@ -17,7 +17,8 @@ class Lab:
 
     def inventory(self):
         nodes = {node['name']: {'ansible_connection':'ncp_incus','ansible_python_interpreter':'/usr/bin/python3',
-                              'ncp_declared_os':node['spec']['config'].get('user.ncp.os','cachyos')}
+                              'ncp_declared_os':node['spec']['config'].get('user.ncp.os','cachyos'),
+                              'ncp_hosts_file_src':str(self.state/'host-identities'/node['name'])}
                  for node in self.journal['plan']['nodes']}
         return {'all': {'hosts': nodes}}
 
@@ -30,6 +31,14 @@ class Lab:
             raise ValueError('DeepOps revision mismatch')
         if subprocess.check_output(['git','-C',str(source),'status','--porcelain','--untracked-files=no'],text=True).strip():
             raise ValueError('DeepOps tracked source is modified')
+        # Identity is desired state, not a template fed by its previous resolver output.
+        # The real DeepOps role supports an explicitly supplied custom hosts file.
+        identities = self.state/'host-identities'
+        identities.mkdir(exist_ok=True)
+        for node in self.inventory()['all']['hosts']:
+            if not node or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-' for c in node):
+                raise ValueError('invalid owned hostname')
+            (identities/node).write_text('127.0.0.1 localhost\n127.0.1.1 '+node+'\n::1 localhost ip6-localhost ip6-loopback\n')
         inventory = self.state/'inventory.json'
         inventory.write_text(json.dumps(self.inventory(),indent=2)+'\n')
         extra = self.state/'variables.json'
