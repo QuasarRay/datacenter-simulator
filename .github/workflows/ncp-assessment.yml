@@ -8,11 +8,17 @@ jobs:
   portable:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - run: git submodule update --init education/rustlings
       - run: rustup toolchain install 1.98.0 --profile minimal
       - run: python3 tools/check_metablueprint.py
+      - run: python3 tools/check_curriculum.py
       - run: |
           python3 tools/build_assessment_bank.py
-          git diff --exit-code -- education/assessment/bank.json
+          python3 tools/build_curriculum.py
+          git diff --exit-code -- education/assessment/bank.json education/ncp-metablueprint
       - run: cargo +1.98.0 test --locked --manifest-path education/assessment/Cargo.toml
+      - run: |
+          python3 -m venv /tmp/ncp-course-env
+          /tmp/ncp-course-env/bin/pip install -r education/sdk/requirements.lock
+          PYTHONPATH=education/sdk /tmp/ncp-course-env/bin/python -m unittest discover -s education/sdk/tests
