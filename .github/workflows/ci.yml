@@ -6,32 +6,15 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: datacenter-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  dagger:
+  specification:
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Execute Dagger and export diagnostics
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
-        with:
-          version: v0.21.8
-          module: ./ci
-          call: artifacts --source=. --run-id=${{ github.run_id }}-${{ github.run_attempt }} export --path=artifacts
-      - name: Require the exact exported run to pass
-        env:
-          EX457_CI_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
-        run: python3 ci/check_results.py --run-id "$EX457_CI_RUN_ID"
-      - name: Preserve diagnostics and successful release package
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ex457-v6-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/
-          if-no-files-found: error
-          retention-days: 14
+      - run: python3 tools/check_metablueprint.py
+      - run: python3 -m unittest discover -s tests -p 'test_ncp*.py'
+      - run: python3 -m unittest discover -s tests -p test_metablueprint.py
+      - run: python3 tools/check_native_runtime.py

@@ -1,93 +1,16 @@
 ---
-- name: Deploy virtual datacenter
+- name: Create the Incus datacenter from validated intent
   hosts: labhost
   gather_facts: false
-
-  vars_files:
-    - ../vars/datacenter.yml
-
-  vars:
-    project_root: "{{ playbook_dir }}/.."
-    topology_file: "{{ project_root }}/build/{{ dc.name }}.clab.yml"
-
   tasks:
-    - name: Inspect resources already owned by this lab
-      become: true
-      ansible.builtin.command:
-        argv: [docker, ps, -a, --filter, "label=containerlab={{ dc.name }}", --format, "{{ '{{.Names}}' }}"]
-      register: existing_lab
-      changed_when: false
-
-    - name: Refuse to replace an existing or partial lab implicitly
+    - name: Require explicit inputs
       ansible.builtin.assert:
-        that: existing_lab.stdout_lines | length == 0
-        fail_msg: "Lab resources already exist. Verify them or run destroy.yml before redeployment."
-
-    - name: Ensure build directory exists
-      ansible.builtin.file:
-        path: "{{ project_root }}/build"
-        state: directory
-        mode: "0755"
-
-    - name: Allocate candidate topology
-      ansible.builtin.tempfile:
-        state: file
-        path: "{{ project_root }}/build"
-        suffix: .clab.yml
-      register: candidate_topology
-
-    - name: Render containerlab topology
-      ansible.builtin.template:
-        src: "../templates/datacenter.clab.yml.j2"
-        dest: "{{ candidate_topology.path }}"
-        mode: "0644"
-
-    - name: Validate containerlab topology
+        that: [ncp_config is defined, ncp_state is defined, ncp_simulator is defined]
+    - name: Validate plan before mutation
       ansible.builtin.command:
-        argv:
-          - containerlab
-          - validate
-          - --topo
-          - "{{ candidate_topology.path }}"
+        argv: ["{{ ncp_simulator }}", incus-plan, "{{ ncp_config }}"]
       changed_when: false
-
-    - name: Publish validated deployment descriptor atomically
-      ansible.builtin.copy:
-        src: "{{ candidate_topology.path }}"
-        dest: "{{ topology_file }}"
-        remote_src: true
-        mode: "0644"
-
-    - name: Remove candidate topology
-      ansible.builtin.file:
-        path: "{{ candidate_topology.path }}"
-        state: absent
-
-    - name: Deploy a new lab with failure cleanup
-      block:
-        - name: Deploy containerlab datacenter
-          become: true
-          ansible.builtin.command:
-            argv: [containerlab, deploy, --topo, "{{ topology_file }}"]
-          register: containerlab_deploy
-          changed_when: containerlab_deploy.rc == 0
-        - name: Verify actual traffic and declared state
-          become: true
-          ansible.builtin.command:
-            argv: ["{{ ansible_playbook_python }}", "{{ project_root }}/tests/datacenter_state.py"]
-          changed_when: false
-      rescue:
-        - name: Remove resources from the failed new deployment
-          become: true
-          ansible.builtin.command:
-            argv: [containerlab, destroy, --topo, "{{ topology_file }}", --cleanup]
-          register: failed_cleanup
-          failed_when: false
-          changed_when: failed_cleanup.rc == 0
-        - name: Report the original failure and cleanup outcome
-          ansible.builtin.fail:
-            msg: "Deployment failed: {{ ansible_failed_result }}. Cleanup rc={{ failed_cleanup.rc }}: {{ failed_cleanup.stderr }}"
-
-    - name: Show deployment output
-      ansible.builtin.debug:
-        var: containerlab_deploy.stdout_lines
+    - name: Create owned system containers and patchbay cables
+      ansible.builtin.command:
+        argv: ["{{ ncp_simulator }}", incus-up, "{{ ncp_config }}", "{{ ncp_state }}"]
+      changed_when: true

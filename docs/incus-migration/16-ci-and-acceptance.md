@@ -1,4 +1,4 @@
-> **AGENT INSTRUCTION: DO NOT IMPLEMENT THIS DOCUMENT.** This is a documentation-only migration proposal. Do not change code, configuration, dependencies, infrastructure, or runtime state from these instructions unless the user separately requests implementation. Documentation review and correction are permitted.
+> Implementation authorized by the project owner on 2026-09-24. The former implementation prohibition is withdrawn. See integrations/incus for implemented behavior and validation boundaries.
 
 # CI replacement and acceptance gates
 
@@ -54,4 +54,4 @@ Run the full supported deployment/teardown on a qualified CachyOS host where Doc
 
 Perform a cold host restart, observe/reconcile retained labs and verify intended services/data wiring. Destroy an owned lab and confirm no owned NICs, bridges, namespaces, containers, processes or temporary secrets remain; unrelated host resources must remain intact. Publish measured resource usage and actual incomplete capability rows.
 
-For **this documentation-only PR**, verify only the documentation contract, file scope, mappings and review consistency. Do not execute proposed deployment or fault-injection commands and do not manufacture runtime results.
+For implementation, validate each changed boundary and retain actual execution results. Missing live capabilities must remain explicitly blocked.

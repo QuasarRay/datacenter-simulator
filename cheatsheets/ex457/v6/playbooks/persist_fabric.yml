@@ -9,7 +9,7 @@
     - name: Require the lab host for integrated-file readback
       ansible.builtin.assert:
         that: awx_job_id is not defined
-        fail_msg: Run persistence on the Docker lab host; Controller jobs have no Docker socket.
+        fail_msg: Run persistence on the Incus trainer; Controller jobs have no lifecycle journal.
     - name: Derive model
       ansible.builtin.import_tasks: tasks/model.yml
     - name: Bootstrap strict libssh trust

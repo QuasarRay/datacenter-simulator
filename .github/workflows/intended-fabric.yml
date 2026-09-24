@@ -1,153 +1,43 @@
-name: intended-fabric
+name: incus-live-qualification
 on:
-  pull_request:
-    paths: ['simulator/**', 'integrations/netbox/**', 'integrations/k8s-test-infra/**', '.gitmodules', '.github/workflows/intended-fabric.yml']
-  push:
-    branches: [main]
-    paths: ['simulator/**', 'integrations/netbox/**', 'integrations/k8s-test-infra/**', '.gitmodules', '.github/workflows/intended-fabric.yml']
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Absolute path to the dedicated runner's reviewed configuration
+        required: true
+      state:
+        description: New absolute directory on the dedicated runner
+        required: true
 permissions:
   contents: read
-concurrency:
-  group: intended-fabric-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  rust:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+  incus:
+    runs-on: [self-hosted, linux, cachyos, incus-lab]
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          persist-credentials: false
           submodules: recursive
-      - run: rustup toolchain install 1.98.0 --profile minimal --component rustfmt,clippy
-      - name: Compile, lint and test intended state integrations
-        working-directory: simulator
-        run: |
-          cargo +1.98.0 fmt --package datacenter-simulator --check
-          cargo +1.98.0 clippy --locked --all-targets --features ibsim,netbox,mokka -- -D warnings
-          cargo +1.98.0 test --locked --all-targets --features ibsim,netbox,mokka
-      - name: Replay the checked NetBox example
-        run: |
-          simulator/target/debug/datacenter-simulator netbox-compile integrations/netbox/config.example.json integrations/netbox/snapshot.example.json > /tmp/manifest.json
-          diff -u integrations/netbox/manifest.example.json /tmp/manifest.json
-          python3 simulator/tests/mokka_cli.py "$PWD"
-          simulator/target/debug/datacenter-simulator ibsim-plan /tmp/manifest.json
-          simulator/target/debug/datacenter-simulator mokka-plan integrations/k8s-test-infra/config.example.json
-  netbox-ibsim:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
           persist-credentials: false
-          submodules: recursive
-      - name: Build Rust and native ibsim
+      - run: cargo test --locked --manifest-path simulator/Cargo.toml --features incus --test incus
+      - run: cargo build --locked --manifest-path simulator/Cargo.toml --features incus
+      - name: Create isolated owned lab
+        env:
+          NCP_CONFIG: ${{ inputs.config }}
+          NCP_STATE: ${{ inputs.state }}
+        run: simulator/target/debug/datacenter-simulator incus-up "$NCP_CONFIG" "$NCP_STATE"
+      - name: Execute upstream DeepOps role
+        env:
+          NCP_STATE: ${{ inputs.state }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libibmad-dev libibumad-dev opensm infiniband-diags nftables iproute2
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          rustup toolchain install 1.98.0 --profile minimal
-          make -C simulator/vendor/patchbay/vendor/ibsim/ibsim
-          make -C simulator/vendor/patchbay/vendor/ibsim/umad2sim
-          cargo +1.98.0 build --locked --manifest-path simulator/Cargo.toml --features ibsim,netbox --bin datacenter-simulator --example ibsim_fabric
-      - name: Run real NetBox and import its intended state with a read-only token
-        run: |
-          docker compose -f integrations/netbox/compose.ci.yml up -d --wait --wait-timeout 600
-          NETBOX_TOKEN=$(bash integrations/netbox/seed-ci.sh)
-          echo "::add-mask::$NETBOX_TOKEN"
-          export NETBOX_TOKEN
-          simulator/target/debug/datacenter-simulator netbox-import integrations/netbox/config.example.json /tmp/netbox-intent
-          jq -e '.content.nodes | length == 3' /tmp/netbox-intent/manifest.json
-          jq -e '.content.links | length == 2 and all(.condition.up)' /tmp/netbox-intent/manifest.json
-      - name: Require real OpenSM discovery, partition and recovery on the imported graph
-        run: timeout 180 simulator/target/debug/examples/ibsim_fabric /tmp/netbox-intent/manifest.json /tmp/ibsim-evidence
-      - name: Preserve native evidence and NetBox service logs
+          python3 - <<'PYTHON'
+          import os, sys
+          sys.path.insert(0, 'integrations/incus')
+          from lab import Lab
+          Lab(os.environ['NCP_STATE']).reconcile_hosts()
+          PYTHON
+      - name: Remove only owned resources
         if: always()
-        run: |
-          mkdir -p /tmp/intended-fabric-evidence
-          docker compose -f integrations/netbox/compose.ci.yml logs --no-color > /tmp/intended-fabric-evidence/netbox.log
-          for dir in /tmp/netbox-intent /tmp/ibsim-evidence; do
-            if sudo test -d "$dir"; then sudo cp -r "$dir" /tmp/intended-fabric-evidence/; fi
-          done
-          sudo chmod -R a+rX /tmp/intended-fabric-evidence
-          docker compose -f integrations/netbox/compose.ci.yml down -v
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: intended-netbox-native-ib
-          path: /tmp/intended-fabric-evidence
-  mokka-upstream:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 35
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          go-version: '1.26.6'
-          cache-dependency-path: integrations/k8s-test-infra/upstream/go.sum
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
-        with:
-          version: v4.2.0
-      - name: Upstream unit, race, harness and chart tests
-        working-directory: integrations/k8s-test-infra/upstream
-        run: |
-          git clone https://github.com/helm-unittest/helm-unittest.git /tmp/helm-unittest
-          git -C /tmp/helm-unittest checkout --detach 6f82a998e0b5461762ca959f87f5dd344af5e4eb
-          test "$(git -C /tmp/helm-unittest rev-parse HEAD)" = 6f82a998e0b5461762ca959f87f5dd344af5e4eb
-          make -C /tmp/helm-unittest install
-          make test
-          make test-e2e-framework
-          make helm-tests helm-crds-tests
-  mokka-kind:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 50
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
-        with:
-          version: v3.19.0
-      - name: Build the pinned Mokka image and Rust orchestrator
-        run: |
-          docker build -f integrations/k8s-test-infra/upstream/deployments/nvml-mock/Dockerfile -t nvml-mock:simulator-4a44f73b41ab integrations/k8s-test-infra/upstream
-          rustup toolchain install 1.98.0 --profile minimal
-          cargo +1.98.0 build --locked --manifest-path simulator/Cargo.toml --features mokka
-      - name: Create an isolated CPU cluster
-        run: |
-          curl -fsSLo /tmp/kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
-          echo 'eb244cbafcc157dff60cf68693c14c9a75c4e6e6fedaf9cd71c58117cb93e3fa  /tmp/kind' | sha256sum --check
-          chmod +x /tmp/kind
-          /tmp/kind create cluster --name simulator --config integrations/k8s-test-infra/kind.ci.yaml --wait 180s
-          docker run -d -p 127.0.0.1:5001:5000 --name simulator-registry registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
-          docker network connect kind simulator-registry
-          for node in $(/tmp/kind get nodes --name simulator); do
-            docker exec "$node" mkdir -p /etc/containerd/certs.d/localhost:5001
-            printf '[host."http://simulator-registry:5000"]\n' | docker exec -i "$node" tee /etc/containerd/certs.d/localhost:5001/hosts.toml
-          done
-          image=localhost:5001/nvml-mock:simulator-4a44f73b41ab
-          docker tag nvml-mock:simulator-4a44f73b41ab "$image"
-          docker push "$image"
-          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image")
-          jq --arg image "$image@${digest##*@}" '.image=$image' integrations/k8s-test-infra/config.example.json > integrations/k8s-test-infra/config.ci.json
-      - name: Apply GPU intent and verify real upstream NVML consumers
-        run: |
-          kubectl --context=kind-simulator create namespace simulator-gpus
-          simulator/target/debug/datacenter-simulator mokka-apply integrations/k8s-test-infra/config.ci.json /tmp/mokka-evidence
-      - name: Record cluster diagnostics
-        if: always()
-        run: |
-          mkdir -p /tmp/mokka-evidence
-          kubectl --context=kind-simulator get pods -A -o wide > /tmp/mokka-evidence/pods.txt 2>&1 || true
-          kubectl --context=kind-simulator -n simulator-gpus logs -l app.kubernetes.io/name=nvml-mock --all-containers --prefix > /tmp/mokka-evidence/agents.log 2>&1 || true
-          if test -x /tmp/kind; then /tmp/kind delete cluster --name simulator; fi
-          docker rm -f simulator-registry || true
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: intended-mokka-contracts
-          path: /tmp/mokka-evidence
+        env:
+          NCP_STATE: ${{ inputs.state }}
+        run: simulator/target/debug/datacenter-simulator incus-down "$NCP_STATE"

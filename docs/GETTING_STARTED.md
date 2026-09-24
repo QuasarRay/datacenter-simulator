@@ -1,3 +1,5 @@
+> The default lab backend is now [Incus](../integrations/incus/README.md). The backend table below is historical; its former EX457 runtime has been retired.
+
 # Start with the backend you need
 
 Use the portable Rust model first on a consumer machine. It needs no GPU,

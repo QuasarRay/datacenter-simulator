@@ -1,2 +1,0 @@
--r ../cheatsheets/ex457/v6/requirements.txt
--r ../cheatsheets/ex457/v6/tests/requirements.txt
