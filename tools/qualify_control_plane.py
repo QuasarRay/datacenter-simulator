@@ -18,6 +18,10 @@ import time
 import urllib.error
 import urllib.request
 
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from verification.evidence import Checklist
+
 REQUIRED_TESTS = {
     'tls-client-proof-and-bearer-rbac',
     'api-create-get-list',
@@ -39,6 +43,8 @@ def token(secret, subject):
 
 def qualify(output, kwok_source):
     output=Path(output).resolve();assets=output/'assets';children=[];streams=[];tests=[]
+    assets_identity={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in assets.iterdir() if p.is_file()}
+    ledger=Checklist(REQUIRED_TESTS, 'control-plane/'+hashlib.sha256(json.dumps(assets_identity,sort_keys=True).encode()).hexdigest())
     with tempfile.TemporaryDirectory(prefix='ncp-control-') as private:
         private=Path(private);os.chmod(private,0o700)
         def start(name, *args):
@@ -46,8 +52,7 @@ def qualify(output, kwok_source):
             child=subprocess.Popen(list(map(str,args)),stdout=stream,stderr=subprocess.STDOUT,cwd=private)
             children.append(child);return child
         def record(name):
-            if name not in REQUIRED_TESTS or any(row['test']==name for row in tests):
-                raise ValueError('unknown or repeated qualification obligation')
+            ledger.record(name)
             tests.append({'test':name,'passed':True})
         def eventually(predicate, seconds=45):
             deadline=time.monotonic()+seconds
@@ -146,11 +151,11 @@ def qualify(output, kwok_source):
                     except subprocess.TimeoutExpired:child.kill();child.wait(timeout=5)
             for stream in streams:stream.close()
             report={'tier':'api-emulated','tests':tests,'required_tests':sorted(REQUIRED_TESTS),
-                    'complete':{row['test'] for row in tests}==REQUIRED_TESTS,
+                    'complete':ledger.complete,'checklist':ledger.report(),
                     'hardware_execution':False,'kubernetes_conformance':False,
-                    'assets':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in assets.iterdir() if p.is_file()}}
+                    'assets':assets_identity}
             (output/'qualification.json').write_text(json.dumps(report,indent=2)+'\n')
-    if not report['complete']:raise RuntimeError('native qualification obligations incomplete')
+    ledger.finish()
     print(json.dumps(report,indent=2))
 
 if __name__=='__main__':

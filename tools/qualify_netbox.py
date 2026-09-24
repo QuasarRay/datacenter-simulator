@@ -11,6 +11,14 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from integrations.incus.fabric import Fabric
 from integrations.incus.transport import Incus
+from verification.evidence import Checklist
+
+REQUIRED_TESTS = (
+    "read-only-token-rejects-write",
+    "netbox-to-incus-deepops-idempotent-native-payload",
+    "generated-topology-partition-and-recovery",
+    "owned-cleanup",
+)
 
 def qualify(fingerprint, token_file):
     output=ROOT/'artifacts/netbox-qualification';output.mkdir(parents=True,exist_ok=False)
@@ -20,7 +28,10 @@ def qualify(fingerprint, token_file):
     config['netbox'].update(api_url='http://127.0.0.1:8000/api/',allow_http=True)
     config['netbox']['resources']['memory']=512
     binary=ROOT/'simulator/target/debug/datacenter-simulator'
-    fabric=None;tests=[];cleanup=None
+    fabric=None;cleanup=None
+    ledger=Checklist(REQUIRED_TESTS, 'netbox/'+fingerprint)
+    def record(name):
+        ledger.record(name)
     try:
         # A read-only token must not mutate even this disposable database.
         request=urllib.request.Request(config['netbox']['api_url']+'dcim/sites/',method='POST',
@@ -30,7 +41,7 @@ def qualify(fingerprint, token_file):
         except urllib.error.HTTPError as error:
             if error.code!=403:raise
         else:raise RuntimeError('read-only NetBox token allowed mutation')
-        tests.append('read-only-token-rejects-write')
+        record('read-only-token-rejects-write')
         fabric=Fabric.compile(config,binary=binary,destination=output/'fabric')
         fabric.deploy();first=fabric.reconcile();second=fabric.reconcile()
         recaps=[line for line in second['stdout'].splitlines() if 'changed=' in line and 'unreachable=' in line]
@@ -45,7 +56,7 @@ def qualify(fingerprint, token_file):
         code,out,err=api.execute(source,['ping','-c','3','-W','2',destination],timeout=15)
         (output/'payload.txt').write_bytes(out+err)
         if code:raise RuntimeError('NetBox-derived routed native payload failed')
-        tests.append('netbox-to-incus-deepops-idempotent-native-payload')
+        record('netbox-to-incus-deepops-idempotent-native-payload')
         journal=json.loads((fabric.directory/'state/incus.json').read_text())
         source_spec=next(node for node in journal['plan']['nodes'] if node['name']==source)
         peer=next(device['host_name'] for device in source_spec['spec']['devices'].values() if device['type']=='nic')
@@ -57,14 +68,16 @@ def qualify(fingerprint, token_file):
         link('up')
         if api.execute(source,['ping','-c','3','-W','2',destination],timeout=15)[0]:
             raise RuntimeError('payload did not recover')
-        tests.append('generated-topology-partition-and-recovery')
+        record('generated-topology-partition-and-recovery')
     finally:
         if fabric is not None and (fabric.directory/'state/incus.json').exists():
             try:fabric.destroy();cleanup=True
-            except Exception:cleanup=False;raise
+            except Exception:cleanup=False
+        ledger.record('owned-cleanup', cleanup is True)
         (output/'qualification.json').write_text(json.dumps({'netbox_revision':'00791344e68213bde942218283dce03cc3941c30',
-            'tests':tests,'required_tests':3,'complete':len(tests)==3 and cleanup is True,
+            'tests':[r['name'] for r in ledger.report()['records'] if r['passed']],'required_tests':list(ledger.required),'complete':ledger.complete,'checklist':ledger.report(),
             'owned_cleanup':cleanup,'tier':'emulated','hardware_or_proprietary_validation':False},indent=2)+'\n')
+        ledger.finish()
 
 if __name__=='__main__':
     if os.geteuid()!=0 or len(sys.argv)!=3:raise SystemExit('requires the disposable CI host, image fingerprint and private token file')

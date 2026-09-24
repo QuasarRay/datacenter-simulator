@@ -4,6 +4,14 @@ The implementation is available for review. Full live mastery delivery and a
 whole-application formal proof are **not complete**. A passing planning example,
 coverage link or synthetic Kubernetes status does not close those gaps.
 
+The user's next priority paused product feature work for reusable infrastructure
+hardening. [Metaverification](verification/README.md) now provides a typed contract
+compiler, eight additional dual-proved predicates, mandatory negative controls,
+783 compiled material obligations, a reviewed source-facet lock, staged generation,
+shared completion checklists and compact content-bound local proof reuse. The
+production assessment uses its evidence/receipt predicates. This expands the
+verified decision boundary; it does not close the whole-application proof gate.
+
 ## Delivered artifacts
 
 | Artifact | Location | Acceptance boundary |

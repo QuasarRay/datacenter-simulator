@@ -4,8 +4,6 @@ from pathlib import Path
 import sys
 
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'education/authoring'))
-from units import UNITS
 
 DIAGRAMS={
 6: '''flowchart TD
@@ -81,11 +79,9 @@ def diagram(n,d):
   D --> I
   H -->|changed topology or event order| V'''
 
-def generate():
-    base=ROOT/'education/ncp-metablueprint'
-    bp=json.loads((base/'blueprint.json').read_text())
+def render(bp, authored):
+    outputs = {}
     objects={o['id']:o for o in bp['objectives']}
-    for name in ['courses','projects','exercises','examples']:(base/name).mkdir(exist_ok=True)
     entries=[]; prior_skills=[]
     index=['# Learning route','',
       'Start with [the operator and visual language](courses/C00.md). Complete C01–C20 before P01. '
@@ -94,7 +90,8 @@ def generate():
       'and a privileged Incus host remain required for full mastery.','',
       '| Stage | Course | Guided project | Independent incidents |', '|---|---|---|---|']
     for u in bp['units']:
-        n=u['level']; d=UNITS[n]; cid=u['course']; pid=u['project']
+        n=u['level']; d=authored[n]; cid=u['course']; pid=u['project']
+        uses=list(prior_skills)
         taught=[f'{cid}.S{i:02}' for i in range(1,len(d['skills'])+1)];prior_skills+=taught
         rows=[]; faceted=[]
         for oid in u['objectives']:
@@ -104,7 +101,7 @@ def generate():
                 rows.append(f'| `{fid}` | {o["exam"]}: {o["label"]} — {facet} | A versioned action, independent observation, and rejected counterexample for this specific facet. |')
         table='\n'.join(['| Facet identity | Required skill | Course-to-assessment obligation |','|---|---|---|']+rows)
         code=d['code']
-        (base/'examples'/f'{cid}.py').write_text(code)
+        outputs[f'examples/{cid}.py'] = code
         previous='C00' if n==1 else f'C{n-1:02}'
         course=f'''# {cid} · {u['title']}
 
@@ -178,7 +175,7 @@ The original source references and discrepancy policy are in [the blueprint](../
 '''
         if n == 1:
             course += '\nContinue with [the NetBox native compiler practical](C01-NETBOX.md).\n'
-        (base/'courses'/f'{cid}.md').write_text(course)
+        outputs[f'courses/{cid}.md'] = course
         prerequisites=[f'C{i:02}' for i in range(1,21)]+([] if n==1 else [f'P{n-1:02}'])
         project=f'''# {pid} · {u['title']} in a production workflow
 
@@ -250,7 +247,7 @@ If a new solution requires a new skill, retain the solution and add that skill t
 a course before marking the project taught. No production-readiness claim is
 valid while its live qualification gates are blocked.
 '''
-        (base/'projects'/f'{pid}.md').write_text(project)
+        outputs[f'projects/{pid}.md'] = project
         exercise_entries=[]
         for j,eid in enumerate(u['exercises']):
             scenario=d['incidents'][j]
@@ -287,17 +284,23 @@ evidence comes from the earlier course assessor; the incident itself uses Incus.
 KWOK status alone never establishes workload execution. The next station unlocks
 only through the authoritative trainer assessment, not by editing local UI progress.
 '''
-            (base/'exercises'/f'{eid}.md').write_text(exercise)
+            outputs[f'exercises/{eid}.md'] = exercise
             exercise_entries.append({'id':eid,'level':2*n-1+j,'skills':list(prior_skills),
                                      'prerequisites':[pid],'prompt':f'exercises/{eid}.md','facets':faceted})
-        entries.append({'unit':u['id'],'course':{'id':cid,'level':n,'skills':taught,'prerequisites':[previous],
+        entries.append({'unit':u['id'],'course':{'id':cid,'level':n,'skills':taught,'uses':uses,'facets':faceted,'prerequisites':[previous],
                                                'skill_names':dict(zip(taught,d['skills'])),'document':f'courses/{cid}.md','example':f'examples/{cid}.py'},
-                        'project':{'id':pid,'level':n,'skills':list(prior_skills),'prerequisites':prerequisites,
+                        'project':{'id':pid,'level':n,'skills':list(prior_skills),'facets':faceted,'prerequisites':prerequisites,
                                    'document':f'projects/{pid}.md'},'exercises':exercise_entries,
                         'delivery':'authored; planning example executable; live qualification pending'})
         index.append(f'| {n} | [{cid}: {u["title"]}](courses/{cid}.md) | [{pid}](projects/{pid}.md) | '+
                      ' · '.join(f'[{e}](exercises/{e}.md)' for e in u['exercises'])+' |')
-    (base/'curriculum.json').write_text(json.dumps(entries,indent=2)+'\n')
-    (base/'LEARNING_ROUTE.md').write_text('\n'.join(index)+'\n')
+    outputs['curriculum.json'] = json.dumps(entries,indent=2)+'\n'
+    outputs['LEARNING_ROUTE.md'] = '\n'.join(index)+'\n'
+    return outputs
+
+def generate():
+    sys.path.insert(0, str(ROOT))
+    from verification.pipeline import render_repository
+    return render_repository(ROOT)
 
 if __name__=='__main__': generate()
