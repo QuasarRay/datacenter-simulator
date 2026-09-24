@@ -29,7 +29,7 @@ flowchart TD
   T --> R["Same executable expression"]
   R --> V["Verus: all inputs"]
   R --> K["Kani: full-width symbolic inputs"]
-  T --> M["Invert every implementation result"]
+  T --> M["Invert, change operators, remove conditions"]
   M --> N["Both verifiers must reject every mutant"]
   V --> G{"Exact inventories and source hashes?"}
   K --> G
@@ -57,7 +57,15 @@ destination before writing; its hash manifest commits last. Each replacement is
 atomic, while an interrupted multi-file publication is detected on the next check.
 Retiring generated paths requires an explicit reviewed migration.
 
-`prove` runs both tools on every predicate and then on inverted implementations.
+`prove` runs both tools on every predicate and then on generated faulty
+implementations: whole-result inversion, every individual Boolean/comparison/mask
+operator change, and removal of each Boolean operand. This challenges an omitted
+requirement separately from an entirely incorrect function. Exact duplicate
+expansions are deduplicated; a surviving mutant blocks the gate. There are no
+unchecked suppression lists. If a future expression is intentionally redundant,
+refactor it or add a separately reviewed equivalence mechanism; do not mark a
+surviving mutant as rejected. Expansion stops at 256 mutants to bound solver work.
+
 A missing harness, incomplete inventory, successful mutant, nonzero positive
 exit or partial Verus run fails. Successful receipts bind sources, tool versions,
 installed verifier/solver distributions, generated code and complete transcripts.
@@ -69,6 +77,10 @@ Python, the Rust witnesses, and all concrete material obligations in compiled Ru
 CI always uses `verify --fresh`. Tool installation is explicit; the runner never downloads
 or installs software. Exact versions and the Verus archive checksum are in
 [toolchain.json](toolchain.json).
+
+When a mutant survives, the diagnostic includes its exact function name. For
+example, `python3 tools/meta.py explain evidence_complete_m02` prints just that
+implementation and its retained laws; an agent need not scan every generated file.
 
 ## Material generation and finite refinement
 

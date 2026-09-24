@@ -11,7 +11,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
-from verification.compiler import expand
+from verification.compiler import expand, instances
 from verification.dsl import require
 from verification.io import atomic_write, sha, strict_json
 
@@ -87,7 +87,7 @@ def verify(root, registry, inputs, *, verus, fresh=False):
     toolchain = strict_json((root / "verification/toolchain.json").read_text())
     cargo = shutil.which("cargo")
     require(cargo is not None and Path(verus).is_file(), "install the pinned Kani and Verus tools first")
-    names = list(registry.contracts)
+    names = {"positive": list(registry.contracts), "mutants": [name for name, _, _ in instances(registry, True)]}
     base = root / "artifacts/metaverify"
     base.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="run-", dir=base))
@@ -133,7 +133,8 @@ def verify(root, registry, inputs, *, verus, fresh=False):
             require(run["stdout"] in receipt["files"] and run["stderr"] in receipt["files"], "unbound transcript")
             output = (folder / run["stdout"]).read_text()
             try:
-                (verus_result if label.startswith("verus") else kani_result)(output, run["exit"], names, "mutants" in label)
+                mutant = "mutants" in label
+                (verus_result if label.startswith("verus") else kani_result)(output, run["exit"], names["mutants" if mutant else "positive"], mutant)
             except (ValueError, KeyError, TypeError) as error:
                 raise ValueError(f"{label}: invalid transcript; inspect {folder.relative_to(root)}: {error}") from error
         # A receipt must bind every expected expansion, not merely some log files.
@@ -148,7 +149,7 @@ def verify(root, registry, inputs, *, verus, fresh=False):
             cached = strict_json(index.read_text())
             folder = inspect_receipt(cached)
             shutil.rmtree(directory)
-            return {"contracts": len(names), "mutants_rejected": 2 * len(names), "cached": True, "evidence": str(folder.relative_to(root))}
+            return {"contracts": len(names["positive"]), "mutants_rejected": 2 * len(names["mutants"]), "cached": True, "evidence": str(folder.relative_to(root))}
         except (ValueError, KeyError, TypeError, OSError):
             pass  # An unusable cache triggers actual verification; it never passes.
     runs = {}
@@ -162,7 +163,7 @@ def verify(root, registry, inputs, *, verus, fresh=False):
             runs[label] = execute(command, directory, label)
             output = (directory / runs[label]["stdout"]).read_text()
             try:
-                (verus_result if label.startswith("verus") else kani_result)(output, runs[label]["exit"], names, mutant)
+                (verus_result if label.startswith("verus") else kani_result)(output, runs[label]["exit"], names["mutants" if mutant else "positive"], mutant)
             except (ValueError, KeyError, TypeError) as error:
                 raise ValueError(f"{label}: {error}; inspect {directory.relative_to(root)}") from error
     files = {}
@@ -175,4 +176,4 @@ def verify(root, registry, inputs, *, verus, fresh=False):
     inspect_receipt(receipt)
     atomic_write(directory / "receipt.json", (json.dumps(receipt, indent=2) + "\n").encode())
     atomic_write(index, (json.dumps(receipt, indent=2) + "\n").encode())
-    return {"contracts": len(names), "mutants_rejected": 2 * len(names), "cached": False, "evidence": str(directory.relative_to(root))}
+    return {"contracts": len(names["positive"]), "mutants_rejected": 2 * len(names["mutants"]), "cached": False, "evidence": str(directory.relative_to(root))}

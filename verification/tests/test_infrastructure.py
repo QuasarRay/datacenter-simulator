@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from verification.compiler import expand
+from verification.compiler import expand, instances
 from verification.dsl import ContractError, Expr, emit, literal, node, variable
 from verification.io import drift, publish, safe_path, strict_json
 from verification.prove import kani_result, verus_result
@@ -23,7 +23,7 @@ class CompilerBoundary(unittest.TestCase):
         with self.assertRaises(ContractError): variable("value", "u8").eq(variable("other", "u64"))
 
     def test_raw_code_and_bypass_operations_are_not_a_language_feature(self):
-        for name in ["result", "name(); unsafe", "x\n", "crate", "_private"]:
+        for name in ["result", "name(); unsafe", "x\n", "crate", "_private", "async", "dyn", "gen", "forall", "proof"]:
             with self.subTest(name=name), self.assertRaises(ContractError): variable(name, "bool")
         for op in ["assume", "admit", "external_body", "call", "eval", "raw"]:
             with self.subTest(op=op), self.assertRaises(ContractError): node(op, literal(True, "bool"), literal(True, "bool"))
@@ -126,7 +126,7 @@ class ProofReportBoundary(unittest.TestCase):
         from unittest.mock import patch
         import sys
         from verification.prove import verify
-        names = list(registry.contracts)
+        inventories = {False: list(registry.contracts), True: [name for name, _, _ in instances(registry, True)]}
         invoked = []
         def fake(command, folder, label, timeout=300):
             invoked.append(label)
@@ -135,6 +135,7 @@ class ProofReportBoundary(unittest.TestCase):
             elif label == "verus-version": output, code = json.dumps({"verus": {"version": "0.2026.09.20.aef82ed"}}), 0
             else:
                 mutant = "mutants" in label
+                names = inventories[mutant]
                 code = int(mutant)
                 if label.startswith("kani"):
                     output = "".join(f"Checking harness proofs::law_{name}...\nVERIFICATION:- {'FAILED' if mutant else 'SUCCESSFUL'}\n" for name in names)

@@ -11,7 +11,12 @@ TYPES = {"bool": 1, "u8": 8, "u16": 16, "u64": 64}
 IDENT = re.compile(r"[a-z][a-z0-9_]*\Z")
 RESERVED = {"result", "self", "super", "crate", "type", "fn", "mod", "pub", "use",
             "let", "mut", "ref", "match", "impl", "trait", "where", "loop", "move",
-            "return", "true", "false", "if", "else", "const", "static", "unsafe"}
+            "return", "true", "false", "if", "else", "const", "static", "unsafe",
+            "as", "async", "await", "break", "continue", "dyn", "enum", "extern", "for", "in", "struct", "while",
+            "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof", "unsized",
+            "virtual", "yield", "try", "gen", "union", "macro_rules", "spec", "proof", "open", "tracked",
+            "ghost", "verus", "requires", "ensures", "decreases", "recommends", "returns", "invariant",
+            "assert", "assume", "forall", "exists", "choose"}
 
 
 class ContractError(ValueError):

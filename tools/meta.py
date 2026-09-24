@@ -30,10 +30,13 @@ def main():
         require(args.name is None or args.operation == "explain", "only explain accepts a name")
         result = {"status": "pass", "operation": args.operation, "contracts": len(registry.contracts)}
         if args.operation == "explain":
-            require(args.name in registry.contracts, "unknown contract name")
-            c = registry.contracts[args.name]
-            result.update(name=c.name, scope=c.scope, parameters=dict(c.parameters),
-                          implementation=emit(c.body), postconditions=[emit(p) for p in c.properties])
+            from verification.compiler import instances
+            candidates = {name: (c, body) for name, c, body in instances(registry) + instances(registry, True)}
+            require(args.name in candidates, "unknown contract or mutant name")
+            c, body = candidates[args.name]
+            result.update(name=args.name, scope=c.scope, parameters=dict(c.parameters),
+                          negative_control=args.name != c.name,
+                          implementation=emit(body), postconditions=[emit(p) for p in c.properties])
         else:
             with (nullcontext() if args.operation in {"check", "impact"} else locked(ROOT)):
                 generated, identity, obligations = compile_repository(ROOT)
