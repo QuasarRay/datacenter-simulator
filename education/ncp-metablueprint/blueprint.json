@@ -1,0 +1,2545 @@
+{
+  "schema": 1,
+  "name": "NCP-Metablueprint",
+  "edition": "2026-09-24",
+  "independent": true,
+  "sources": {
+    "AIO-W": {
+      "url": "https://www.nvidia.com/en-us/learn/certification/ai-operations-professional/",
+      "date": "2026-09-24",
+      "weights": [
+        31,
+        23,
+        23,
+        23
+      ],
+      "numbering": "Local section and bullet indices; webpage bullets are unnumbered."
+    },
+    "AIO-G": {
+      "url": "https://dam-cdn.nvd.orangelogic.com/AssetLink/ub08c12vdc5l53ksln5d4dlpt3346464.pdf",
+      "date": "2026-09-24",
+      "weights": [
+        28,
+        20,
+        32,
+        20
+      ],
+      "numbering": "Printed objective identifiers, FEB26 guide. Erroneous contents-only cognition heading is retained as a source discrepancy, not an invented objective."
+    },
+    "AIN": {
+      "url": "https://www.nvidia.com/en-us/learn/certification/ai-networking-professional/",
+      "guide": "https://dam-cdn.nvd.orangelogic.com/AssetLink/32ljugfxg1hs1sd42371npw1xmcuo1yo.pdf",
+      "date": "2026-09-24",
+      "weights": [
+        5,
+        30,
+        30,
+        5,
+        20,
+        10
+      ],
+      "numbering": "MAY26 guide identifiers; webpage agrees. Wrapped switches text belongs to 1.1."
+    },
+    "AII": {
+      "url": "https://www.nvidia.com/en-us/learn/certification/ai-infrastructure-professional/",
+      "guide": "https://dam-cdn.nvd.orangelogic.com/AssetLink/8gauup66xn2gv80pu4m166li0bhyytk4.pdf",
+      "date": "2026-09-24",
+      "weights": [
+        31,
+        5,
+        19,
+        33,
+        12
+      ],
+      "numbering": "SEP25 guide identifiers; webpage agrees."
+    }
+  },
+  "objectives": [
+    {
+      "id": "AIO-W-1.1",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.1",
+      "label": "Mission Control",
+      "facets": [
+        "toolkit"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.2",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.2",
+      "label": "Base View",
+      "facets": [
+        "performance",
+        "utilization",
+        "health"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.3",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.3",
+      "label": "BCM scheduling",
+      "facets": [
+        "Slurm",
+        "Kubernetes",
+        "allocation"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.4",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.4",
+      "label": "BCM rollout",
+      "facets": [
+        "patch",
+        "firmware",
+        "image"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AIO-W-1.5",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.5",
+      "label": "BCM identity",
+      "facets": [
+        "account",
+        "role",
+        "permission"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.6",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.6",
+      "label": "BCM networking",
+      "facets": [
+        "node",
+        "DPU",
+        "switch"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.7",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.7",
+      "label": "BCM incident",
+      "facets": [
+        "job",
+        "node",
+        "bottleneck"
+      ],
+      "unit": "U20",
+      "assessed_by": [
+        "E20a",
+        "E20b"
+      ],
+      "taught_by": "C20",
+      "combined_by": "P20"
+    },
+    {
+      "id": "AIO-W-1.8",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.8",
+      "label": "BCM categories",
+      "facets": [
+        "hardware",
+        "workload"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-W-1.9",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.9",
+      "label": "BCM reporting",
+      "facets": [
+        "usage",
+        "performance",
+        "incident"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIO-W-1.10",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.10",
+      "label": "BCM Kubernetes bootstrap",
+      "facets": [
+        "install",
+        "initialize"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIO-W-1.11",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.11",
+      "label": "Arm services",
+      "facets": [
+        "DOCA"
+      ],
+      "unit": "U08",
+      "assessed_by": [
+        "E08a",
+        "E08b"
+      ],
+      "taught_by": "C08",
+      "combined_by": "P08"
+    },
+    {
+      "id": "AIO-W-1.12",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.12",
+      "label": "Run:ai bootstrap",
+      "facets": [
+        "installation"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-W-1.13",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "1.13",
+      "label": "Slurm bootstrap",
+      "facets": [
+        "installation"
+      ],
+      "unit": "U10",
+      "assessed_by": [
+        "E10a",
+        "E10b"
+      ],
+      "taught_by": "C10",
+      "combined_by": "P10"
+    },
+    {
+      "id": "AIO-W-2.1",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "2.1",
+      "label": "Slurm operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U10",
+      "assessed_by": [
+        "E10a",
+        "E10b"
+      ],
+      "taught_by": "C10",
+      "combined_by": "P10"
+    },
+    {
+      "id": "AIO-W-2.2",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "2.2",
+      "label": "Factory architecture",
+      "facets": [
+        "design"
+      ],
+      "unit": "U01",
+      "assessed_by": [
+        "E01a",
+        "E01b"
+      ],
+      "taught_by": "C01",
+      "combined_by": "P01"
+    },
+    {
+      "id": "AIO-W-2.3",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "2.3",
+      "label": "Run:ai operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-W-2.4",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "2.4",
+      "label": "Kubernetes operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIO-W-2.5",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "2.5",
+      "label": "MIG partitioning",
+      "facets": [
+        "configuration"
+      ],
+      "unit": "U12",
+      "assessed_by": [
+        "E12a",
+        "E12b"
+      ],
+      "taught_by": "C12",
+      "combined_by": "P12"
+    },
+    {
+      "id": "AIO-W-3.1",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.1",
+      "label": "Kubernetes inference",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIO-W-3.2",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.2",
+      "label": "Run:ai inference",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-W-3.3",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.3",
+      "label": "Slurm training",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U10",
+      "assessed_by": [
+        "E10a",
+        "E10b"
+      ],
+      "taught_by": "C10",
+      "combined_by": "P10"
+    },
+    {
+      "id": "AIO-W-3.4",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.4",
+      "label": "Run:ai training",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-W-3.5",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.5",
+      "label": "Diagnostic tools",
+      "facets": [
+        "DCGM",
+        "NVSM",
+        "SMI"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIO-W-3.6",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.6",
+      "label": "Team allocation",
+      "facets": [
+        "Run:ai",
+        "Slurm",
+        "Kubernetes"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-W-3.7",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "3.7",
+      "label": "NGC payloads",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AIO-W-4.1",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.1",
+      "label": "Docker diagnosis",
+      "facets": [
+        "daemon",
+        "toolkit"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AIO-W-4.2",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.2",
+      "label": "NVSwitch service",
+      "facets": [
+        "Fabric Manager",
+        "NVLink",
+        "NVSwitch"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AIO-W-4.3",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.3",
+      "label": "BCM diagnosis",
+      "facets": [
+        "control-plane"
+      ],
+      "unit": "U20",
+      "assessed_by": [
+        "E20a",
+        "E20b"
+      ],
+      "taught_by": "C20",
+      "combined_by": "P20"
+    },
+    {
+      "id": "AIO-W-4.4",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.4",
+      "label": "Magnum IO diagnosis",
+      "facets": [
+        "data-path"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AIO-W-4.5",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.5",
+      "label": "Storage diagnosis",
+      "facets": [
+        "performance"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AIO-W-4.6",
+      "exam": "AIO",
+      "source": "AIO-W",
+      "locator": "4.6",
+      "label": "NGC diagnosis",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AIO-G-1.1",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "1.1",
+      "label": "Fleet Command",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U19",
+      "assessed_by": [
+        "E19a",
+        "E19b"
+      ],
+      "taught_by": "C19",
+      "combined_by": "P19"
+    },
+    {
+      "id": "AIO-G-1.2",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "1.2",
+      "label": "Slurm operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U10",
+      "assessed_by": [
+        "E10a",
+        "E10b"
+      ],
+      "taught_by": "C10",
+      "combined_by": "P10"
+    },
+    {
+      "id": "AIO-G-1.3",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "1.3",
+      "label": "Factory design",
+      "facets": [
+        "architecture"
+      ],
+      "unit": "U01",
+      "assessed_by": [
+        "E01a",
+        "E01b"
+      ],
+      "taught_by": "C01",
+      "combined_by": "P01"
+    },
+    {
+      "id": "AIO-G-1.4",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "1.4",
+      "label": "Run:ai operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U11",
+      "assessed_by": [
+        "E11a",
+        "E11b"
+      ],
+      "taught_by": "C11",
+      "combined_by": "P11"
+    },
+    {
+      "id": "AIO-G-1.5",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "1.5",
+      "label": "MIG partitioning",
+      "facets": [
+        "AI",
+        "HPC"
+      ],
+      "unit": "U12",
+      "assessed_by": [
+        "E12a",
+        "E12b"
+      ],
+      "taught_by": "C12",
+      "combined_by": "P12"
+    },
+    {
+      "id": "AIO-G-2.1",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "2.1",
+      "label": "Kubernetes operations",
+      "facets": [
+        "administration"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIO-G-2.2",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "2.2",
+      "label": "Diagnostic tools",
+      "facets": [
+        "DCGM",
+        "NVSM",
+        "SMI"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIO-G-2.3",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "2.3",
+      "label": "BCM provisioner",
+      "facets": [
+        "administration",
+        "provisioning"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-G-3.1",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.1",
+      "label": "BCM bootstrap",
+      "facets": [
+        "installation",
+        "configuration"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AIO-G-3.2",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.2",
+      "label": "BCM Kubernetes bootstrap",
+      "facets": [
+        "installation",
+        "initialization"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIO-G-3.3",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.3",
+      "label": "NGC payloads",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AIO-G-3.4",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.4",
+      "label": "Cloud VMI",
+      "facets": [
+        "deployment"
+      ],
+      "unit": "U19",
+      "assessed_by": [
+        "E19a",
+        "E19b"
+      ],
+      "taught_by": "C19",
+      "combined_by": "P19"
+    },
+    {
+      "id": "AIO-G-3.5",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.5",
+      "label": "Storage sizing",
+      "facets": [
+        "requirements"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AIO-G-3.6",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "3.6",
+      "label": "Arm services",
+      "facets": [
+        "DOCA"
+      ],
+      "unit": "U08",
+      "assessed_by": [
+        "E08a",
+        "E08b"
+      ],
+      "taught_by": "C08",
+      "combined_by": "P08"
+    },
+    {
+      "id": "AIO-G-4.1",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "4.1",
+      "label": "Docker diagnosis",
+      "facets": [
+        "daemon",
+        "toolkit"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AIO-G-4.2",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "4.2",
+      "label": "NVSwitch service",
+      "facets": [
+        "Fabric Manager",
+        "NVLink",
+        "NVSwitch"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AIO-G-4.3",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "4.3",
+      "label": "BCM diagnosis",
+      "facets": [
+        "control-plane"
+      ],
+      "unit": "U20",
+      "assessed_by": [
+        "E20a",
+        "E20b"
+      ],
+      "taught_by": "C20",
+      "combined_by": "P20"
+    },
+    {
+      "id": "AIO-G-4.4",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "4.4",
+      "label": "Magnum IO diagnosis",
+      "facets": [
+        "data-path"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AIO-G-4.5",
+      "exam": "AIO",
+      "source": "AIO-G",
+      "locator": "4.5",
+      "label": "Storage diagnosis",
+      "facets": [
+        "performance"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AIN-1.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "1.1",
+      "label": "Factory components",
+      "facets": [
+        "GPU",
+        "BlueField",
+        "scalable-unit",
+        "switch"
+      ],
+      "unit": "U01",
+      "assessed_by": [
+        "E01a",
+        "E01b"
+      ],
+      "taught_by": "C01",
+      "combined_by": "P01"
+    },
+    {
+      "id": "AIN-1.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "1.2",
+      "label": "Rail placement",
+      "facets": [
+        "topology"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AIN-1.3",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "1.3",
+      "label": "GPU communication",
+      "facets": [
+        "intra-node",
+        "inter-node"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AIN-2.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.1",
+      "label": "Spectrum-X RoCE",
+      "facets": [
+        "configuration"
+      ],
+      "unit": "U06",
+      "assessed_by": [
+        "E06a",
+        "E06b"
+      ],
+      "taught_by": "C06",
+      "combined_by": "P06"
+    },
+    {
+      "id": "AIN-2.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.2",
+      "label": "Lossless policy",
+      "facets": [
+        "QoS",
+        "ECN",
+        "PFC",
+        "adaptive-routing",
+        "telemetry"
+      ],
+      "unit": "U06",
+      "assessed_by": [
+        "E06a",
+        "E06b"
+      ],
+      "taught_by": "C06",
+      "combined_by": "P06"
+    },
+    {
+      "id": "AIN-2.3",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.3",
+      "label": "EVPN tenancy",
+      "facets": [
+        "BGP",
+        "EVPN",
+        "isolation"
+      ],
+      "unit": "U05",
+      "assessed_by": [
+        "E05a",
+        "E05b"
+      ],
+      "taught_by": "C05",
+      "combined_by": "P05"
+    },
+    {
+      "id": "AIN-2.4",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.4",
+      "label": "Air rehearsal",
+      "facets": [
+        "simulation",
+        "diagnosis"
+      ],
+      "unit": "U01",
+      "assessed_by": [
+        "E01a",
+        "E01b"
+      ],
+      "taught_by": "C01",
+      "combined_by": "P01"
+    },
+    {
+      "id": "AIN-2.5",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.5",
+      "label": "Packet-drop evidence",
+      "facets": [
+        "in-band-telemetry",
+        "WJH"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIN-2.6",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.6",
+      "label": "NetQ observation",
+      "facets": [
+        "congestion",
+        "latency"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIN-2.7",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.7",
+      "label": "DOCA installation",
+      "facets": [
+        "host",
+        "DPU"
+      ],
+      "unit": "U08",
+      "assessed_by": [
+        "E08a",
+        "E08b"
+      ],
+      "taught_by": "C08",
+      "combined_by": "P08"
+    },
+    {
+      "id": "AIN-2.8",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "2.8",
+      "label": "SuperNIC configuration",
+      "facets": [
+        "packet-processing",
+        "congestion"
+      ],
+      "unit": "U08",
+      "assessed_by": [
+        "E08a",
+        "E08b"
+      ],
+      "taught_by": "C08",
+      "combined_by": "P08"
+    },
+    {
+      "id": "AIN-3.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "3.1",
+      "label": "Fabric bootstrap",
+      "facets": [
+        "provisioning",
+        "HA"
+      ],
+      "unit": "U07",
+      "assessed_by": [
+        "E07a",
+        "E07b"
+      ],
+      "taught_by": "C07",
+      "combined_by": "P07"
+    },
+    {
+      "id": "AIN-3.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "3.2",
+      "label": "PKey membership",
+      "facets": [
+        "multi-tenancy"
+      ],
+      "unit": "U07",
+      "assessed_by": [
+        "E07a",
+        "E07b"
+      ],
+      "taught_by": "C07",
+      "combined_by": "P07"
+    },
+    {
+      "id": "AIN-3.3",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "3.3",
+      "label": "Fabric traffic policy",
+      "facets": [
+        "QoS",
+        "adaptive-routing"
+      ],
+      "unit": "U07",
+      "assessed_by": [
+        "E07a",
+        "E07b"
+      ],
+      "taught_by": "C07",
+      "combined_by": "P07"
+    },
+    {
+      "id": "AIN-3.4",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "3.4",
+      "label": "UFM observation",
+      "facets": [
+        "link-state",
+        "bandwidth"
+      ],
+      "unit": "U07",
+      "assessed_by": [
+        "E07a",
+        "E07b"
+      ],
+      "taught_by": "C07",
+      "combined_by": "P07"
+    },
+    {
+      "id": "AIN-4.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "4.1",
+      "label": "Network Operator rollout",
+      "facets": [
+        "RDMA",
+        "InfiniBand"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIN-4.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "4.2",
+      "label": "Network Operator acceptance",
+      "facets": [
+        "verification"
+      ],
+      "unit": "U09",
+      "assessed_by": [
+        "E09a",
+        "E09b"
+      ],
+      "taught_by": "C09",
+      "combined_by": "P09"
+    },
+    {
+      "id": "AIN-5.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "5.1",
+      "label": "ASIC resource diagnosis",
+      "facets": [
+        "cl-resource-query"
+      ],
+      "unit": "U18",
+      "assessed_by": [
+        "E18a",
+        "E18b"
+      ],
+      "taught_by": "C18",
+      "combined_by": "P18"
+    },
+    {
+      "id": "AIN-5.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "5.2",
+      "label": "Event diagnosis",
+      "facets": [
+        "WJH"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AIN-5.3",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "5.3",
+      "label": "Interconnect latency",
+      "facets": [
+        "GPU",
+        "CPU",
+        "storage"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AIN-5.4",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "5.4",
+      "label": "UFM diagnosis",
+      "facets": [
+        "health"
+      ],
+      "unit": "U20",
+      "assessed_by": [
+        "E20a",
+        "E20b"
+      ],
+      "taught_by": "C20",
+      "combined_by": "P20"
+    },
+    {
+      "id": "AIN-5.5",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "5.5",
+      "label": "IB diagnostics",
+      "facets": [
+        "ib_write_lat",
+        "ib_write_bw",
+        "ibping",
+        "ibstat",
+        "ibdiagnet",
+        "ibnodes",
+        "iblinkinfo"
+      ],
+      "unit": "U07",
+      "assessed_by": [
+        "E07a",
+        "E07b"
+      ],
+      "taught_by": "C07",
+      "combined_by": "P07"
+    },
+    {
+      "id": "AIN-6.1",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "6.1",
+      "label": "NVUE generation",
+      "facets": [
+        "templates"
+      ],
+      "unit": "U05",
+      "assessed_by": [
+        "E05a",
+        "E05b"
+      ],
+      "taught_by": "C05",
+      "combined_by": "P05"
+    },
+    {
+      "id": "AIN-6.2",
+      "exam": "AIN",
+      "source": "AIN",
+      "locator": "6.2",
+      "label": "Ansible fabric delivery",
+      "facets": [
+        "VLAN",
+        "RoCE"
+      ],
+      "unit": "U05",
+      "assessed_by": [
+        "E05a",
+        "E05b"
+      ],
+      "taught_by": "C05",
+      "combined_by": "P05"
+    },
+    {
+      "id": "AII-1.1",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.1",
+      "label": "Commissioning order",
+      "facets": [
+        "deployment",
+        "validation"
+      ],
+      "unit": "U01",
+      "assessed_by": [
+        "E01a",
+        "E01b"
+      ],
+      "taught_by": "C01",
+      "combined_by": "P01"
+    },
+    {
+      "id": "AII-1.2",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.2",
+      "label": "Factory topology",
+      "facets": [
+        "design"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.3",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.3",
+      "label": "Management root",
+      "facets": [
+        "BMC",
+        "OOB",
+        "TPM"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.4",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.4",
+      "label": "Firmware transition",
+      "facets": [
+        "HGX",
+        "upgrade",
+        "fault-detection"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-1.5",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.5",
+      "label": "Environmental envelope",
+      "facets": [
+        "power",
+        "cooling"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.6",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.6",
+      "label": "Server installation",
+      "facets": [
+        "SMI"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.7",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.7",
+      "label": "Component inventory",
+      "facets": [
+        "validation"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.8",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.8",
+      "label": "Optical compatibility",
+      "facets": [
+        "cable",
+        "transceiver"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.9",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.9",
+      "label": "GPU insertion",
+      "facets": [
+        "physical-installation"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-1.10",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.10",
+      "label": "Workload acceptance",
+      "facets": [
+        "hardware-validation"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-1.11",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "1.11",
+      "label": "Storage bootstrap",
+      "facets": [
+        "third-party-parameters"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AII-2.1",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "2.1",
+      "label": "BlueField lifecycle",
+      "facets": [
+        "configuration",
+        "management"
+      ],
+      "unit": "U08",
+      "assessed_by": [
+        "E08a",
+        "E08b"
+      ],
+      "taught_by": "C08",
+      "combined_by": "P08"
+    },
+    {
+      "id": "AII-2.2",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "2.2",
+      "label": "MIG partitioning",
+      "facets": [
+        "AI",
+        "HPC"
+      ],
+      "unit": "U12",
+      "assessed_by": [
+        "E12a",
+        "E12b"
+      ],
+      "taught_by": "C12",
+      "combined_by": "P12"
+    },
+    {
+      "id": "AII-3.1",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.1",
+      "label": "BCM redundancy",
+      "facets": [
+        "installation",
+        "HA-configuration",
+        "HA-verification"
+      ],
+      "unit": "U04",
+      "assessed_by": [
+        "E04a",
+        "E04b"
+      ],
+      "taught_by": "C04",
+      "combined_by": "P04"
+    },
+    {
+      "id": "AII-3.2",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.2",
+      "label": "OS installation",
+      "facets": [
+        "installation"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AII-3.3",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.3",
+      "label": "Cluster bootstrap",
+      "facets": [
+        "category",
+        "interface",
+        "Slurm",
+        "Enroot",
+        "Pyxis"
+      ],
+      "unit": "U10",
+      "assessed_by": [
+        "E10a",
+        "E10b"
+      ],
+      "taught_by": "C10",
+      "combined_by": "P10"
+    },
+    {
+      "id": "AII-3.4",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.4",
+      "label": "Driver lifecycle",
+      "facets": [
+        "GPU",
+        "DOCA",
+        "install",
+        "update",
+        "remove"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AII-3.5",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.5",
+      "label": "Toolkit installation",
+      "facets": [
+        "installation"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AII-3.6",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.6",
+      "label": "Docker GPU execution",
+      "facets": [
+        "demonstration"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AII-3.7",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "3.7",
+      "label": "NGC client",
+      "facets": [
+        "host-installation"
+      ],
+      "unit": "U03",
+      "assessed_by": [
+        "E03a",
+        "E03b"
+      ],
+      "taught_by": "C03",
+      "combined_by": "P03"
+    },
+    {
+      "id": "AII-4.1",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.1",
+      "label": "Node stress",
+      "facets": [
+        "execution"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.2",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.2",
+      "label": "HPL acceptance",
+      "facets": [
+        "execution"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.3",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.3",
+      "label": "Local collective",
+      "facets": [
+        "NCCL",
+        "NVLink-Switch"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AII-4.4",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.4",
+      "label": "Signal integrity",
+      "facets": [
+        "quality"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-4.5",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.5",
+      "label": "Cable audit",
+      "facets": [
+        "correctness"
+      ],
+      "unit": "U02",
+      "assessed_by": [
+        "E02a",
+        "E02b"
+      ],
+      "taught_by": "C02",
+      "combined_by": "P02"
+    },
+    {
+      "id": "AII-4.6",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.6",
+      "label": "Switch revision",
+      "facets": [
+        "firmware",
+        "software"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-4.7",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.7",
+      "label": "BlueField-3 revision",
+      "facets": [
+        "firmware",
+        "software"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-4.8",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.8",
+      "label": "Optic revision",
+      "facets": [
+        "firmware"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-4.9",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.9",
+      "label": "ClusterKit acceptance",
+      "facets": [
+        "assessment"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.10",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.10",
+      "label": "East-west collective",
+      "facets": [
+        "NCCL",
+        "bandwidth"
+      ],
+      "unit": "U14",
+      "assessed_by": [
+        "E14a",
+        "E14b"
+      ],
+      "taught_by": "C14",
+      "combined_by": "P14"
+    },
+    {
+      "id": "AII-4.11",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.11",
+      "label": "NCCL soak",
+      "facets": [
+        "burn-in"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.12",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.12",
+      "label": "HPL soak",
+      "facets": [
+        "burn-in"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.13",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.13",
+      "label": "NeMo soak",
+      "facets": [
+        "burn-in"
+      ],
+      "unit": "U15",
+      "assessed_by": [
+        "E15a",
+        "E15b"
+      ],
+      "taught_by": "C15",
+      "combined_by": "P15"
+    },
+    {
+      "id": "AII-4.14",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "4.14",
+      "label": "Storage acceptance",
+      "facets": [
+        "testing"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    },
+    {
+      "id": "AII-5.1",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "5.1",
+      "label": "Fault localization",
+      "facets": [
+        "GPU",
+        "fan",
+        "NIC"
+      ],
+      "unit": "U16",
+      "assessed_by": [
+        "E16a",
+        "E16b"
+      ],
+      "taught_by": "C16",
+      "combined_by": "P16"
+    },
+    {
+      "id": "AII-5.2",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "5.2",
+      "label": "Failed-part isolation",
+      "facets": [
+        "card",
+        "GPU",
+        "PSU"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-5.3",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "5.3",
+      "label": "Part replacement",
+      "facets": [
+        "card",
+        "GPU",
+        "PSU"
+      ],
+      "unit": "U17",
+      "assessed_by": [
+        "E17a",
+        "E17b"
+      ],
+      "taught_by": "C17",
+      "combined_by": "P17"
+    },
+    {
+      "id": "AII-5.4",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "5.4",
+      "label": "Host tuning",
+      "facets": [
+        "AMD",
+        "Intel"
+      ],
+      "unit": "U18",
+      "assessed_by": [
+        "E18a",
+        "E18b"
+      ],
+      "taught_by": "C18",
+      "combined_by": "P18"
+    },
+    {
+      "id": "AII-5.5",
+      "exam": "AII",
+      "source": "AII",
+      "locator": "5.5",
+      "label": "Storage tuning",
+      "facets": [
+        "optimization"
+      ],
+      "unit": "U13",
+      "assessed_by": [
+        "E13a",
+        "E13b"
+      ],
+      "taught_by": "C13",
+      "combined_by": "P13"
+    }
+  ],
+  "units": [
+    {
+      "id": "U01",
+      "title": "Intent before intervention",
+      "level": 1,
+      "objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "course": "C01",
+      "project": "P01",
+      "exercises": [
+        "E01a",
+        "E01b"
+      ],
+      "prerequisites": [],
+      "status": "specified"
+    },
+    {
+      "id": "U02",
+      "title": "Commission a rail",
+      "level": 2,
+      "objectives": [
+        "AIN-1.2",
+        "AII-1.2",
+        "AII-1.3",
+        "AII-1.5",
+        "AII-1.6",
+        "AII-1.7",
+        "AII-1.8",
+        "AII-1.9",
+        "AII-4.4",
+        "AII-4.5",
+        "AIO-W-3.5"
+      ],
+      "course": "C02",
+      "project": "P02",
+      "exercises": [
+        "E02a",
+        "E02b"
+      ],
+      "prerequisites": [
+        "U01"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U03",
+      "title": "Software and payload supply",
+      "level": 3,
+      "objectives": [
+        "AIO-W-3.7",
+        "AIO-W-4.1",
+        "AIO-W-4.6",
+        "AIO-G-3.3",
+        "AIO-G-4.1",
+        "AII-3.2",
+        "AII-3.4",
+        "AII-3.5",
+        "AII-3.6",
+        "AII-3.7",
+        "AIN-5.3"
+      ],
+      "course": "C03",
+      "project": "P03",
+      "exercises": [
+        "E03a",
+        "E03b"
+      ],
+      "prerequisites": [
+        "U02"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U04",
+      "title": "Cluster authority and fencing",
+      "level": 4,
+      "objectives": [
+        "AIO-W-1.1",
+        "AIO-W-1.2",
+        "AIO-W-1.3",
+        "AIO-W-1.5",
+        "AIO-W-1.6",
+        "AIO-W-1.8",
+        "AIO-G-2.3",
+        "AIO-G-3.1",
+        "AII-3.1",
+        "AIN-5.3"
+      ],
+      "course": "C04",
+      "project": "P04",
+      "exercises": [
+        "E04a",
+        "E04b"
+      ],
+      "prerequisites": [
+        "U03"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U05",
+      "title": "Routed tenant boundaries",
+      "level": 5,
+      "objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "course": "C05",
+      "project": "P05",
+      "exercises": [
+        "E05a",
+        "E05b"
+      ],
+      "prerequisites": [
+        "U04"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U06",
+      "title": "Congestion without deadlock",
+      "level": 6,
+      "objectives": [
+        "AIN-2.1",
+        "AIN-2.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "course": "C06",
+      "project": "P06",
+      "exercises": [
+        "E06a",
+        "E06b"
+      ],
+      "prerequisites": [
+        "U05"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U07",
+      "title": "InfiniBand membership and failover",
+      "level": 7,
+      "objectives": [
+        "AIN-3.1",
+        "AIN-3.2",
+        "AIN-3.3",
+        "AIN-3.4",
+        "AIN-5.5",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "course": "C07",
+      "project": "P07",
+      "exercises": [
+        "E07a",
+        "E07b"
+      ],
+      "prerequisites": [
+        "U06"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U08",
+      "title": "DPU control and data ownership",
+      "level": 8,
+      "objectives": [
+        "AIO-W-1.11",
+        "AIO-G-3.6",
+        "AIN-2.7",
+        "AIN-2.8",
+        "AII-2.1"
+      ],
+      "course": "C08",
+      "project": "P08",
+      "exercises": [
+        "E08a",
+        "E08b"
+      ],
+      "prerequisites": [
+        "U07"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U09",
+      "title": "Kubernetes API and real execution",
+      "level": 9,
+      "objectives": [
+        "AIO-W-1.10",
+        "AIO-W-2.4",
+        "AIO-W-3.1",
+        "AIO-G-2.1",
+        "AIO-G-3.2",
+        "AIN-4.1",
+        "AIN-4.2",
+        "AII-1.10"
+      ],
+      "course": "C09",
+      "project": "P09",
+      "exercises": [
+        "E09a",
+        "E09b"
+      ],
+      "prerequisites": [
+        "U08"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U10",
+      "title": "Slurm admission and locality",
+      "level": 10,
+      "objectives": [
+        "AIO-W-1.13",
+        "AIO-W-2.1",
+        "AIO-W-3.3",
+        "AIO-G-1.2",
+        "AII-3.3",
+        "AIN-5.3"
+      ],
+      "course": "C10",
+      "project": "P10",
+      "exercises": [
+        "E10a",
+        "E10b"
+      ],
+      "prerequisites": [
+        "U09"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U11",
+      "title": "Team quotas across schedulers",
+      "level": 11,
+      "objectives": [
+        "AIO-W-1.12",
+        "AIO-W-2.3",
+        "AIO-W-3.2",
+        "AIO-W-3.4",
+        "AIO-W-3.6",
+        "AIO-G-1.4",
+        "AIN-5.3",
+        "AII-1.10"
+      ],
+      "course": "C11",
+      "project": "P11",
+      "exercises": [
+        "E11a",
+        "E11b"
+      ],
+      "prerequisites": [
+        "U10"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U12",
+      "title": "MIG geometry and disruption",
+      "level": 12,
+      "objectives": [
+        "AIO-W-2.5",
+        "AIO-G-1.5",
+        "AII-2.2",
+        "AIN-5.3"
+      ],
+      "course": "C12",
+      "project": "P12",
+      "exercises": [
+        "E12a",
+        "E12b"
+      ],
+      "prerequisites": [
+        "U11"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U13",
+      "title": "Storage to GPU lifetime",
+      "level": 13,
+      "objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "course": "C13",
+      "project": "P13",
+      "exercises": [
+        "E13a",
+        "E13b"
+      ],
+      "prerequisites": [
+        "U12"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U14",
+      "title": "Collectives across both fabrics",
+      "level": 14,
+      "objectives": [
+        "AIO-W-4.2",
+        "AIO-G-4.2",
+        "AIN-1.3",
+        "AIN-5.3",
+        "AII-4.3",
+        "AII-4.10"
+      ],
+      "course": "C14",
+      "project": "P14",
+      "exercises": [
+        "E14a",
+        "E14b"
+      ],
+      "prerequisites": [
+        "U13"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U15",
+      "title": "Acceptance under sustained load",
+      "level": 15,
+      "objectives": [
+        "AII-1.10",
+        "AII-4.1",
+        "AII-4.2",
+        "AII-4.9",
+        "AII-4.11",
+        "AII-4.12",
+        "AII-4.13",
+        "AIO-W-3.5",
+        "AIN-5.3"
+      ],
+      "course": "C15",
+      "project": "P15",
+      "exercises": [
+        "E15a",
+        "E15b"
+      ],
+      "prerequisites": [
+        "U14"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U16",
+      "title": "Correlate independent observations",
+      "level": 16,
+      "objectives": [
+        "AIO-W-1.9",
+        "AIO-W-3.5",
+        "AIO-G-2.2",
+        "AIN-2.5",
+        "AIN-2.6",
+        "AIN-5.2",
+        "AII-5.1"
+      ],
+      "course": "C16",
+      "project": "P16",
+      "exercises": [
+        "E16a",
+        "E16b"
+      ],
+      "prerequisites": [
+        "U15"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U17",
+      "title": "Maintain a live failure domain",
+      "level": 17,
+      "objectives": [
+        "AIO-W-1.4",
+        "AII-1.4",
+        "AII-4.6",
+        "AII-4.7",
+        "AII-4.8",
+        "AII-5.2",
+        "AII-5.3",
+        "AIN-5.3"
+      ],
+      "course": "C17",
+      "project": "P17",
+      "exercises": [
+        "E17a",
+        "E17b"
+      ],
+      "prerequisites": [
+        "U16"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U18",
+      "title": "Capacity and host affinity",
+      "level": 18,
+      "objectives": [
+        "AIN-5.1",
+        "AII-5.4",
+        "AIO-W-3.5"
+      ],
+      "course": "C18",
+      "project": "P18",
+      "exercises": [
+        "E18a",
+        "E18b"
+      ],
+      "prerequisites": [
+        "U17"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U19",
+      "title": "Edge and cloud reconnection",
+      "level": 19,
+      "objectives": [
+        "AIO-G-1.1",
+        "AIO-G-3.4",
+        "AIN-5.3",
+        "AII-1.10"
+      ],
+      "course": "C19",
+      "project": "P19",
+      "exercises": [
+        "E19a",
+        "E19b"
+      ],
+      "prerequisites": [
+        "U18"
+      ],
+      "status": "specified"
+    },
+    {
+      "id": "U20",
+      "title": "Recover without split brain",
+      "level": 20,
+      "objectives": [
+        "AIO-W-1.7",
+        "AIO-W-4.3",
+        "AIO-G-4.3",
+        "AIN-5.4",
+        "AII-1.10"
+      ],
+      "course": "C20",
+      "project": "P20",
+      "exercises": [
+        "E20a",
+        "E20b"
+      ],
+      "prerequisites": [
+        "U19"
+      ],
+      "status": "specified"
+    }
+  ]
+}
