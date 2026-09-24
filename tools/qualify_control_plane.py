@@ -18,6 +18,17 @@ import time
 import urllib.error
 import urllib.request
 
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from verification.evidence import Checklist
+
+REQUIRED_TESTS = {
+    'tls-client-proof-and-bearer-rbac',
+    'api-create-get-list',
+    'runtime-subresources-refuse-fabricated-execution',
+    'kwok-selected-node-ready-unselected-node-unchanged',
+}
+
 def run(*args, **kwargs):
     return subprocess.run(list(map(str,args)), check=True, capture_output=True, timeout=60, **kwargs)
 
@@ -32,13 +43,17 @@ def token(secret, subject):
 
 def qualify(output, kwok_source):
     output=Path(output).resolve();assets=output/'assets';children=[];streams=[];tests=[]
+    assets_identity={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in assets.iterdir() if p.is_file()}
+    ledger=Checklist(REQUIRED_TESTS, 'control-plane/'+hashlib.sha256(json.dumps(assets_identity,sort_keys=True).encode()).hexdigest())
     with tempfile.TemporaryDirectory(prefix='ncp-control-') as private:
         private=Path(private);os.chmod(private,0o700)
         def start(name, *args):
             stream=(output/(name+'.log')).open('w');streams.append(stream)
             child=subprocess.Popen(list(map(str,args)),stdout=stream,stderr=subprocess.STDOUT,cwd=private)
             children.append(child);return child
-        def record(name):tests.append({'test':name,'passed':True})
+        def record(name):
+            ledger.record(name)
+            tests.append({'test':name,'passed':True})
         def eventually(predicate, seconds=45):
             deadline=time.monotonic()+seconds
             while time.monotonic()<deadline:
@@ -102,6 +117,13 @@ def qualify(output, kwok_source):
                       'spec':{'taints':[{'key':'ncp.simulated','value':'true','effect':'NoSchedule'}]},
                       'status':{'capacity':{'cpu':'2','memory':'1Gi','pods':'10'},'allocatable':{'cpu':'2','memory':'1Gi','pods':'10'}}}
                 if api('POST','/api/v1/nodes',node)[0]!=201:raise RuntimeError('node creation failed')
+                code, observed=api('GET','/api/v1/nodes/'+name)
+                if code!=200 or observed['metadata']['labels']['ncp.simulated']!=str(selected).lower():
+                    raise RuntimeError('stored node does not match intent')
+            code, listing=api('GET','/api/v1/nodes')
+            if code!=200 or not {'ncp-selected','ncp-unselected'}.issubset({n['metadata']['name'] for n in listing['items']}):
+                raise RuntimeError('created nodes missing from listing')
+            record('api-create-get-list')
             pod={'apiVersion':'v1','kind':'Pod','metadata':{'name':'ncp-synthetic','namespace':'default'},
                  'spec':{'nodeName':'ncp-selected','containers':[{'name':'placeholder','image':'ncp.invalid/synthetic-only'}]}}
             if api('POST','/api/v1/namespaces/default/pods',pod)[0]!=201:raise RuntimeError('synthetic pod creation failed')
@@ -128,10 +150,12 @@ def qualify(output, kwok_source):
                     try:child.wait(timeout=5)
                     except subprocess.TimeoutExpired:child.kill();child.wait(timeout=5)
             for stream in streams:stream.close()
-            report={'tier':'api-emulated','tests':tests,'required_tests':4,'complete':len(tests)==4,
+            report={'tier':'api-emulated','tests':tests,'required_tests':sorted(REQUIRED_TESTS),
+                    'complete':ledger.complete,'checklist':ledger.report(),
                     'hardware_execution':False,'kubernetes_conformance':False,
-                    'assets':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in assets.iterdir() if p.is_file()}}
+                    'assets':assets_identity}
             (output/'qualification.json').write_text(json.dumps(report,indent=2)+'\n')
+    ledger.finish()
     print(json.dumps(report,indent=2))
 
 if __name__=='__main__':

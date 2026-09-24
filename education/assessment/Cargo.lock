@@ -83,10 +83,15 @@ name = "ncp-grade"
 version = "0.1.0"
 dependencies = [
  "ncp-assessment-kernel",
+ "ncp-metaverify",
  "serde",
  "serde_json",
  "sha2",
 ]
+
+[[package]]
+name = "ncp-metaverify"
+version = "0.1.0"
 
 [[package]]
 name = "proc-macro2"

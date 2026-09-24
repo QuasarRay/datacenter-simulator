@@ -15,5 +15,7 @@ def build(blueprint):
     return stations
 
 if __name__ == '__main__':
-    data = json.loads((ROOT/'education/ncp-metablueprint/blueprint.json').read_text())
-    (ROOT/'education/assessment/bank.json').write_text(json.dumps(build(data),indent=2)+'\n')
+    import sys
+    sys.path.insert(0, str(ROOT))
+    from verification.pipeline import render_repository
+    render_repository(ROOT)

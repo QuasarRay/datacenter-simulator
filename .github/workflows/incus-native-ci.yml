@@ -59,14 +59,12 @@ jobs:
         run: |
           ncp_image_fingerprint=$(python3 -c 'import json; print(json.load(open("/tmp/ncp-image.json"))[0]["fingerprint"])')
           sudo env PATH="/tmp/ncp-ci-env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" PYTHONPATH="$PWD" /tmp/ncp-ci-env/bin/python tools/qualify_netbox.py "$ncp_image_fingerprint" /tmp/ncp-netbox-read-token
+      - name: Export fixed qualification reports without changing lab permissions
+        if: always()
+        run: sudo python3 tools/export_native_evidence.py
       - name: Retain exact-host evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: incus-qualification-${{ github.sha }}
-          path: |
-            artifacts/incus-qualification
-            artifacts/netbox-qualification
-            /tmp/ncp-image.json
-            /tmp/ncp-incus-version.txt
-            /tmp/ncp-netbox.log
+          path: artifacts/native-evidence.tar.gz

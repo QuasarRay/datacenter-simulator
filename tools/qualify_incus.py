@@ -14,6 +14,13 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from integrations.incus.lab import Lab
 from integrations.incus.transport import Incus
+from verification.evidence import Checklist
+
+REQUIRED_TESTS = (
+    "native-deepops-and-payload/ncp-ci-a", "native-deepops-and-payload/ncp-ci-b",
+    "partition-recovery-and-concurrent-isolation", "foreign-member-cleanup-refusal",
+    "owned-cleanup-a", "owned-cleanup-b",
+)
 
 def command(*args,success=True):
     result=subprocess.run(list(map(str,args)),capture_output=True,text=True,timeout=300)
@@ -33,6 +40,7 @@ def qualify(fingerprint):
     for node in topology['content']['nodes'].values():node['os']='ubuntu-24.04'
     manifest=workspace/'topology.json';manifest.write_text(json.dumps(topology))
     states=[];results=[]
+    ledger=Checklist(REQUIRED_TESTS, 'incus/'+fingerprint)
     try:
         for suffix in ('a','b'):
             config={'project':'ncp-ci-'+suffix,'socket':'/var/lib/incus/unix.socket',
@@ -58,6 +66,7 @@ def qualify(fingerprint):
             recaps=[line for line in second['stdout'].splitlines() if 'changed=' in line and 'unreachable=' in line]
             if len(recaps)!=5 or any('changed=0' not in line.replace(' ', '') for line in recaps):
                 raise RuntimeError('native reconciliation is not idempotent')
+            ledger.record('native-deepops-and-payload/'+config['project'])
             results.append({'test':'native-deepops-and-payload','project':config['project'],'passed':True})
         first=json.loads((states[0]/'incus.json').read_text());second=json.loads((states[1]/'incus.json').read_text())
         if {c['name'] for c in first['plan']['cables']} & {c['name'] for c in second['plan']['cables']}:
@@ -73,6 +82,7 @@ def qualify(fingerprint):
         guest(api_b,'compute-a','ping','-c','2','-W','2','10.66.3.2')
         command(binary,'incus-link',states[0],index,'up')
         guest(api_a,'compute-a','ping','-c','3','-W','2','10.66.3.2')
+        ledger.record('partition-recovery-and-concurrent-isolation')
         results.append({'test':'partition-recovery-and-concurrent-isolation','passed':True})
         # No other lab or host resource may be silently adopted during cleanup.
         cable=first['cables'][0]['bridge']
@@ -83,6 +93,7 @@ def qualify(fingerprint):
             if refused.returncode==0:raise RuntimeError('cleanup accepted a foreign bridge member')
             api_a.checked('compute-a')
         finally:command('ip','link','delete','ncp-test-extra')
+        ledger.record('foreign-member-cleanup-refusal')
         results.append({'test':'foreign-member-cleanup-refusal','passed':True})
     finally:
         cleanup=[]
@@ -91,11 +102,12 @@ def qualify(fingerprint):
                 continue # preflight failed before any owned resources existed
             outcome=command(binary,'incus-down',state,success=False)
             cleanup.append({'state':str(state),'returncode':outcome.returncode,'stderr':outcome.stderr})
-            if outcome.returncode==0:command(binary,'incus-down',state) # idempotent completed teardown
+            repeated=command(binary,'incus-down',state,success=False) if outcome.returncode==0 else outcome
+            ledger.record('owned-cleanup-'+state.name[-1], outcome.returncode==0 and repeated.returncode==0)
         report={'tier':'emulated','image_fingerprint':fingerprint,'tests':results,'cleanup':cleanup,
-                'hardware_or_proprietary_validation':False}
+                'hardware_or_proprietary_validation':False,'complete':ledger.complete,'checklist':ledger.report()}
         (workspace/'qualification.json').write_text(json.dumps(report,indent=2)+'\n')
-        if any(x['returncode'] for x in cleanup):raise RuntimeError('owned cleanup incomplete; inspect qualification artifacts')
+        ledger.finish()
     print(json.dumps(report,indent=2))
 
 if __name__=='__main__':

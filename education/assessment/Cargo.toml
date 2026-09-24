@@ -7,9 +7,9 @@ license = "RPL-1.5"
 
 [dependencies]
 ncp-assessment-kernel = { path = "../rustlings/lab-kernel" }
+ncp-metaverify = { path = "../../verification/generated/kernel" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 
 [workspace]
-

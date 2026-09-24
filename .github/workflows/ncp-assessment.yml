@@ -12,11 +12,9 @@ jobs:
       - run: git submodule update --init education/rustlings
       - run: rustup toolchain install 1.98.0 --profile minimal
       - run: python3 tools/check_metablueprint.py
+      - run: python3 tools/check_agents.py
       - run: python3 tools/check_curriculum.py
-      - run: |
-          python3 tools/build_assessment_bank.py
-          python3 tools/build_curriculum.py
-          git diff --exit-code -- education/assessment/bank.json education/ncp-metablueprint
+      - run: python3 tools/meta.py check
       - run: cargo +1.98.0 test --locked --manifest-path education/assessment/Cargo.toml
       - run: |
           python3 -m venv /tmp/ncp-course-env

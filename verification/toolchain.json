@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "rust": "1.98.1",
+  "kani": "0.67.0",
+  "verus": "0.2026.09.20.aef82ed",
+  "verus_archive_sha256": "7b870fa12bc589015c2fab60a8b3d9f07c7b1adb3444eb0fadffcbf7f0447b33",
+  "verus_url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.20.aef82ed/verus-0.2026.09.20.aef82ed-x86-linux.zip"
+}
