@@ -12,6 +12,7 @@ jobs:
       - run: git submodule update --init education/rustlings
       - run: rustup toolchain install 1.98.0 --profile minimal
       - run: python3 tools/check_metablueprint.py
+      - run: python3 tools/check_agents.py
       - run: python3 tools/check_curriculum.py
       - run: |
           python3 tools/build_assessment_bank.py
