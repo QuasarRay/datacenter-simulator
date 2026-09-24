@@ -33,6 +33,8 @@ def safe_path(root, relative):
     result = root.joinpath(*path.parts)
     for item in [result, *result.parents]:
         require(not item.is_symlink(), f"symlink forbidden: {item}")
+        if item.exists():
+            require(item.is_file() if item == result else item.is_dir(), f"wrong output path kind: {item}")
         if item == root: break
     return result
 
@@ -78,6 +80,7 @@ def drift(root, files, manifest_path, inputs):
     old_path = safe_path(root, manifest_path)
     if old_path.exists():
         old = strict_json(old_path.read_text())
+        require(set(old) == {"schema", "inputs", "outputs"} and old["schema"] == 1, "ownership manifest schema")
         for name in old["outputs"]:
             safe_path(root, name)
             if name not in files: errors.append("retired:" + name)
@@ -96,10 +99,13 @@ def publish(root, files, manifest_path, inputs):
     previous = paths[manifest_path]
     if previous.exists():
         old = strict_json(previous.read_text())
+        require(set(old) == {"schema", "inputs", "outputs"} and old["schema"] == 1, "ownership manifest schema")
         require(set(old["outputs"]) <= set(files), "retired generated files require an explicit reviewed migration")
+    manifest_bytes = (json.dumps(bundle_manifest(files, inputs), indent=2) + "\n").encode()
     for name, content in files.items():
         require(type(content) is str, f"not text: {name}")
+        content.encode()
     for name, content in files.items():
         path = paths[name]
         if not path.exists() or path.read_bytes() != content.encode(): atomic_write(path, content.encode())
-    atomic_write(previous, (json.dumps(bundle_manifest(files, inputs), indent=2) + "\n").encode())
+    atomic_write(previous, manifest_bytes)

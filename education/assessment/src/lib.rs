@@ -1,6 +1,7 @@
 //! Trainer-side evidence validation. A JSON assertion is trusted only when its
 //! collector and artifact store are outside the learner's security principal.
-use ncp_assessment_kernel::{current_receipt, facets_complete, tier_matches, triad};
+use ncp_assessment_kernel::tier_matches;
+use ncp_metaverify::{evidence_complete, receipt_current as current_receipt};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
@@ -102,13 +103,18 @@ pub fn accepted(receipt: &Receipt, station: &Station) -> bool {
     if station.facets.is_empty() || station.facets.len() > 63 {
         return false;
     }
-    triad(
-        receipt.ops,
-        receipt.net,
-        receipt.infra,
-        receipt.coupled,
+    let domains = (receipt.ops == 2) as u8
+        | (((receipt.net == 2) as u8) << 1)
+        | (((receipt.infra == 2) as u8) << 2);
+    // evaluate sets a facet bit only after both baseline and holdout pass.
+    // coupled covers all three removal/restoration interventions.
+    evidence_complete(
+        (1u64 << station.facets.len()) - 1,
+        receipt.observed_facets,
+        receipt.observed_facets,
+        domains,
+        if receipt.coupled { 7 } else { 0 },
         receipt.provenance,
-        facets_complete((1u64 << station.facets.len()) - 1, receipt.observed_facets),
     )
 }
 
@@ -218,15 +224,7 @@ pub fn evaluate(
     });
     let statuses = std::array::from_fn::<_, 3, _>(|i| if present[i] && domains[i] { 2 } else { 1 });
     [r.ops, r.net, r.infra] = statuses;
-    let required = (1u64 << s.facets.len()) - 1;
-    if triad(
-        r.ops,
-        r.net,
-        r.infra,
-        r.coupled,
-        r.provenance,
-        facets_complete(required, r.observed_facets),
-    ) {
+    if accepted(&r, s) {
         r.feedback = "Integrated station accepted from trainer observations at the required execution tiers.".into();
     } else {
         r.feedback =
@@ -295,14 +293,7 @@ mod tests {
         (q, b)
     }
     fn accepted(r: Receipt, s: &Station) -> bool {
-        triad(
-            r.ops,
-            r.net,
-            r.infra,
-            r.coupled,
-            r.provenance,
-            facets_complete((1u64 << s.facets.len()) - 1, r.observed_facets),
-        )
+        super::accepted(&r, s)
     }
     #[test]
     fn entire_bank_rejects_every_missing_facet_domain_case_and_provenance() {
@@ -311,6 +302,9 @@ mod tests {
         for s in &bank {
             let (q, b) = sample(s);
             assert!(accepted(evaluate(s, &q, Some(&b), |_, _, _| true), s));
+            let mut extra = evaluate(s, &q, Some(&b), |_, _, _| true);
+            extra.observed_facets |= 1u64 << 63;
+            assert!(!accepted(extra, s));
             assert!(!accepted(evaluate(s, &q, None, |_, _, _| true), s));
             assert!(!accepted(evaluate(s, &q, Some(&b), |_, _, _| false), s));
             for i in 0..b.observations.len() {

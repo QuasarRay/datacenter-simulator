@@ -89,9 +89,12 @@ def node(op, *args):
     return Expr(op, kind, tuple(args))
 
 
-def inspect(expr, bindings, depth=0):
+def inspect(expr, bindings, depth=0, budget=None):
     """Recheck even hand-constructed Expr nodes; never trust a dataclass instance."""
     require(isinstance(expr, Expr) and depth <= 64, "invalid or excessive expression depth")
+    if budget is None: budget = [4096]
+    budget[0] -= 1
+    require(budget[0] >= 0, "expanded expression exceeds the 4096-node proof budget")
     require(type(expr.args) is tuple and expr.kind in TYPES, "invalid expression shape")
     if expr.op == "literal":
         require(len(expr.args) == 1, "literal arity")
@@ -103,7 +106,7 @@ def inspect(expr, bindings, depth=0):
         return {expr.args[0]}
     names = set()
     for child in expr.args:
-        names.update(inspect(child, bindings, depth + 1))
+        names.update(inspect(child, bindings, depth + 1, budget))
     require(node(expr.op, *expr.args).kind == expr.kind, "forged result type")
     return names
 
@@ -142,6 +145,8 @@ class Contract:
     def validate(self):
         identifier(self.name)
         require(type(self.scope) is str and bool(self.scope.strip()), f"{self.name}: missing scope")
+        require(1 <= len(self.parameters) <= 16 and 1 <= len(self.properties) <= 16
+                and 2 <= len(self.witnesses) <= 32, "contract expansion bounds exceeded or empty")
         bindings = {}
         for name, kind in self.parameters:
             identifier(name)

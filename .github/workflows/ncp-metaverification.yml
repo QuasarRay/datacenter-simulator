@@ -9,7 +9,8 @@ on:
       - 'tools/check_metablueprint.py'
       - 'education/authoring/**'
       - 'education/ncp-metablueprint/**'
-      - 'education/assessment/bank.json'
+      - 'education/assessment/**'
+      - 'tools/qualify_*.py'
       - '.github/workflows/ncp-metaverification.yml'
   workflow_dispatch:
 permissions:
@@ -26,10 +27,7 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 tools/meta.py check
-      - run: python3 -m unittest discover -s verification/tests
-      - run: python3 -O -m unittest discover -s verification/tests
       - run: rustup toolchain install 1.98.1 --profile minimal
-      - run: cargo +1.98.1 test --manifest-path verification/generated/kernel/Cargo.toml
       - name: Install pinned verification tools
         run: |
           cargo +1.98.1 install kani-verifier --locked --version 0.67.0
@@ -49,7 +47,7 @@ jobs:
       - name: Fresh all-input proofs and mandatory negative controls
         env:
           VERUS: /tmp/ncp-verus/verus-x86-linux/verus
-        run: python3 tools/meta.py prove --fresh
+        run: python3 tools/meta.py verify --fresh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

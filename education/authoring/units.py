@@ -6,6 +6,8 @@ Never derive a product-completion claim from a successful planning example.
 UNITS = {}
 
 def unit(n, skills, semantics, steps, project, incidents, symbols, code):
+    if type(n) is not int or n in UNITS:
+        raise ValueError('unit identity must be an integer registered exactly once')
     UNITS[n] = dict(skills=skills,semantics=semantics,steps=steps,project=project,
                     incidents=incidents,symbols=symbols,code=code.strip()+'\n')
 

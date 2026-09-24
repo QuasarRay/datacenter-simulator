@@ -47,6 +47,12 @@ class CompilerBoundary(unittest.TestCase):
         for c in registry.contracts.values():
             with self.subTest(contract=c.name): c.validate()
 
+    def test_compact_recursive_dag_cannot_expand_into_unbounded_solver_input(self):
+        c = registry.contracts["subset"]
+        body = c.body
+        for _ in range(13): body = body & body
+        with self.assertRaisesRegex(ContractError, "proof budget"): replace(c, body=body).validate()
+
     def test_single_expression_is_used_by_both_execution_backends(self):
         first, second = expand(registry), expand(registry)
         self.assertEqual(first, second)
@@ -72,6 +78,9 @@ class PublicationBoundary(unittest.TestCase):
                 self.assertFalse((root / "good").exists())
             (root / "linked").symlink_to(root, target_is_directory=True)
             with self.assertRaises(ContractError): safe_path(root, "linked/x")
+            (root / "blocked").write_text("not a directory")
+            with self.assertRaises(ContractError): publish(root, {"good": "one", "blocked/child": "two"}, "manifest.json", {})
+            self.assertFalse((root / "good").exists())
 
     def test_drift_is_read_only_and_a_partial_publish_cannot_pass(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -101,7 +110,7 @@ class ProofReportBoundary(unittest.TestCase):
 
     def test_verus_no_verify_partial_crate_and_wrong_inventory_cannot_pass(self):
         report = {"func-details": {"verus::one": {}}, "verification-results": {
-            "is-verifying-entire-crate": True, "encountered-vir-error": False,
+            "is-verifying-entire-crate": True, "encountered-vir-error": False, "encountered-error": False,
             "verified": 1, "errors": 0, "success": True}}
         verus_result(json.dumps(report), 0, ["one"], False)
         for key, value in [("verified", 0), ("errors", 1), ("is-verifying-entire-crate", False),
@@ -110,6 +119,43 @@ class ProofReportBoundary(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(ContractError): verus_result(json.dumps(changed), 0, ["one"], False)
         with self.assertRaises(ContractError): verus_result(json.dumps(report), 0, ["two"], False)
         with self.assertRaises(ContractError): verus_result(json.dumps(report), 0, ["one"], True)
+
+    def test_tampered_local_receipt_reexecutes_tools_instead_of_reusing_success(self):
+        # Simulated tool transcripts test orchestration only. Actual proof gates
+        # separately invoke the real verifiers with no mocks or injected commands.
+        from unittest.mock import patch
+        import sys
+        from verification.prove import verify
+        names = list(registry.contracts)
+        invoked = []
+        def fake(command, folder, label, timeout=300):
+            invoked.append(label)
+            if label == "kani-version": output, code = "cargo-kani 0.67.0", 0
+            elif label == "rust-version": output, code = "cargo 1.98.1 (test)", 0
+            elif label == "verus-version": output, code = json.dumps({"verus": {"version": "0.2026.09.20.aef82ed"}}), 0
+            else:
+                mutant = "mutants" in label
+                code = int(mutant)
+                if label.startswith("kani"):
+                    output = "".join(f"Checking harness proofs::law_{name}...\nVERIFICATION:- {'FAILED' if mutant else 'SUCCESSFUL'}\n" for name in names)
+                else:
+                    output = json.dumps({"func-details": {"verus::" + n: {} for n in names}, "verification-results": {
+                        "is-verifying-entire-crate": True, "encountered-vir-error": False, "encountered-error": mutant,
+                        "verified": 0 if mutant else len(names), "errors": len(names) if mutant else 0, "success": not mutant}})
+            (folder / (label + ".stdout")).write_text(output)
+            (folder / (label + ".stderr")).write_text("")
+            return {"command": command, "exit": code, "stdout": label + ".stdout", "stderr": label + ".stderr"}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); (root / "verification").mkdir()
+            (root / "verification/toolchain.json").write_text(json.dumps({"rust": "1.98.1", "kani": "0.67.0", "verus": "0.2026.09.20.aef82ed"}))
+            with patch("verification.prove.execute", side_effect=fake), patch("verification.prove.tree_identity", return_value="fixture"), patch("verification.prove.shutil.which", return_value=sys.executable):
+                first = verify(root, registry, {}, verus=sys.executable)
+                self.assertFalse(first["cached"])
+                self.assertTrue(verify(root, registry, {}, verus=sys.executable)["cached"])
+                (root / first["evidence"] / "verus.stdout").write_text("")
+                self.assertFalse(verify(root, registry, {}, verus=sys.executable)["cached"])
+                self.assertEqual(invoked.count("verus"), 2)
+                self.assertEqual(invoked.count("kani-mutants"), 2)
 
 
 if __name__ == "__main__": unittest.main()

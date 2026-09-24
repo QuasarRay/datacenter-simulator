@@ -23,15 +23,23 @@ def execute(command, directory, label, timeout=300):
                    "CARGO_ENCODED_RUSTFLAGS", "RUSTUP_TOOLCHAIN", "KANIFLAGS", "VERUS_ARGS"}:
             env.pop(key)
     out, err = directory / (label + ".stdout"), directory / (label + ".stderr")
-    with out.open("wb") as stdout, err.open("wb") as stderr:
-        process = subprocess.Popen(command, cwd=directory, env=env, stdout=stdout, stderr=stderr, start_new_session=True)
-        try: code = process.wait(timeout=timeout)
-        except BaseException:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.wait()
-            raise
-    require(out.stat().st_size + err.stat().st_size <= 16 * 1024 * 1024, f"excessive tool output: {label}")
-    return {"command": command, "exit": code, "stdout": out.name, "stderr": err.name}
+    process = subprocess.Popen(command, cwd=directory, env=env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, start_new_session=True)
+    failure = None
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+    except BaseException as error:
+        os.killpg(process.pid, signal.SIGKILL)
+        stdout, stderr = process.communicate(timeout=10)
+        failure = error
+    require(len(stdout) + len(stderr) <= 16 * 1024 * 1024, f"excessive tool output: {label}")
+    # The tool never owns the accepted transcript's file descriptor. Publish an
+    # atomic snapshot only after EOF; inherited descriptors cannot truncate it.
+    atomic_write(out, stdout)
+    atomic_write(err, stderr)
+    if failure is not None:
+        raise failure
+    return {"command": command, "exit": process.returncode, "stdout": out.name, "stderr": err.name}
 
 
 def verus_result(text, code, names, mutant):
@@ -40,6 +48,7 @@ def verus_result(text, code, names, mutant):
     expected_count = len(names)
     require(result["is-verifying-entire-crate"] is True and result["encountered-vir-error"] is False,
             "Verus did not verify the entire valid crate")
+    require(result["encountered-error"] is mutant, "Verus error flag contradicts the expected proof outcome")
     actual = {name.split("::")[-1] for name in report["func-details"] if not name.startswith("vstd::")}
     require(actual == set(names), "Verus function inventory mismatch")
     require(result["verified"] == (0 if mutant else expected_count)
@@ -89,13 +98,23 @@ def verify(root, registry, inputs, *, verus, fresh=False):
                           ("rust", [cargo, "+" + toolchain["rust"], "--version"])]:
         run = execute(command, directory, name + "-version")
         output = (directory / run["stdout"]).read_text()
-        require(run["exit"] == 0 and toolchain[name] in output, f"{name}: wrong or missing pinned version")
+        observed = (strict_json(output)["verus"]["version"] if name == "verus"
+                    else output.split()[1] if len(output.split()) >= 2 else None)
+        require(run["exit"] == 0 and toolchain[name] == observed, f"{name}: wrong or missing pinned version")
         versions[name] = output.strip()
     kani_home = Path.home() / ".kani" / ("kani-" + toolchain["kani"])
     tools = {"versions": versions, "verus_tree": tree_identity(Path(verus).parent),
              "kani_tree": tree_identity(kani_home), "cargo": sha(Path(cargo).resolve().read_bytes())}
     key = sha(json.dumps({"inputs": inputs, "tools": tools}, sort_keys=True).encode())
     index = base / (key + ".json")
+
+    def commands(folder, mutant):
+        prefix = "mutants" if mutant else "positive"
+        suffix = "-mutants" if mutant else ""
+        return {
+            "verus" + suffix: [str(Path(verus).resolve()), "--no-cheating", "--output-json", str(folder / prefix / "verus.rs")],
+            "kani" + suffix: [cargo, "kani", "--manifest-path", str(folder / prefix / "kernel/Cargo.toml"), "--output-format", "terse"],
+        }
 
     def inspect_receipt(receipt):
         require(set(receipt) == {"schema", "key", "inputs", "tools", "names", "runs", "files", "directory"}, "unexpected proof receipt")
@@ -110,9 +129,13 @@ def verify(root, registry, inputs, *, verus, fresh=False):
         expected_runs = {"verus", "kani", "verus-mutants", "kani-mutants"}
         require(set(receipt["runs"]) == expected_runs, "missing verifier or negative-control run")
         for label, run in receipt["runs"].items():
+            require(run["command"] == commands(folder, "mutants" in label)[label], "proof command drift")
             require(run["stdout"] in receipt["files"] and run["stderr"] in receipt["files"], "unbound transcript")
             output = (folder / run["stdout"]).read_text()
-            (verus_result if label.startswith("verus") else kani_result)(output, run["exit"], names, "mutants" in label)
+            try:
+                (verus_result if label.startswith("verus") else kani_result)(output, run["exit"], names, "mutants" in label)
+            except (ValueError, KeyError, TypeError) as error:
+                raise ValueError(f"{label}: invalid transcript; inspect {folder.relative_to(root)}: {error}") from error
         # A receipt must bind every expected expansion, not merely some log files.
         for mutant in (False, True):
             prefix = "mutants" if mutant else "positive"
@@ -135,12 +158,7 @@ def verify(root, registry, inputs, *, verus, fresh=False):
             path = directory / prefix / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content)
-        suffix = "-mutants" if mutant else ""
-        commands = {
-            "verus" + suffix: [str(Path(verus).resolve()), "--no-cheating", "--output-json", str(directory / prefix / "verus.rs")],
-            "kani" + suffix: [cargo, "kani", "--manifest-path", str(directory / prefix / "kernel/Cargo.toml"), "--output-format", "terse"],
-        }
-        for label, command in commands.items():
+        for label, command in commands(directory, mutant).items():
             runs[label] = execute(command, directory, label)
             output = (directory / runs[label]["stdout"]).read_text()
             try:
