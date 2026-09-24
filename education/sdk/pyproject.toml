@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ncp-lab"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["unpythonic==2.1.0", "mcpyrate==4.0.0", "kr8s==0.20.15"]
+
+[tool.setuptools.packages.find]
+include = ["ncp_lab*"]

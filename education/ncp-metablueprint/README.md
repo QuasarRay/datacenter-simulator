@@ -11,6 +11,8 @@ credit. Familiarity with one or two source exams remains useful prerequisite
 knowledge, but earns zero completed Metablueprint assessment units by itself.
 This is an assessment rule, not a claim that prior learning has no value.
 
+Start with [the learning route](LEARNING_ROUTE.md): twenty authored courses, twenty guided projects, forty independent incident prompts and twenty executable planning examples. Live qualification is tracked separately.
+
 ## Source completeness
 
 [blueprint.json](blueprint.json) retains **113 source objective identities and 203
