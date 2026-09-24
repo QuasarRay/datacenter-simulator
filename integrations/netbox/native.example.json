@@ -1,0 +1,19 @@
+{
+  "netbox": {
+    "api_url": "https://netbox.lab.example/api/",
+    "token_env": "NETBOX_TOKEN",
+    "device_filter": {"site": "ncp-lab"},
+    "roles": {"gpu-server": "host", "control": "host", "services": "host", "leaf": "switch", "spine": "switch"},
+    "medium": "ethernet",
+    "planned_links_up": false,
+    "image": "ubuntu-24.04",
+    "snapshot_max_age_secs": 300,
+    "resources": {"cpu": 1, "memory": 1024, "storage": 8}
+  },
+  "project": "ncp-commissioning",
+  "socket": "/var/lib/incus/unix.socket",
+  "storage_pool": "default",
+  "image_fingerprint": "REPLACE_WITH_THE_EXACT_LOCALLY_QUALIFIED_64_HEX_IMAGE_FINGERPRINT",
+  "max_memory_mib": 8192,
+  "ipv4_pool": "10.88.0.0/16"
+}

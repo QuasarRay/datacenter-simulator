@@ -40,6 +40,8 @@ pub mod manifest;
 pub mod model;
 #[cfg(feature = "mokka")]
 pub mod mokka;
+#[cfg(all(feature = "netbox", feature = "incus"))]
+pub mod native_fabric;
 #[cfg(feature = "nccl")]
 pub mod nccl_backend;
 #[cfg(feature = "nccl")]

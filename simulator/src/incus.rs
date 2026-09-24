@@ -99,14 +99,19 @@ impl Config {
             !nodes.is_empty() && nodes.len() <= 64,
             "Incus profile supports 1..64 real system containers; use KWOK for worker scale"
         );
-        let total = nodes
-            .iter()
-            .try_fold(0u64, |sum, n| sum.checked_add(n.spec.resources.memory))
-            .context("memory overflow")?;
-        ensure!(
-            total <= self.max_memory_mib,
-            "declared memory exceeds local budget"
-        );
+        let mut total = 0;
+        for node in &nodes {
+            let next = ncp_assessment_kernel::reserve(
+                total,
+                node.spec.resources.memory,
+                self.max_memory_mib,
+            );
+            ensure!(
+                next > total,
+                "declared memory exceeds local budget or is zero"
+            );
+            total = next;
+        }
         let mut peers = BTreeMap::new();
         let mut plans = Vec::new();
         for (index, node) in nodes.iter().enumerate() {
