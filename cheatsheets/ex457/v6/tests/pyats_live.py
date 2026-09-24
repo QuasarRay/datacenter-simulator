@@ -1,6 +1,6 @@
-"""Destructive acceptance tests ONLY for the isolated ex457-v6 Containerlab lab.
+"""Destructive acceptance tests ONLY for the isolated ex457-v6 Incus lab.
 
-A missing Docker daemon or an unprepared lab is an error, never a skip/pass.
+A missing Incus daemon or an unprepared lab is an error, never a skip/pass.
 Raw outputs stay in private .state; CI exports an allowlist of sanitized logs.
 """
 import hashlib
@@ -45,13 +45,22 @@ def cmd(argv, expected=0, env=None):
     return run
 
 
-def docker(node,*args,expected=0): return cmd(['docker','exec','clab-ex457-v6-'+node,*args],expected)
+def guest(node,*args,expected=0):
+    import importlib.util
+    transport_path = Path(__file__).resolve().parents[4]/'integrations/incus/transport.py'
+    spec = importlib.util.spec_from_file_location('incus_transport', transport_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    client = module.Incus(os.environ['NCP_JOURNAL'])
+    code, out, err = client.execute(node, list(args))
+    assert code == expected, (code, err)
+    return subprocess.CompletedProcess(args, code, out.decode(), err.decode())
 
 
 def cli(node,*commands):
     args=['vtysh']
     for command in commands:args+=['-c',command]
-    return docker(node,*args).stdout
+    return guest(node,*args).stdout
 
 
 def play(name,*args,expected=0,env=None):
@@ -61,9 +70,11 @@ def play(name,*args,expected=0,env=None):
 class LabSetup(aetest.CommonSetup):
     @aetest.subsection
     def require_exact_testbed(self):
-        running=cmd(['docker','ps','--format','{{.Names}}']).stdout.splitlines()
-        assert {x for x in running if x.startswith('clab-ex457-v6-')}=={'clab-ex457-v6-'+n for n in DC['nodes']}
-        cmd([sys.executable,'tools/labctl.py','preflight'])
+        journal=json.loads(Path(os.environ['NCP_JOURNAL']).read_text())
+        running=[n['name'] for n in journal['plan']['nodes']]
+        assert set(running)==set(DC['nodes'])
+        assert journal['phase']=='active'
+        for node in running: guest(node, 'true')
 
 
 class Transport(aetest.Testcase):
@@ -71,10 +82,10 @@ class Transport(aetest.Testcase):
     def ssh_policy_and_real_libssh(self):
         doc_contract('R001','Transport.ssh_policy_and_real_libssh')
         for node in DC['nodes']:
-            policy=docker(node,'/usr/sbin/sshd','-T').stdout
+            policy=guest(node,'/usr/sbin/sshd','-T').stdout
             for directive in ['passwordauthentication no','kbdinteractiveauthentication no','pubkeyauthentication yes','permitrootlogin no']:
                 assert directive in policy
-            account=docker(node,'awk','-F:', '$1 == "ansible" { if ($2 ~ /^[!*]/) print "LOCKED"; else print "UNLOCKED" }','/etc/shadow').stdout.strip()
+            account=guest(node,'awk','-F:', '$1 == "ansible" { if ($2 ~ /^[!*]/) print "LOCKED"; else print "UNLOCKED" }','/etc/shadow').stdout.strip()
             assert account == 'UNLOCKED', 'missing or locked public-key account'
             assert '10.7.1' in cli(node,'show version')
         play('show_version')
@@ -107,7 +118,7 @@ class Convergence(aetest.Testcase):
         with recorded_run(ROOT,'live-independent',STATE) as record:
             for name,node in DC['nodes'].items():
                 want=intent(DC,name)
-                raw=json.loads(docker(name,'ip','-j','-4','address','show').stdout)
+                raw=json.loads(guest(name,'ip','-j','-4','address','show').stdout)
                 observed={r['ifname']:[f"{a['local']}/{a['prefixlen']}" for a in r.get('addr_info',[]) if a['family']=='inet' and a['local']!='127.0.0.1'] for r in raw if r['ifname']!='eth0'}
                 observed={k:sorted(v) for k,v in observed.items() if v}
                 expected={'lo':[node['loopback']]}
@@ -122,8 +133,8 @@ class Convergence(aetest.Testcase):
                     prefix=other['loopback']
                     bgp_ok(cli(name,'show bgp ipv4 unicast '+prefix+' json'),prefix,want)
                     rib_ok(cli(name,'show ip route '+prefix+' json'),prefix,want)
-                    kernel_ok(docker(name,'ip','-j','-4','route','show','exact',prefix).stdout,prefix,want)
-                    ping_ok(docker(name,'ping','-n','-c','3','-W','2','-I',node['loopback'].split('/')[0],prefix.split('/')[0]).stdout)
+                    kernel_ok(guest(name,'ip','-j','-4','route','show','exact',prefix).stdout,prefix,want)
+                    ping_ok(guest(name,'ping','-n','-c','3','-W','2','-I',node['loopback'].split('/')[0],prefix.split('/')[0]).stdout)
                     record['results'].append({'node':name,'remote':remote,'checks':['address','BGP','Zebra','kernel','sourced-ping']})
             assert len(record['results'])==12
 
@@ -147,12 +158,12 @@ class NegativeCases(aetest.Testcase):
         cmd([sys.executable,'tools/labctl.py','dataplane'])
         success=json.loads((STATE/'dataplane.json').read_text())
         rule=['OUTPUT','-p','icmp','--icmp-type','echo-request','-j','DROP']
-        docker('spine1','iptables','-I',*rule)
+        guest('spine1','iptables','-I',*rule)
         try:
             cmd([sys.executable,'tools/labctl.py','dataplane'],expected='failure')
             failed=json.loads((STATE/'dataplane.json').read_text())
             assert failed['status']=='FAIL' and failed['run_id']!=success['run_id']
-        finally:docker('spine1','iptables','-D',*rule)
+        finally:guest('spine1','iptables','-D',*rule)
         cmd([sys.executable,'tools/labctl.py','dataplane'])
 
 
@@ -171,12 +182,12 @@ class Persistence(aetest.Testcase):
         cli('spine1','configure terminal','interface lo','ip address 192.0.2.248/32','end')
         play('restore_fabric','-e','restore_run_id='+run_id)
         play('persist_fabric')
-        saved={n:hashlib.sha256(docker(n,'cat','/etc/frr/frr.conf').stdout.encode()).hexdigest() for n in DC['nodes']}
+        saved={n:hashlib.sha256(guest(n,'cat','/etc/frr/frr.conf').stdout.encode()).hexdigest() for n in DC['nodes']}
         cmd([sys.executable,'tools/labctl.py','restart'])
         play('verify_fabric')
         cmd([sys.executable,'tools/labctl.py','dataplane'])
         cmd([sys.executable,'tools/labctl.py','saved'])
-        assert saved=={n:hashlib.sha256(docker(n,'cat','/etc/frr/frr.conf').stdout.encode()).hexdigest() for n in DC['nodes']}
+        assert saved=={n:hashlib.sha256(guest(n,'cat','/etc/frr/frr.conf').stdout.encode()).hexdigest() for n in DC['nodes']}
         assert set(index['nodes'])==set(DC['nodes'])
 
 

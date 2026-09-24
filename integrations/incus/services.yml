@@ -1,0 +1,46 @@
+---
+- name: Install prebuilt control-plane and service processes in system containers
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check explicitly staged executable files
+      ansible.builtin.stat:
+        path: "{{ item.executable }}"
+        checksum_algorithm: sha256
+      loop: "{{ ncp_services[inventory_hostname] | default([]) }}"
+      register: ncp_binary_checks
+    - name: Refuse unpinned executables
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.checksum == item.item.sha256
+          - item.item.name is match('^ncp-[a-z0-9-]+$')
+      loop: "{{ ncp_binary_checks.results }}"
+    - name: Install systemd units from reviewed service descriptions
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}.service"
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=NCP {{ item.name }}
+          After=network-online.target
+          Wants=network-online.target
+          [Service]
+          User={{ item.user }}
+          ExecStart={{ item.executable }} {{ item.arguments }}
+          WorkingDirectory={{ item.directory }}
+          EnvironmentFile=/etc/ncp/service.env
+          Restart=on-failure
+          RestartSec=3
+          NoNewPrivileges=true
+          [Install]
+          WantedBy=multi-user.target
+      loop: "{{ ncp_services[inventory_hostname] | default([]) }}"
+      register: ncp_units
+    - name: Start native services
+      ansible.builtin.systemd_service:
+        name: "{{ item.name }}"
+        state: "{{ 'restarted' if ncp_units.changed else 'started' }}"
+        enabled: true
+        daemon_reload: true
+      loop: "{{ ncp_services[inventory_hostname] | default([]) }}"

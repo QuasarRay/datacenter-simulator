@@ -1,3 +1,5 @@
+> Historical course text and regression evidence. Its former runtime has been retired. Use [the Incus backend](../../../integrations/incus/README.md) for new deployments. Historical release validation is not a current acceptance gate.
+
 # EX457 Containerlab cheatsheet v5
 
 ## Start here
