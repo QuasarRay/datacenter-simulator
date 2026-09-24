@@ -1,0 +1,8 @@
+{
+  "project": "ncp-lab",
+  "socket": "/var/lib/incus/unix.socket",
+  "storage_pool": "default",
+  "image_fingerprint": "REPLACE_WITH_THE_64_HEX_DIGIT_IMPORTED_CACHYOS_IMAGE_FINGERPRINT",
+  "manifest": "topology.ubuntu.json",
+  "max_memory_mib": 8192
+}

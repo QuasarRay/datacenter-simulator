@@ -1,0 +1,53 @@
+name: Incus native qualification
+on:
+  pull_request:
+    paths: ['simulator/**', 'integrations/incus/**', 'tools/qualify_incus.py', '.github/workflows/incus-native-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: incus-qualification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ethernet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Native dependencies on disposable VM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y incus btrfs-progs iproute2 iputils-ping python3-venv
+          sudo incus admin init --auto --storage-backend btrfs --storage-create-loop 8
+      - name: Build a labeled Ubuntu qualification image
+        run: |
+          sudo incus launch images:ubuntu/24.04 ncp-ci-image-builder -c user.ncp.owner=ci-image-builder
+          sudo incus exec ncp-ci-image-builder -- apt-get update
+          sudo incus exec ncp-ci-image-builder -- apt-get install -y python3 iproute2 iputils-ping procps
+          sudo incus stop ncp-ci-image-builder
+          sudo incus publish ncp-ci-image-builder --alias ncp-ci-qualified
+          sudo incus delete ncp-ci-image-builder
+          sudo incus image list ncp-ci-qualified --format=json > /tmp/ncp-image.json
+          sudo incus version > /tmp/ncp-incus-version.txt
+      - name: Compile and prepare pinned Ansible
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          cargo +1.98.0 build --locked --manifest-path simulator/Cargo.toml --features incus
+          python3 -m venv /tmp/ncp-ci-env
+          /tmp/ncp-ci-env/bin/pip install ansible-core==2.19.8
+      - name: Qualify two concurrent native labs
+        run: |
+          ncp_image_fingerprint=$(python3 -c 'import json; images=json.load(open("/tmp/ncp-image.json")); assert len(images)==1; print(images[0]["fingerprint"])')
+          sudo env PATH="/tmp/ncp-ci-env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" PYTHONPATH="$PWD" /tmp/ncp-ci-env/bin/python tools/qualify_incus.py "$ncp_image_fingerprint"
+      - name: Retain exact-host evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: incus-qualification-${{ github.sha }}
+          path: |
+            artifacts/incus-qualification
+            /tmp/ncp-image.json
+            /tmp/ncp-incus-version.txt

@@ -65,3 +65,24 @@ fn independent_runs_never_reuse_owner_or_peer_names() {
             .all(|p| !names.contains(p))
     );
 }
+
+#[test]
+fn declared_ubuntu_profile_is_explicit_and_mixed_images_are_rejected() {
+    let mut c = config();
+    c.manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../integrations/incus/topology.ubuntu.json");
+    let plan = c.plan().unwrap();
+    assert!(
+        plan.nodes
+            .iter()
+            .all(|n| n.spec["config"]["user.ncp.os"] == "ubuntu-24.04")
+    );
+    let text = std::fs::read_to_string(&c.manifest)
+        .unwrap()
+        .replacen("ubuntu-24.04", "cachyos", 1);
+    let temporary = std::env::temp_dir().join(format!("ncp-mixed-os-{}.json", std::process::id()));
+    std::fs::write(&temporary, text).unwrap();
+    c.manifest = temporary.clone();
+    assert!(c.plan().is_err());
+    std::fs::remove_file(temporary).unwrap();
+}

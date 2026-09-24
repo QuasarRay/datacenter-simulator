@@ -1,13 +1,13 @@
 ---
-- name: Provision the owned CachyOS lab through real DeepOps roles
+- name: Provision the owned declared OS through real DeepOps roles
   hosts: all
   gather_facts: true
   tasks:
     - name: Require the declared guest distribution
       ansible.builtin.assert:
         that:
-          - ansible_facts.distribution == 'CachyOS'
-        fail_msg: The lab requires a qualified CachyOS image; changing distro facts is prohibited.
+          - (ncp_declared_os == 'cachyos' and ansible_facts.distribution == 'CachyOS') or (ncp_declared_os == 'ubuntu-24.04' and ansible_facts.distribution == 'Ubuntu' and ansible_facts.distribution_version == '24.04')
+        fail_msg: The observed distribution must match the declared image OS; changing distro facts is prohibited.
     - name: Manage node identity using NVIDIA DeepOps
       ansible.builtin.include_role:
         name: deepops_hosts

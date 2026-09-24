@@ -3,10 +3,11 @@
 The Rust `incus` feature compiles the existing simulator manifest into explicit
 Incus REST requests and patchbay host cables. No image alias, default profile,
 implicit uplink, privileged guest or nested runtime is inherited. The example
-uses five CachyOS system containers with 6 GiB of declared RAM; this is a budget,
+uses five CachyOS system containers with 6 GiB of declared RAM; the explicit
+`topology.ubuntu.json` profile declares Ubuntu 24.04 instead. This is a budget,
 not a measured host memory claim. KWOK workers are separate logical resources.
 
-Import a CachyOS system-container image into an initialized local Incus daemon,
+Import a system-container image matching the declared OS into a local Incus daemon,
 record its full fingerprint, then replace the deliberately invalid value in
 `config.example.json`. The image must include a working init, Python, iproute2
 and the packages required by the selected Ansible roles. Image building and
@@ -39,6 +40,15 @@ InfiniBand manifests; use the existing ibsim backend for management-plane IB
 experiments and native RDMA for payload evidence. Bridge behavior for LLDP,
 STP/LACP, optical errors, hardware PFC and switch ASIC queues is not qualified.
 Neither wall-clock netem latency nor a model label is hardware performance proof.
+
+Ubuntu 24.04 is an additional qualification profile because it matches an OS
+family/version supported by real DeepOps. This does not qualify every DeepOps
+role inside an unprivileged container. Ansible checks observed distribution
+facts against each journal's declared OS; it never changes those facts.
+Both profiles use the same exact-fingerprint and ownership rules. The hosted
+qualification workflow records its base/prepared image identity and tests two
+native labs, real DeepOps reconciliation, packet delivery, partition/recovery,
+concurrent isolation, foreign-member refusal and owned cleanup.
 
 Validation in the development environment: compile and portable plan tests.
 Live network qualification is **blocked**: creating a network namespace returns

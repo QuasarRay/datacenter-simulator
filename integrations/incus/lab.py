@@ -16,7 +16,8 @@ class Lab:
             raise ValueError('expected an active Incus lab')
 
     def inventory(self):
-        nodes = {node['name']: {'ansible_connection':'ncp_incus','ansible_python_interpreter':'/usr/bin/python3'}
+        nodes = {node['name']: {'ansible_connection':'ncp_incus','ansible_python_interpreter':'/usr/bin/python3',
+                              'ncp_declared_os':node['spec']['config'].get('user.ncp.os','cachyos')}
                  for node in self.journal['plan']['nodes']}
         return {'all': {'hosts': nodes}}
 
