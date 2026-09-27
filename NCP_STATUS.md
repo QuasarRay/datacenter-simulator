@@ -4,13 +4,18 @@ The implementation is available for review. Full live mastery delivery and a
 whole-application formal proof are **not complete**. A passing planning example,
 coverage link or synthetic Kubernetes status does not close those gaps.
 
-The user's next priority paused product feature work for reusable infrastructure
-hardening. [Metaverification](verification/README.md) now provides a typed contract
+The priority reusable infrastructure hardening is committed; delivery work has
+resumed. [Metaverification](verification/README.md) provides a typed contract
 compiler, eight additional dual-proved predicates, mandatory negative controls,
 783 compiled material obligations, a reviewed source-facet lock, staged generation,
 shared completion checklists and compact content-bound local proof reuse. The
 production assessment uses its evidence/receipt predicates. This expands the
 verified decision boundary; it does not close the whole-application proof gate.
+
+The expanded [scope](education/ncp-metablueprint/EXTENSIONS.md) now preserves the
+user's additional blueprint requirements. NCP-DCIT has a source-traceable catalog
+of 52 leaves and 84 concepts, with NVIDIA coupling and explicit fidelity limits.
+Its twelve learning units are specified, not a completed delivery or live grade.
 
 ## Delivered artifacts
 
@@ -40,22 +45,20 @@ two source-domain checks grants no unit.
   passed two concurrent five-node labs, real DeepOps reconciliation, second-run
   idempotency, routed packets, cable cut/restoration, isolation, foreign-member
   teardown refusal and repeated owned cleanup. This is Linux Ethernet evidence.
-- The initial [native control-plane run](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35989026291)
-  built the three Rusternetes binaries and KWOK, and exercised API authentication,
-  unavailable runtime responses and selected-node KWOK transitions. Its retained
-  report exposed an incomplete checklist despite a green job. PR #32 adds the
-  missing explicit CRUD checks and makes incomplete reports fail. Inspect the
-  current report's `complete` field, not only the workflow color.
-- [NetBox native qualification](https://github.com/QuasarRay/datacenter-simulator/pull/31)
-  installs exact native NetBox/PostgreSQL/Redis/Gunicorn on a disposable host and
-  tests the full API-to-Incus-to-DeepOps-to-packet path. Its generated image and
-  binary identities are retained with that run, not generalized to another host.
+- The corrected [native control-plane run](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35997103762)
+  passed all four capability checks. Its downloaded artifact digest and complete
+  checklist were independently validated. This supersedes the earlier incomplete
+  report; it is not a Kubernetes conformance or NVIDIA execution certificate.
+- [Native Incus and NetBox qualification](https://github.com/QuasarRay/datacenter-simulator/actions/runs/35997103707)
+  passed its six Incus and four NetBox checks. Downloaded artifact hashes and both
+  complete checklists were validated. The result binds the exact Ubuntu qualification
+  image and binaries; CachyOS and hardware qualification remain separate gates.
 
 ## Remaining release gates
 
-1. Inspect successful complete reports for the current NetBox and control-plane
-   gates. Scheduler/controller binaries being built does not prove their complete
-   reconciliation semantics, API conformance or NVIDIA Operator compatibility.
+1. Deliver the expanded source-traceable learning/assessment chains, prioritizing
+   the three NVIDIA blueprints and then NCP-DCIT. Keep the remaining requested
+   extensions visible as open obligations. Complete metadata is not teaching sufficiency.
 2. Qualify the combined deployment inside the chosen Incus image: native service
    asset installation, authentication, restart behavior, KWOK pod/lease recovery,
    Slurm, storage services and workload adapters. The Linux Ethernet lifecycle and
@@ -89,6 +92,7 @@ Python watch support and verified reservations. Patchbay PRs
 This repository pins their exact commits, so its checkout does not depend on
 following a moving companion branch.
 
-The user's full directives are already on `main` in every one of its 92 tracked
-directories, including the new NCP paths. Implementation changes remain in the
-review stack. External submodule source is not rewritten to duplicate root policy.
+The earlier aggregate implementation was merged through PR #33. The expanded
+directives were synchronized directly to `main` in all 98 existing repository-owned
+directories on 2026-09-27. New implementation cycles use a fresh PR stack. External
+submodule source is not rewritten to duplicate root policy.

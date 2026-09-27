@@ -1,0 +1,1369 @@
+{
+  "schema": 1,
+  "name": "NCP-DCIT",
+  "independent": true,
+  "source": {
+    "name": "Cisco 300-615 DCIT",
+    "version": "1.2",
+    "url": "https://learningcontent.cisco.com/documents/marketing/exam-topics/300-615-DCIT-v1.2.pdf",
+    "reviewed": "2026-09-27",
+    "basis": "Numbered leaf identities and inline concepts manually reviewed across all three pages; parent headings are covered by their descendants. These are topic identifiers, not copied exam questions.",
+    "weights": [
+      25,
+      25,
+      15,
+      15,
+      20
+    ]
+  },
+  "source_leaves": 52,
+  "source_facets": 84,
+  "live_mastery_enabled": false,
+  "units": [
+    {
+      "id": "D01",
+      "level": 1,
+      "title": "Establish rack and adapter identity",
+      "course": "DC01",
+      "project": "DP01",
+      "exercises": [
+        "DE01a",
+        "DE01b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D02",
+      "level": 2,
+      "title": "Localize a broken host-to-fabric path",
+      "course": "DC02",
+      "project": "DP02",
+      "exercises": [
+        "DE02a",
+        "DE02b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D03",
+      "level": 3,
+      "title": "Separate link redundancy from overlay reachability",
+      "course": "DC03",
+      "project": "DP03",
+      "exercises": [
+        "DE03a",
+        "DE03b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D04",
+      "level": 4,
+      "title": "Trace tenant intent into forwarding state",
+      "course": "DC04",
+      "project": "DP04",
+      "exercises": [
+        "DE04a",
+        "DE04b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D05",
+      "level": 5,
+      "title": "Reconcile server, boot and storage profiles",
+      "course": "DC05",
+      "project": "DP05",
+      "exercises": [
+        "DE05a",
+        "DE05b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D06",
+      "level": 6,
+      "title": "Localize storage transport stalls",
+      "course": "DC06",
+      "project": "DP06",
+      "exercises": [
+        "DE06a",
+        "DE06b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D07",
+      "level": 7,
+      "title": "Repair storage identity without widening access",
+      "course": "DC07",
+      "project": "DP07",
+      "exercises": [
+        "DE07a",
+        "DE07b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D08",
+      "level": 8,
+      "title": "Debug event-driven reconciliation",
+      "course": "DC08",
+      "project": "DP08",
+      "exercises": [
+        "DE08a",
+        "DE08b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D09",
+      "level": 9,
+      "title": "Recover fleet automation from partial application",
+      "course": "DC09",
+      "project": "DP09",
+      "exercises": [
+        "DE09a",
+        "DE09b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D10",
+      "level": 10,
+      "title": "Stage and reverse a firmware change",
+      "course": "DC10",
+      "project": "DP10",
+      "exercises": [
+        "DE10a",
+        "DE10b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D11",
+      "level": 11,
+      "title": "Recover a fabric while preserving isolation",
+      "course": "DC11",
+      "project": "DP11",
+      "exercises": [
+        "DE11a",
+        "DE11b"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "D12",
+      "level": 12,
+      "title": "Restore compute and storage authority together",
+      "course": "DC12",
+      "project": "DP12",
+      "exercises": [
+        "DE12a",
+        "DE12b"
+      ],
+      "status": "planned"
+    }
+  ],
+  "objectives": [
+    {
+      "locator": "1.1.a",
+      "page": 1,
+      "concepts": [
+        "ospf-v2",
+        "ospf-v3"
+      ],
+      "unit": "D02",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Locate IPv4 and IPv6 adjacency, area, MTU or route-installation disagreement along a GPU service path.",
+      "required_evidence": "Compare intended peers with both neighbor databases, selected routes and a source-bound payload in each address family.",
+      "fidelity_boundary": "Static routes are not an OSPF implementation; both protocol versions need an explicit routing adapter.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.1.b",
+      "page": 1,
+      "concepts": [
+        "mp-bgp"
+      ],
+      "unit": "D02",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Separate BGP session health, address-family exchange, policy rejection and forwarding installation.",
+      "required_evidence": "Retain received and selected prefixes, next-hop resolution, return path and application transfer before and after repair.",
+      "fidelity_boundary": "A graph path does not prove BGP convergence; real FRR or qualified switch observations are required.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.1.c",
+      "page": 1,
+      "concepts": [
+        "pim"
+      ],
+      "unit": "D02",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Diagnose multicast receiver registration, reverse-path selection and tree state in surrounding CPU services.",
+      "required_evidence": "Trace one identified source and group through membership, control state and captured delivery.",
+      "fidelity_boundary": "Do not assume the GPU collective uses IP multicast; identify its actual transport first.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.1.d",
+      "page": 1,
+      "concepts": [
+        "fhrp"
+      ],
+      "unit": "D02",
+      "core_unit": "U20",
+      "nvidia_objectives": [
+        "AIO-W-1.7",
+        "AIO-W-4.3",
+        "AIO-G-4.3",
+        "AIN-5.4",
+        "AII-1.10"
+      ],
+      "investigation": "Distinguish gateway ownership loss from duplicate ownership during a CPU service failover.",
+      "required_evidence": "Observe gateway identity, neighbor resolution, interruption interval and post-failover bidirectional traffic.",
+      "fidelity_boundary": "An anycast gateway and a first-hop election protocol have different failure models; qualify the selected mechanism.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.2",
+      "page": 1,
+      "concepts": [
+        "rstp-plus",
+        "lacp",
+        "vpc"
+      ],
+      "unit": "D03",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Separate loop prevention, LACP agreement and dual-switch consistency when a GPU server loses one uplink.",
+      "required_evidence": "Compare bridge roles, partner identities, bond members, peer health and traffic on the surviving physical path.",
+      "fidelity_boundary": "Cumulus MLAG transfers the redundancy investigation; it does not implement Cisco vPC or every RSTP+ detail.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.3",
+      "page": 1,
+      "concepts": [
+        "vxlan",
+        "evpn"
+      ],
+      "unit": "D03",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Trace an isolated GPU tenant from local attachment through VNI, route target and remote next hop.",
+      "required_evidence": "Correlate endpoint learning, EVPN routes, encapsulated packets and both directions of the workload path.",
+      "fidelity_boundary": "A routed Ethernet lab is not a VXLAN/EVPN implementation; underlay success alone is insufficient.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.a",
+      "page": 1,
+      "concepts": [
+        "discovery"
+      ],
+      "unit": "D04",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Explain why a physically present switch is absent from intended fabric membership.",
+      "required_evidence": "Reconcile NetBox serial and port identity with discovery, admission state and the affected job path.",
+      "fidelity_boundary": "NetBox is intent, not an ACI discovery controller; preserve controller-specific admission as a separate gate.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.b",
+      "page": 1,
+      "concepts": [
+        "access-policy"
+      ],
+      "unit": "D04",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Localize a tenant attachment failure to port selection, VLAN allowance or policy application.",
+      "required_evidence": "Join endpoint, port, bridge and policy identities; prove permitted traffic succeeds while a neighboring tenant stays denied.",
+      "fidelity_boundary": "A generic policy mapping does not reproduce ACI access-policy object semantics.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.c",
+      "page": 1,
+      "concepts": [
+        "vmm-integration"
+      ],
+      "unit": "D04",
+      "core_unit": "U09",
+      "nvidia_objectives": [
+        "AIO-W-1.10",
+        "AIO-W-2.4",
+        "AIO-W-3.1",
+        "AIO-G-2.1",
+        "AIO-G-3.2",
+        "AIN-4.1",
+        "AIN-4.2",
+        "AII-1.10"
+      ],
+      "investigation": "Investigate disagreement between virtual workload placement and physical network attachment.",
+      "required_evidence": "Join workload UID, virtual interface, host uplink and tenant segment; distinguish controller state from actual payload.",
+      "fidelity_boundary": "Rusternetes/KWOK object transitions do not execute a VMM integration or virtual machine.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.d",
+      "page": 1,
+      "concepts": [
+        "tenant-policy"
+      ],
+      "unit": "D04",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Find the first policy boundary that changes an intended tenant relationship.",
+      "required_evidence": "Retain intended producer/consumer identities, applied rules, allowed flow and forbidden companion flow.",
+      "fidelity_boundary": "VRF and ACL exercises preserve isolation reasoning without claiming ACI tenant-contract equivalence.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.e",
+      "page": 1,
+      "concepts": [
+        "unicast",
+        "multicast",
+        "broadcast"
+      ],
+      "unit": "D04",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Separate unicast lookup, multicast replication and broadcast flooding along the same tenant path.",
+      "required_evidence": "Observe destination classification and each expected egress independently with bounded captures.",
+      "fidelity_boundary": "One successful unicast ping cannot certify multicast or broadcast behavior.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "1.4.f",
+      "page": 1,
+      "concepts": [
+        "external-connectivity"
+      ],
+      "unit": "D04",
+      "core_unit": "U19",
+      "nvidia_objectives": [
+        "AIO-G-1.1",
+        "AIO-G-3.4",
+        "AIN-5.3",
+        "AII-1.10"
+      ],
+      "investigation": "Diagnose a cluster that is reachable internally but cannot reach its external data or artifact service.",
+      "required_evidence": "Compare boundary routes, import/export policy, return path and authenticated application transfer.",
+      "fidelity_boundary": "An external connectivity adaptation does not reproduce ACI L2Out/L3Out object behavior.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.1",
+      "page": 1,
+      "concepts": [
+        "rack-server"
+      ],
+      "unit": "D01",
+      "core_unit": "U02",
+      "nvidia_objectives": [
+        "AIN-1.2",
+        "AII-1.2",
+        "AII-1.3",
+        "AII-1.5",
+        "AII-1.6",
+        "AII-1.7",
+        "AII-1.8",
+        "AII-1.9",
+        "AII-4.4",
+        "AII-4.5",
+        "AIO-W-3.5"
+      ],
+      "investigation": "Establish the physical GPU server identity before replacing or reprovisioning anything.",
+      "required_evidence": "Correlate rack position, serial, BMC inventory, power state, adapter presence and a named affected workload.",
+      "fidelity_boundary": "An Incus guest cannot certify a physical rack server or Cisco UCS hardware.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.2.a",
+      "page": 1,
+      "concepts": [
+        "chassis",
+        "power",
+        "io-module"
+      ],
+      "unit": "D01",
+      "core_unit": "U02",
+      "nvidia_objectives": [
+        "AIN-1.2",
+        "AII-1.2",
+        "AII-1.3",
+        "AII-1.5",
+        "AII-1.6",
+        "AII-1.7",
+        "AII-1.8",
+        "AII-1.9",
+        "AII-4.4",
+        "AII-4.5",
+        "AIO-W-3.5"
+      ],
+      "investigation": "Localize a shared rack failure across chassis, power feed and I/O paths.",
+      "required_evidence": "Retain independent power and module observations plus the affected-host set before choosing a maintenance boundary.",
+      "fidelity_boundary": "System containers do not simulate electrical redundancy or chassis module service procedures.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.2.b",
+      "page": 1,
+      "concepts": [
+        "vlan",
+        "pool",
+        "policy",
+        "template"
+      ],
+      "unit": "D05",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Find why a templated host receives the wrong network identity or allowed segment.",
+      "required_evidence": "Diff pool allocation, template revision, realized port attachment and the resulting GPU job reachability.",
+      "fidelity_boundary": "NVIDIA/Linux host profiles are not Cisco UCS service profiles; preserve that distinction in evidence.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.2.c",
+      "page": 1,
+      "concepts": [
+        "san-connectivity",
+        "fc-zoning",
+        "vsan",
+        "pool",
+        "policy",
+        "template"
+      ],
+      "unit": "D05",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Trace a storage attachment mismatch through transport, isolation, allocation and template intent.",
+      "required_evidence": "Correlate initiator identity, fabric membership, target authorization and a checksummed dataset read.",
+      "fidelity_boundary": "FC zoning and VSAN behavior require a real SAN adapter; a TCP volume is not a substitute.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.2.d",
+      "page": 1,
+      "concepts": [
+        "server-pool",
+        "boot-policy"
+      ],
+      "unit": "D05",
+      "core_unit": "U03",
+      "nvidia_objectives": [
+        "AIO-W-3.7",
+        "AIO-W-4.1",
+        "AIO-W-4.6",
+        "AIO-G-3.3",
+        "AIO-G-4.1",
+        "AII-3.2",
+        "AII-3.4",
+        "AII-3.5",
+        "AII-3.6",
+        "AII-3.7",
+        "AIN-5.3"
+      ],
+      "investigation": "Diagnose a host that joins the wrong allocation pool or boots an incompatible payload.",
+      "required_evidence": "Bind boot source, artifact digest, pool ownership and observed operating system to one immutable host identity.",
+      "fidelity_boundary": "DeepOps hosts reconciliation alone does not qualify network boot or firmware boot policy.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.3",
+      "page": 1,
+      "concepts": [
+        "server-fabric-packet-path"
+      ],
+      "unit": "D02",
+      "core_unit": "U16",
+      "nvidia_objectives": [
+        "AIO-W-1.9",
+        "AIO-W-3.5",
+        "AIO-G-2.2",
+        "AIN-2.5",
+        "AIN-2.6",
+        "AIN-5.2",
+        "AII-5.1"
+      ],
+      "investigation": "Trace one CPU-side data transfer required by a GPU job from the named source interface to its storage peer.",
+      "required_evidence": "Bind NetBox endpoints, guest routes, packet counters, exact payload and cut/restore evidence to one attempt.",
+      "fidelity_boundary": "Linux Ethernet evidence does not establish GPU execution, switch ASIC forwarding or RDMA.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.4.a",
+      "page": 2,
+      "concepts": [
+        "vic-adapter"
+      ],
+      "unit": "D01",
+      "core_unit": "U08",
+      "nvidia_objectives": [
+        "AIO-W-1.11",
+        "AIO-G-3.6",
+        "AIN-2.7",
+        "AIN-2.8",
+        "AII-2.1"
+      ],
+      "investigation": "Check the adapter identity and host driver agreement before blaming the fabric.",
+      "required_evidence": "Correlate PCI function, firmware, driver, link mode and the bound data path.",
+      "fidelity_boundary": "ConnectX or BlueField inspection is an adaptation, not a Cisco VIC emulation.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.4.b",
+      "page": 2,
+      "concepts": [
+        "firmware"
+      ],
+      "unit": "D01",
+      "core_unit": "U17",
+      "nvidia_objectives": [
+        "AIO-W-1.4",
+        "AII-1.4",
+        "AII-4.6",
+        "AII-4.7",
+        "AII-4.8",
+        "AII-5.2",
+        "AII-5.3",
+        "AIN-5.3"
+      ],
+      "investigation": "Determine whether a component firmware revision belongs to the supported compatibility tuple.",
+      "required_evidence": "Record actual model, revision, driver and release-matrix decision with a reproducible pre-change workload.",
+      "fidelity_boundary": "A source pin is not a hardware compatibility certificate.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.4.c",
+      "page": 2,
+      "concepts": [
+        "io-module"
+      ],
+      "unit": "D01",
+      "core_unit": "U02",
+      "nvidia_objectives": [
+        "AIN-1.2",
+        "AII-1.2",
+        "AII-1.3",
+        "AII-1.5",
+        "AII-1.6",
+        "AII-1.7",
+        "AII-1.8",
+        "AII-1.9",
+        "AII-4.4",
+        "AII-4.5",
+        "AIO-W-3.5"
+      ],
+      "investigation": "Locate an I/O module mismatch that disconnects several hosts together.",
+      "required_evidence": "Correlate slot, lane mapping, module revision, physical links and common affected endpoints.",
+      "fidelity_boundary": "Virtual NIC presence cannot certify chassis I/O module interoperability.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.4.d",
+      "page": 2,
+      "concepts": [
+        "fabric-interconnect"
+      ],
+      "unit": "D01",
+      "core_unit": "U02",
+      "nvidia_objectives": [
+        "AIN-1.2",
+        "AII-1.2",
+        "AII-1.3",
+        "AII-1.5",
+        "AII-1.6",
+        "AII-1.7",
+        "AII-1.8",
+        "AII-1.9",
+        "AII-4.4",
+        "AII-4.5",
+        "AIO-W-3.5"
+      ],
+      "investigation": "Separate a server uplink fault from a shared fabric interconnect fault.",
+      "required_evidence": "Compare both sides of each connection and the blast radius across independent hosts.",
+      "fidelity_boundary": "An Ethernet switch-role guest does not implement UCS fabric interconnects.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "2.5",
+      "page": 2,
+      "concepts": [
+        "firmware",
+        "package",
+        "interoperability"
+      ],
+      "unit": "D10",
+      "core_unit": "U17",
+      "nvidia_objectives": [
+        "AIO-W-1.4",
+        "AII-1.4",
+        "AII-4.6",
+        "AII-4.7",
+        "AII-4.8",
+        "AII-5.2",
+        "AII-5.3",
+        "AIN-5.3"
+      ],
+      "investigation": "Stage a component upgrade only after its dependency tuple and rollback image are known.",
+      "required_evidence": "Bind package signatures, installed versions, drained jobs, failover result and rollback outcome.",
+      "fidelity_boundary": "Real device update and interruption behavior require the relevant hardware adapter.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.1.a",
+      "page": 2,
+      "concepts": [
+        "initialization"
+      ],
+      "unit": "D06",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Locate the first storage fabric membership transition that did not complete.",
+      "required_evidence": "Collect ordered link, login and fabric membership events before the dataset read is attempted.",
+      "fidelity_boundary": "FC initialization is neither Ethernet link-up nor InfiniBand subnet management.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.1.b",
+      "page": 2,
+      "concepts": [
+        "credit-starvation"
+      ],
+      "unit": "D06",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Distinguish storage receiver-credit exhaustion from packet loss or slow media.",
+      "required_evidence": "Correlate both-end credit counters, link distance and I/O completion latency during a controlled load.",
+      "fidelity_boundary": "FC buffer credits, Ethernet PFC and NVMe queue depth are different mechanisms; do not relabel one as another.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.1.c",
+      "page": 2,
+      "concepts": [
+        "npv",
+        "npiv"
+      ],
+      "unit": "D06",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Trace virtual initiator identity through a shared physical storage uplink.",
+      "required_evidence": "Bind virtual identity, physical port, fabric login and target access to the affected dataset.",
+      "fidelity_boundary": "NPV/NPIV requires an FC-capable environment; virtual NIC aliases cannot satisfy it.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.1.d",
+      "page": 2,
+      "concepts": [
+        "vsan"
+      ],
+      "unit": "D06",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Explain why a storage endpoint is in the wrong logical fabric.",
+      "required_evidence": "Compare intended and observed fabric membership with denied cross-tenant and permitted local I/O.",
+      "fidelity_boundary": "A VRF or InfiniBand partition is a comparison, not a VSAN implementation.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.2.a",
+      "page": 2,
+      "concepts": [
+        "fcid"
+      ],
+      "unit": "D07",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Distinguish persistent initiator identity from a fabric-assigned storage address.",
+      "required_evidence": "Correlate login history, assigned address and target lookup after reattachment.",
+      "fidelity_boundary": "FCID assignment must be observed on a qualified FC fabric.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.2.b",
+      "page": 2,
+      "concepts": [
+        "zoning"
+      ],
+      "unit": "D07",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Repair initiator-to-target authorization without opening another tenant path.",
+      "required_evidence": "Show the intended pair, effective policy and positive plus negative dataset access trials.",
+      "fidelity_boundary": "File permissions alone do not demonstrate FC zoning enforcement.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.2.c",
+      "page": 2,
+      "concepts": [
+        "device-alias"
+      ],
+      "unit": "D07",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Detect a friendly storage name that resolves to the wrong immutable endpoint.",
+      "required_evidence": "Join alias, immutable identity, effective policy and checksum-valid application data.",
+      "fidelity_boundary": "Keep vendor alias semantics separate from generic naming examples.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "3.2.d",
+      "page": 2,
+      "concepts": [
+        "cfs"
+      ],
+      "unit": "D07",
+      "core_unit": "U20",
+      "nvidia_objectives": [
+        "AIO-W-1.7",
+        "AIO-W-4.3",
+        "AIO-G-4.3",
+        "AIN-5.4",
+        "AII-1.10"
+      ],
+      "investigation": "Identify disagreement between distributed copies of storage-fabric configuration.",
+      "required_evidence": "Compare authoritative revision, replication outcome, conflict ownership and post-recovery I/O.",
+      "fidelity_boundary": "A Git/NetBox reconciliation example does not implement Cisco Fabric Services.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.1.a",
+      "page": 2,
+      "concepts": [
+        "eem"
+      ],
+      "unit": "D08",
+      "core_unit": "U16",
+      "nvidia_objectives": [
+        "AIO-W-1.9",
+        "AIO-W-3.5",
+        "AIO-G-2.2",
+        "AIN-2.5",
+        "AIN-2.6",
+        "AIN-5.2",
+        "AII-5.1"
+      ],
+      "investigation": "Diagnose a recovery automation event that is missing, repeated or associated with the wrong host.",
+      "required_evidence": "Bind event identity and time to an idempotent guarded change plus an independent workload observation.",
+      "fidelity_boundary": "A native event adapter teaches event reasoning without claiming Cisco EEM execution.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.1.b",
+      "page": 2,
+      "concepts": [
+        "scheduler"
+      ],
+      "unit": "D08",
+      "core_unit": "U10",
+      "nvidia_objectives": [
+        "AIO-W-1.13",
+        "AIO-W-2.1",
+        "AIO-W-3.3",
+        "AIO-G-1.2",
+        "AII-3.3",
+        "AIN-5.3"
+      ],
+      "investigation": "Separate automation timer overlap from GPU workload scheduler admission.",
+      "required_evidence": "Retain timer ownership, last run, exit state, retry record and the effect on a named job.",
+      "fidelity_boundary": "A maintenance timer is not a Slurm or Kubernetes scheduler.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.a",
+      "page": 2,
+      "concepts": [
+        "bash",
+        "guest-shell"
+      ],
+      "unit": "D08",
+      "core_unit": "U03",
+      "nvidia_objectives": [
+        "AIO-W-3.7",
+        "AIO-W-4.1",
+        "AIO-W-4.6",
+        "AIO-G-3.3",
+        "AIO-G-4.1",
+        "AII-3.2",
+        "AII-3.4",
+        "AII-3.5",
+        "AII-3.6",
+        "AII-3.7",
+        "AIN-5.3"
+      ],
+      "investigation": "Find a native automation process failing because its environment or authority differs from the operator context.",
+      "required_evidence": "Capture executable identity, arguments, environment allowlist, UID, output and exit status through a code API.",
+      "fidelity_boundary": "Incus is the execution boundary; this does not qualify NX-OS guest-shell behavior.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.b",
+      "page": 2,
+      "concepts": [
+        "rest"
+      ],
+      "unit": "D08",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Diagnose a partial API reconciliation without retrying an unsafe write blindly.",
+      "required_evidence": "Keep bounded request identity, authorization, status, pagination and observed postcondition.",
+      "fidelity_boundary": "Transport success alone is not successful configuration or workload execution.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.c",
+      "page": 2,
+      "concepts": [
+        "json",
+        "xml"
+      ],
+      "unit": "D08",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Reject an intent document that changes meaning during decoding or serialization.",
+      "required_evidence": "Exercise duplicate keys, missing values, types, namespaces and a round-trip comparison against the reviewed schema.",
+      "fidelity_boundary": "JSON validation does not cover XML; qualify each format that the selected product exposes.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.d",
+      "page": 2,
+      "concepts": [
+        "python"
+      ],
+      "unit": "D08",
+      "core_unit": "U03",
+      "nvidia_objectives": [
+        "AIO-W-3.7",
+        "AIO-W-4.1",
+        "AIO-W-4.6",
+        "AIO-G-3.3",
+        "AIO-G-4.1",
+        "AII-3.2",
+        "AII-3.4",
+        "AII-3.5",
+        "AII-3.6",
+        "AII-3.7",
+        "AIN-5.3"
+      ],
+      "investigation": "Localize an automation defect to input normalization, transformation or an external effect.",
+      "required_evidence": "Retain typed input, expanded plan, exception boundary and a controlled replay without duplicate effects.",
+      "fidelity_boundary": "A planning example is not evidence that the external Python-controlled service ran.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.e",
+      "page": 2,
+      "concepts": [
+        "ansible"
+      ],
+      "unit": "D08",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Diagnose a real DeepOps reconciliation whose second application still changes hosts.",
+      "required_evidence": "Compare pinned role source, inventory, generated variables, task outcomes and second-run changes.",
+      "fidelity_boundary": "Only actually selected upstream roles are qualified; hosts reconciliation is not full DeepOps deployment.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.f",
+      "page": 2,
+      "concepts": [
+        "terraform"
+      ],
+      "unit": "D09",
+      "core_unit": "U01",
+      "nvidia_objectives": [
+        "AIO-W-2.2",
+        "AIO-G-1.3",
+        "AIN-1.1",
+        "AIN-2.4",
+        "AII-1.1"
+      ],
+      "investigation": "Repair desired/observed/state disagreement after an interrupted infrastructure change.",
+      "required_evidence": "Review refresh and proposed changes, ownership conflicts, provider behavior and rollback against the original intent.",
+      "fidelity_boundary": "Pulumi may teach the workflow; Terraform state and provider semantics need explicit separate practice.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "4.2.g",
+      "page": 2,
+      "concepts": [
+        "intersight"
+      ],
+      "unit": "D09",
+      "core_unit": "U16",
+      "nvidia_objectives": [
+        "AIO-W-1.9",
+        "AIO-W-3.5",
+        "AIO-G-2.2",
+        "AIN-2.5",
+        "AIN-2.6",
+        "AIN-5.2",
+        "AII-5.1"
+      ],
+      "investigation": "Trace a fleet operation from a management request to the actual GPU host effect.",
+      "required_evidence": "Correlate target identity, task revision, permission, execution status and independent host evidence.",
+      "fidelity_boundary": "Mission Control or another fleet manager does not implement Cisco Intersight.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.1",
+      "page": 2,
+      "concepts": [
+        "firmware",
+        "package",
+        "interoperability"
+      ],
+      "unit": "D10",
+      "core_unit": "U17",
+      "nvidia_objectives": [
+        "AIO-W-1.4",
+        "AII-1.4",
+        "AII-4.6",
+        "AII-4.7",
+        "AII-4.8",
+        "AII-5.2",
+        "AII-5.3",
+        "AIN-5.3"
+      ],
+      "investigation": "Diagnose a fleet-wide update inconsistency separately from a single-device upgrade.",
+      "required_evidence": "Compare package provenance, cohorts, compatibility constraints and recovery for both changed and unchanged hosts.",
+      "fidelity_boundary": "This distinct operations obligation is retained even though source 2.5 also concerns updates.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.2",
+      "page": 2,
+      "concepts": [
+        "nexus-dashboard",
+        "intersight"
+      ],
+      "unit": "D09",
+      "core_unit": "U16",
+      "nvidia_objectives": [
+        "AIO-W-1.9",
+        "AIO-W-3.5",
+        "AIO-G-2.2",
+        "AIN-2.5",
+        "AIN-2.6",
+        "AIN-5.2",
+        "AII-5.1"
+      ],
+      "investigation": "Locate the boundary at which centralized network or compute management loses accurate state.",
+      "required_evidence": "Correlate collector identity, credentials, timestamps, intended revision and actual service behavior.",
+      "fidelity_boundary": "NetQ and Mission Control are adaptations; their behavior is not Nexus Dashboard or Intersight equivalence.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.3.a",
+      "page": 2,
+      "concepts": [
+        "fabric-binding",
+        "port-security"
+      ],
+      "unit": "D11",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Detect an unauthorized endpoint attached to an otherwise healthy data path.",
+      "required_evidence": "Bind intended port and endpoint identity, admission decision and denied unauthorized traffic.",
+      "fidelity_boundary": "Switch access control is distinct from FC fabric binding; qualify both where used.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.3.b",
+      "page": 2,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ],
+      "unit": "D11",
+      "core_unit": "U04",
+      "nvidia_objectives": [
+        "AIO-W-1.1",
+        "AIO-W-1.2",
+        "AIO-W-1.3",
+        "AIO-W-1.5",
+        "AIO-W-1.6",
+        "AIO-W-1.8",
+        "AIO-G-2.3",
+        "AIO-G-3.1",
+        "AII-3.1",
+        "AIN-5.3"
+      ],
+      "investigation": "Restore operator access while keeping a lesser role unable to mutate network intent.",
+      "required_evidence": "Observe authentication and authorization separately with positive and negative principals.",
+      "fidelity_boundary": "A trusted TLS client is not automatically an authorized API administrator.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.3.c",
+      "page": 2,
+      "concepts": [
+        "arp-inspection",
+        "dhcp-snooping",
+        "port-security"
+      ],
+      "unit": "D11",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Locate a forged first-hop binding that redirects a CPU dependency of a GPU workload.",
+      "required_evidence": "Correlate lease, source binding, neighbor cache and enforcement on the actual ingress port.",
+      "fidelity_boundary": "Ordinary Linux forwarding does not provide switch DHCP-snooping or inspection semantics.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.3.d",
+      "page": 2,
+      "concepts": [
+        "macsec"
+      ],
+      "unit": "D11",
+      "core_unit": "U05",
+      "nvidia_objectives": [
+        "AIN-2.3",
+        "AIN-6.1",
+        "AIN-6.2",
+        "AIO-W-3.5",
+        "AII-1.10"
+      ],
+      "investigation": "Distinguish link-key disagreement from reachability or application TLS failure.",
+      "required_evidence": "Observe secure association, replay protection, key rotation and permitted payload on the selected link.",
+      "fidelity_boundary": "TLS and an unencrypted veth do not implement MACsec.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.4",
+      "page": 2,
+      "concepts": [
+        "security-domain",
+        "role-mapping"
+      ],
+      "unit": "D11",
+      "core_unit": "U04",
+      "nvidia_objectives": [
+        "AIO-W-1.1",
+        "AIO-W-1.2",
+        "AIO-W-1.3",
+        "AIO-W-1.5",
+        "AIO-W-1.6",
+        "AIO-W-1.8",
+        "AIO-G-2.3",
+        "AIO-G-3.1",
+        "AII-3.1",
+        "AIN-5.3"
+      ],
+      "investigation": "Find a role-to-tenant mapping that grants authority in the wrong administrative domain.",
+      "required_evidence": "Test the same principal against permitted and forbidden scopes after the mapping change.",
+      "fidelity_boundary": "Generic RBAC teaches scope reasoning but does not implement ACI security domains.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.5.a",
+      "page": 3,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ],
+      "unit": "D12",
+      "core_unit": "U04",
+      "nvidia_objectives": [
+        "AIO-W-1.1",
+        "AIO-W-1.2",
+        "AIO-W-1.3",
+        "AIO-W-1.5",
+        "AIO-W-1.6",
+        "AIO-W-1.8",
+        "AIO-G-2.3",
+        "AIO-G-3.1",
+        "AII-3.1",
+        "AIN-5.3"
+      ],
+      "investigation": "Recover host and scheduler access without granting unrestricted execution to a tenant.",
+      "required_evidence": "Join OS identity, scheduler account and effective permission with positive and negative job operations.",
+      "fidelity_boundary": "A synthetic Ready node does not prove host or scheduler security enforcement.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.5.b",
+      "page": 3,
+      "concepts": [
+        "key-management"
+      ],
+      "unit": "D12",
+      "core_unit": "U03",
+      "nvidia_objectives": [
+        "AIO-W-3.7",
+        "AIO-W-4.1",
+        "AIO-W-4.6",
+        "AIO-G-3.3",
+        "AIO-G-4.1",
+        "AII-3.2",
+        "AII-3.4",
+        "AII-3.5",
+        "AII-3.6",
+        "AII-3.7",
+        "AIN-5.3"
+      ],
+      "investigation": "Rotate a compute credential without breaking retrieval or leaking the old key.",
+      "required_evidence": "Bind issuer, consumer, validity interval, revocation and authenticated artifact retrieval.",
+      "fidelity_boundary": "A secret placeholder is not key lifecycle evidence.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.6.a",
+      "page": 3,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ],
+      "unit": "D12",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Restore authorized dataset access while another tenant remains denied.",
+      "required_evidence": "Correlate storage principal, effective role, target and content-verified read/write outcomes.",
+      "fidelity_boundary": "Storage authorization must be observed at its enforcement point, not inferred from API login.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.6.b",
+      "page": 3,
+      "concepts": [
+        "port-security"
+      ],
+      "unit": "D12",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Reject a storage endpoint connected through an unauthorized port.",
+      "required_evidence": "Bind initiator, physical attachment, effective restriction and failed unauthorized I/O.",
+      "fidelity_boundary": "A directory permission cannot replace a storage port-security observation.",
+      "status": "specified-not-qualified"
+    },
+    {
+      "locator": "5.6.c",
+      "page": 3,
+      "concepts": [
+        "fabric-binding"
+      ],
+      "unit": "D12",
+      "core_unit": "U13",
+      "nvidia_objectives": [
+        "AIO-W-4.4",
+        "AIO-W-4.5",
+        "AIO-G-3.5",
+        "AIO-G-4.4",
+        "AIO-G-4.5",
+        "AII-1.11",
+        "AII-4.14",
+        "AII-5.5",
+        "AIN-5.3"
+      ],
+      "investigation": "Recover storage-fabric membership without admitting an untrusted participant.",
+      "required_evidence": "Observe fabric identity and admission state, then test intended and forbidden storage paths.",
+      "fidelity_boundary": "Qualified SAN evidence is required for fabric binding; graph membership alone is insufficient.",
+      "status": "specified-not-qualified"
+    }
+  ]
+}

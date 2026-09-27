@@ -1,0 +1,415 @@
+{
+  "schema": 1,
+  "source": {
+    "name": "Cisco 300-615 DCIT",
+    "version": "1.2",
+    "url": "https://learningcontent.cisco.com/documents/marketing/exam-topics/300-615-DCIT-v1.2.pdf",
+    "reviewed": "2026-09-27",
+    "basis": "Numbered leaf identities and inline concepts manually reviewed across all three pages; parent headings are covered by their descendants. These are topic identifiers, not copied exam questions.",
+    "weights": [
+      25,
+      25,
+      15,
+      15,
+      20
+    ]
+  },
+  "objectives": [
+    {
+      "locator": "1.1.a",
+      "page": 1,
+      "concepts": [
+        "ospf-v2",
+        "ospf-v3"
+      ]
+    },
+    {
+      "locator": "1.1.b",
+      "page": 1,
+      "concepts": [
+        "mp-bgp"
+      ]
+    },
+    {
+      "locator": "1.1.c",
+      "page": 1,
+      "concepts": [
+        "pim"
+      ]
+    },
+    {
+      "locator": "1.1.d",
+      "page": 1,
+      "concepts": [
+        "fhrp"
+      ]
+    },
+    {
+      "locator": "1.2",
+      "page": 1,
+      "concepts": [
+        "rstp-plus",
+        "lacp",
+        "vpc"
+      ]
+    },
+    {
+      "locator": "1.3",
+      "page": 1,
+      "concepts": [
+        "vxlan",
+        "evpn"
+      ]
+    },
+    {
+      "locator": "1.4.a",
+      "page": 1,
+      "concepts": [
+        "discovery"
+      ]
+    },
+    {
+      "locator": "1.4.b",
+      "page": 1,
+      "concepts": [
+        "access-policy"
+      ]
+    },
+    {
+      "locator": "1.4.c",
+      "page": 1,
+      "concepts": [
+        "vmm-integration"
+      ]
+    },
+    {
+      "locator": "1.4.d",
+      "page": 1,
+      "concepts": [
+        "tenant-policy"
+      ]
+    },
+    {
+      "locator": "1.4.e",
+      "page": 1,
+      "concepts": [
+        "unicast",
+        "multicast",
+        "broadcast"
+      ]
+    },
+    {
+      "locator": "1.4.f",
+      "page": 1,
+      "concepts": [
+        "external-connectivity"
+      ]
+    },
+    {
+      "locator": "2.1",
+      "page": 1,
+      "concepts": [
+        "rack-server"
+      ]
+    },
+    {
+      "locator": "2.2.a",
+      "page": 1,
+      "concepts": [
+        "chassis",
+        "power",
+        "io-module"
+      ]
+    },
+    {
+      "locator": "2.2.b",
+      "page": 1,
+      "concepts": [
+        "vlan",
+        "pool",
+        "policy",
+        "template"
+      ]
+    },
+    {
+      "locator": "2.2.c",
+      "page": 1,
+      "concepts": [
+        "san-connectivity",
+        "fc-zoning",
+        "vsan",
+        "pool",
+        "policy",
+        "template"
+      ]
+    },
+    {
+      "locator": "2.2.d",
+      "page": 1,
+      "concepts": [
+        "server-pool",
+        "boot-policy"
+      ]
+    },
+    {
+      "locator": "2.3",
+      "page": 1,
+      "concepts": [
+        "server-fabric-packet-path"
+      ]
+    },
+    {
+      "locator": "2.4.a",
+      "page": 2,
+      "concepts": [
+        "vic-adapter"
+      ]
+    },
+    {
+      "locator": "2.4.b",
+      "page": 2,
+      "concepts": [
+        "firmware"
+      ]
+    },
+    {
+      "locator": "2.4.c",
+      "page": 2,
+      "concepts": [
+        "io-module"
+      ]
+    },
+    {
+      "locator": "2.4.d",
+      "page": 2,
+      "concepts": [
+        "fabric-interconnect"
+      ]
+    },
+    {
+      "locator": "2.5",
+      "page": 2,
+      "concepts": [
+        "firmware",
+        "package",
+        "interoperability"
+      ]
+    },
+    {
+      "locator": "3.1.a",
+      "page": 2,
+      "concepts": [
+        "initialization"
+      ]
+    },
+    {
+      "locator": "3.1.b",
+      "page": 2,
+      "concepts": [
+        "credit-starvation"
+      ]
+    },
+    {
+      "locator": "3.1.c",
+      "page": 2,
+      "concepts": [
+        "npv",
+        "npiv"
+      ]
+    },
+    {
+      "locator": "3.1.d",
+      "page": 2,
+      "concepts": [
+        "vsan"
+      ]
+    },
+    {
+      "locator": "3.2.a",
+      "page": 2,
+      "concepts": [
+        "fcid"
+      ]
+    },
+    {
+      "locator": "3.2.b",
+      "page": 2,
+      "concepts": [
+        "zoning"
+      ]
+    },
+    {
+      "locator": "3.2.c",
+      "page": 2,
+      "concepts": [
+        "device-alias"
+      ]
+    },
+    {
+      "locator": "3.2.d",
+      "page": 2,
+      "concepts": [
+        "cfs"
+      ]
+    },
+    {
+      "locator": "4.1.a",
+      "page": 2,
+      "concepts": [
+        "eem"
+      ]
+    },
+    {
+      "locator": "4.1.b",
+      "page": 2,
+      "concepts": [
+        "scheduler"
+      ]
+    },
+    {
+      "locator": "4.2.a",
+      "page": 2,
+      "concepts": [
+        "bash",
+        "guest-shell"
+      ]
+    },
+    {
+      "locator": "4.2.b",
+      "page": 2,
+      "concepts": [
+        "rest"
+      ]
+    },
+    {
+      "locator": "4.2.c",
+      "page": 2,
+      "concepts": [
+        "json",
+        "xml"
+      ]
+    },
+    {
+      "locator": "4.2.d",
+      "page": 2,
+      "concepts": [
+        "python"
+      ]
+    },
+    {
+      "locator": "4.2.e",
+      "page": 2,
+      "concepts": [
+        "ansible"
+      ]
+    },
+    {
+      "locator": "4.2.f",
+      "page": 2,
+      "concepts": [
+        "terraform"
+      ]
+    },
+    {
+      "locator": "4.2.g",
+      "page": 2,
+      "concepts": [
+        "intersight"
+      ]
+    },
+    {
+      "locator": "5.1",
+      "page": 2,
+      "concepts": [
+        "firmware",
+        "package",
+        "interoperability"
+      ]
+    },
+    {
+      "locator": "5.2",
+      "page": 2,
+      "concepts": [
+        "nexus-dashboard",
+        "intersight"
+      ]
+    },
+    {
+      "locator": "5.3.a",
+      "page": 2,
+      "concepts": [
+        "fabric-binding",
+        "port-security"
+      ]
+    },
+    {
+      "locator": "5.3.b",
+      "page": 2,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ]
+    },
+    {
+      "locator": "5.3.c",
+      "page": 2,
+      "concepts": [
+        "arp-inspection",
+        "dhcp-snooping",
+        "port-security"
+      ]
+    },
+    {
+      "locator": "5.3.d",
+      "page": 2,
+      "concepts": [
+        "macsec"
+      ]
+    },
+    {
+      "locator": "5.4",
+      "page": 2,
+      "concepts": [
+        "security-domain",
+        "role-mapping"
+      ]
+    },
+    {
+      "locator": "5.5.a",
+      "page": 3,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ]
+    },
+    {
+      "locator": "5.5.b",
+      "page": 3,
+      "concepts": [
+        "key-management"
+      ]
+    },
+    {
+      "locator": "5.6.a",
+      "page": 3,
+      "concepts": [
+        "aaa",
+        "rbac"
+      ]
+    },
+    {
+      "locator": "5.6.b",
+      "page": 3,
+      "concepts": [
+        "port-security"
+      ]
+    },
+    {
+      "locator": "5.6.c",
+      "page": 3,
+      "concepts": [
+        "fabric-binding"
+      ]
+    }
+  ]
+}

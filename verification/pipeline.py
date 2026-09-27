@@ -14,7 +14,8 @@ PROOF_INPUTS = ("tools/meta.py", "verification/__init__.py", "verification/dsl.p
                 "verification/compiler.py", "verification/io.py", "verification/prove.py", "verification/toolchain.json")
 MATERIAL_INPUTS = ("verification/pipeline.py", "verification/materials.py", "verification/source-obligations.json",
                    "education/ncp-metablueprint/blueprint.json", "education/authoring/units.py",
-                   "tools/build_curriculum.py", "tools/build_assessment_bank.py")
+                   "tools/build_curriculum.py", "tools/build_assessment_bank.py",
+                   "verification/dcit-source-obligations.json", "education/authoring/dcit.py")
 
 
 def identities(root, paths): return {name: sha((root / name).read_bytes()) for name in paths}
@@ -51,12 +52,15 @@ def compile_repository(root):
     obligations = Obligations()
     validate_materials(bp, strict_json(material["curriculum.json"]), bank, material, obligations)
     files = {"education/ncp-metablueprint/" + path: value for path, value in material.items()}
+    from verification.extensions import render_extensions
+    files.update({"education/ncp-metablueprint/extensions/" + path: value
+                  for path, value in render_extensions(root, bp, obligations, load_module).items()})
     files["education/assessment/bank.json"] = json.dumps(bank, indent=2) + "\n"
     files.update({"verification/generated/" + path: value for path, value in expand(registry).items()})
     files["verification/generated/kernel/src/bin/check_materials.rs"] = obligations.rust()
     allowed = set(files) | {MANIFEST, "education/ncp-metablueprint/courses/C00.md",
                            "education/ncp-metablueprint/courses/C01-NETBOX.md"}
-    for scope in ["verification/generated", *("education/ncp-metablueprint/" + name for name in ["courses", "projects", "exercises", "examples"])]:
+    for scope in ["verification/generated", *("education/ncp-metablueprint/" + name for name in ["courses", "projects", "exercises", "examples", "extensions"])]:
         for parent, directories, names in os.walk(root / scope):
             directories[:] = [name for name in directories if name not in {"target", "__pycache__"}]
             for name in names:
