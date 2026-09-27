@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "source_facet": "2.3/server-fabric-packet-path",
+  "core_prerequisites": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20"
+  ],
+  "skills": [
+    "DCIT-PATH/resolve-intended-endpoints",
+    "DCIT-PATH/bind-observation-to-interface",
+    "DCIT-PATH/use-unaffected-control",
+    "DCIT-PATH/retain-failed-attempt",
+    "DCIT-PATH/restore-owned-fault"
+  ],
+  "course": "native-practical",
+  "project": "guided-native-practical",
+  "exercises": "prompts-awaiting-private-scenarios",
+  "live_mastery_enabled": false
+}

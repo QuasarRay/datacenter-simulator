@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "nvidia_core": {
+    "priority": 1,
+    "source_objectives": 113,
+    "source_facets": 203,
+    "live_mastery_enabled": false
+  },
+  "extensions": [
+    {
+      "id": "NCP-DCIT",
+      "description": "DCIT troubleshooting adaptation",
+      "priority": 2,
+      "status": "specified-not-qualified",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "NCP-WCA",
+      "description": "WCA and CBT Nuggets packet-analysis adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "CKA",
+      "description": "GPU cluster administration adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "CKNE",
+      "description": "GPU Kubernetes networking adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "CNPE",
+      "description": "GPU platform engineering adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "EX200",
+      "description": "CachyOS GPU-host administration adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "EX294",
+      "description": "GPU-host automation adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "EX342",
+      "description": "GPU-host diagnosis and troubleshooting adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "EX457",
+      "description": "GPU fabric automation adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "NCP-CCDE",
+      "description": "CCDE AI infrastructure, on-premises/cloud and CCNP DC design adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    },
+    {
+      "id": "VCDX-VCF",
+      "description": "GPU infrastructure architecture and virtualization adaptation",
+      "priority": 3,
+      "status": "source-review-pending",
+      "live_mastery_enabled": false
+    }
+  ],
+  "release_complete": false
+}

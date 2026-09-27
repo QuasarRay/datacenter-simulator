@@ -13,6 +13,11 @@ This is an assessment rule, not a claim that prior learning has no value.
 
 Start with [the learning route](LEARNING_ROUTE.md): twenty authored courses, twenty guided projects, forty independent incident prompts and twenty executable planning examples. Live qualification is tracked separately.
 
+The [expanded scope](EXTENSIONS.md) retains the additional requested blueprints.
+NCP-DCIT now has a complete source-obligation catalog; delivery and live
+qualification are tracked separately. The twenty units below describe the NVIDIA
+core, not completion of the expanded Metablueprint.
+
 ## Source completeness
 
 [blueprint.json](blueprint.json) retains **113 source objective identities and 203
