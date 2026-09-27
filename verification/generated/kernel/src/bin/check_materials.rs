@@ -838,6 +838,16 @@ fn main() {
         ("DCIT/domains/5.6.c", ncp_metaverify::report_complete(7u64, 7u64, 0u64)),
         ("DCIT/source/0", ncp_metaverify::coverage(18446744073709551615u64, 18446744073709551615u64)),
         ("DCIT/source/1", ncp_metaverify::coverage(1048575u64, 1048575u64)),
+        ("skills/DCIT-PATH-NVIDIA-core/0", ncp_metaverify::learning_ready(0u64, 0u64, 0u64, false)),
+        ("edge/DCIT-PATH-course/DCIT-PATH-NVIDIA-core", ncp_metaverify::ordered_edge(0u16, 1u16, 5u16)),
+        ("skills/DCIT-PATH-course/0", ncp_metaverify::learning_ready(7u64, 7u64, 0u64, false)),
+        ("edge/DCIT-PATH-project/DCIT-PATH-course", ncp_metaverify::ordered_edge(1u16, 2u16, 5u16)),
+        ("skills/DCIT-PATH-project/0", ncp_metaverify::learning_ready(255u64, 255u64, 0u64, false)),
+        ("edge/DCIT-PATH-a/DCIT-PATH-project", ncp_metaverify::ordered_edge(2u16, 3u16, 5u16)),
+        ("skills/DCIT-PATH-a/0", ncp_metaverify::learning_ready(255u64, 255u64, 255u64, true)),
+        ("edge/DCIT-PATH-b/DCIT-PATH-a", ncp_metaverify::ordered_edge(3u16, 4u16, 5u16)),
+        ("edge/DCIT-PATH-b/DCIT-PATH-project", ncp_metaverify::ordered_edge(2u16, 4u16, 5u16)),
+        ("skills/DCIT-PATH-b/0", ncp_metaverify::learning_ready(255u64, 255u64, 255u64, true)),
     ];
     let mut failed = 0usize;
     for (name, passed) in checks {

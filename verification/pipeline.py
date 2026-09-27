@@ -15,7 +15,8 @@ PROOF_INPUTS = ("tools/meta.py", "verification/__init__.py", "verification/dsl.p
 MATERIAL_INPUTS = ("verification/pipeline.py", "verification/materials.py", "verification/source-obligations.json",
                    "education/ncp-metablueprint/blueprint.json", "education/authoring/units.py",
                    "tools/build_curriculum.py", "tools/build_assessment_bank.py",
-                   "verification/dcit-source-obligations.json", "education/authoring/dcit.py")
+                   "verification/dcit-source-obligations.json", "education/authoring/dcit.py",
+                   "education/authoring/dcit_practical.py")
 
 
 def identities(root, paths): return {name: sha((root / name).read_bytes()) for name in paths}

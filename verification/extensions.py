@@ -101,5 +101,7 @@ def render_extensions(root, bp, obligations, loader):
                       row['required_evidence'], row['fidelity_boundary'] + f" Core: {row['core_unit']}."]
             out.append('| ' + ' | '.join(value.replace('|', '\\|') for value in values) + ' |')
         out.append('')
+    practical = loader(root, 'education/authoring/dcit_practical.py', 'ncp_dcit_practical')
     return {'NCP-DCIT.json': json.dumps(catalog, indent=2) + '\n',
-            'NCP-DCIT.md': '\n'.join(out), 'scope.json': json.dumps(scope, indent=2) + '\n'}
+            'NCP-DCIT.md': '\n'.join(out), 'scope.json': json.dumps(scope, indent=2) + '\n',
+            **practical.render(obligations)}

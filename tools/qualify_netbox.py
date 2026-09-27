@@ -11,12 +11,14 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from integrations.incus.fabric import Fabric
 from integrations.incus.transport import Incus
+from integrations.incus.diagnostics import Endpoint, Flow, path_study
 from verification.evidence import Checklist
 
 REQUIRED_TESTS = (
     "read-only-token-rejects-write",
     "netbox-to-incus-deepops-idempotent-native-payload",
     "generated-topology-partition-and-recovery",
+    "source-bound-native-diagnostic-and-control",
     "owned-cleanup",
 )
 
@@ -69,6 +71,14 @@ def qualify(fingerprint, token_file):
         if api.execute(source,['ping','-c','3','-W','2',destination],timeout=15)[0]:
             raise RuntimeError('payload did not recover')
         record('generated-topology-partition-and-recovery')
+        @path_study
+        def dependency_path():
+            return (Flow(Endpoint('compute-a', 'data0'), Endpoint('compute-b', 'data0')),
+                    Flow(Endpoint('control', 'data0'), Endpoint('services', 'data0')))
+        diagnostic = dependency_path(fabric).run(output / 'path-study.json')
+        if diagnostic['complete'] is not True or diagnostic['live_mastery_enabled'] is not False:
+            raise RuntimeError('native diagnostic did not complete within its evidence boundary')
+        record('source-bound-native-diagnostic-and-control')
     finally:
         if fabric is not None and (fabric.directory/'state/incus.json').exists():
             try:fabric.destroy();cleanup=True

@@ -54,3 +54,10 @@ Linux Ethernet cut/restore evidence can settle a CPU-side path investigation;
 it cannot certify OSPF, EVPN, Fibre Channel credits, RDMA, GPU execution or switch
 ASIC behavior. Cisco-specific source behavior stays visible alongside its NVIDIA
 adaptation rather than disappearing behind a renamed simulator feature.
+
+The first [native path course](extensions/dcit-path/course.md) and
+[guided project](extensions/dcit-path/project.md) implement a bounded UDP
+dependency-path experiment through the generated NetBox/Incus fabric. A shared
+decorator expands endpoint intent into DeepOps reconciliation, fresh payloads,
+interface-bound observations, fault/control trials and restoration. Its independent
+incident prompts remain blocked on private scenario and holdout qualification.

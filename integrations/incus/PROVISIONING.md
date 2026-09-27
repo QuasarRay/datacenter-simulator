@@ -62,6 +62,20 @@ They are worker objects, not a thousand control planes or executing GPUs.
 
 ## DeepOps fidelity
 
+For a bounded data-path investigation, use the
+[DCIT native practical](../../education/ncp-metablueprint/extensions/dcit-path/course.md).
+Its `@path_study` declaration resolves four NetBox endpoints, checks owned active
+instances, reconciles actual DeepOps twice and tests a fresh UDP parcel in both a
+subject path and an unaffected control. The receiver and sender bind the named
+data interfaces. The experiment cuts one owned patchbay cable, observes the
+expected failure and restores it even after ordinary exceptions. A per-fabric
+lock refuses concurrent diagnostic runs; inspect stale locks and journals after
+a controller crash. Each report is private, new and incomplete on failure.
+
+The checksum acknowledgement and interface counters qualify a bounded CPU-side
+Ethernet exchange only. They are not GPU, RDMA, bulk-throughput or complete DCIT
+evidence. Private independent incident/holdout qualification remains required.
+
 Every course starts from `Lab.reconcile_hosts()` and retains the resulting
 DeepOps revision and Ansible transcript. Add actual upstream roles only after
 checking their target distribution and effects. The shipped common path executes

@@ -16,6 +16,10 @@ The expanded [scope](education/ncp-metablueprint/EXTENSIONS.md) now preserves th
 user's additional blueprint requirements. NCP-DCIT has a source-traceable catalog
 of 52 leaves and 84 concepts, with NVIDIA coupling and explicit fidelity limits.
 Its twelve learning units are specified, not a completed delivery or live grade.
+The first native path course/project and two independent prompts are now authored.
+The code compiles NetBox-named flows into real DeepOps reconciliation and bounded
+interface-bound UDP fault/control/recovery observations. Its private exercise
+scenarios and holdout grading remain open; it awards no live mastery.
 
 ## Delivered artifacts
 
