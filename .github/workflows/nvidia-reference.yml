@@ -25,9 +25,15 @@ jobs:
       NVIDIA_SUPERPOD_PDF: >-
         https://docs.nvidia.com/dgx-superpod/reference-architecture/scalable-infrastructure-b300-xdr/latest/_downloads/f2d6423ee942e3f144511f5df58e3080/RA11339001-DSPB300-XDR-ReferenceArch.pdf
     steps:
-      - uses: actions/upload-artifact@...
+      - uses: actions/upload-artifact@curl \
+          --fail \
+          --silent \
+          --show-error \
+          --location \
+          "$NVIDIA_SUPERPOD_PDF" \
+          --output /tmp/nvidia-superpod-reference.pdf
         with:
-          path: /tmp/file.pdf
+          path: /tmp/nvidia-superpod-reference.pdf
 
       - name: Fetch official NVIDIA reference into ephemeral storage
         shell: bash
