@@ -1,0 +1,79 @@
+---
+- name: Install real NVIDIA Base Command Manager 11 head node
+  hosts: head_node
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    - name: Refuse containerized BCM head-node targets
+      ansible.builtin.assert:
+        that:
+          - not bcm_require_full_machine | bool or ansible_virtualization_type not in ['docker', 'lxc', 'podman', 'container']
+        fail_msg: >-
+          BCM head-node installation must target a full machine or full VM.
+          Incus system containers are not claimed as a supported BCM head-node platform.
+
+    - name: Require explicit installation and licensing inputs
+      ansible.builtin.assert:
+        that:
+          - product_key is defined
+          - product_key != 'REPLACE_WITH_NVIDIA_BCM_PRODUCT_KEY'
+          - install_medium == 'dvd'
+          - install_medium_dvd_path | length > 0
+          - external_interface in ansible_facts
+          - management_interface in ansible_facts
+          - external_network_gateway | string | length > 0
+          - license.cluster_name | length > 0
+        fail_msg: >-
+          Configure group_vars/head_node/settings.yml and an Ansible-Vault
+          credentials.yml before invoking the real NVIDIA installer.
+
+    - name: Verify BCM installation media exists on the target
+      ansible.builtin.stat:
+        path: "{{ install_medium_dvd_path }}"
+        get_checksum: false
+      register: bcm_iso
+
+    - name: Require actual BCM installation media
+      ansible.builtin.assert:
+        that:
+          - bcm_iso.stat.exists
+          - bcm_iso.stat.isreg
+        fail_msg: "Stage the licensed NVIDIA BCM ISO at {{ install_medium_dvd_path }} on the head node."
+
+  roles:
+    - role: brightcomputing.installer110.head_node
+
+  post_tasks:
+    - name: Ensure the real BCM Base View package is installed
+      ansible.builtin.package:
+        name: base-view
+        state: present
+
+    - name: Ensure CMDaemon is enabled and running
+      ansible.builtin.systemd_service:
+        name: cmd.service
+        enabled: true
+        state: started
+
+    - name: Wait for the Base View HTTPS listener
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ bcm_base_view_port }}"
+        timeout: 120
+
+    - name: Probe the real Base View application
+      ansible.builtin.uri:
+        url: "https://127.0.0.1:{{ bcm_base_view_port }}{{ bcm_base_view_path }}"
+        method: GET
+        validate_certs: false
+        follow_redirects: safe
+        status_code: [200, 301, 302, 303, 307, 308, 401, 403]
+      register: bcm_base_view_probe
+      changed_when: false
+
+    - name: Report Base View endpoint
+      ansible.builtin.debug:
+        msg: >-
+          Base View responded with HTTP {{ bcm_base_view_probe.status }}.
+          Open https://{{ ansible_host | default(inventory_hostname) }}:{{ bcm_base_view_port }}{{ bcm_base_view_path }}

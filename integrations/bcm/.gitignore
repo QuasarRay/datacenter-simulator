@@ -1,0 +1,4 @@
+group_vars/head_node/credentials.yml
+*.vault-password
+*.iso
+*.iso.sha256
