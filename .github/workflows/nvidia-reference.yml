@@ -21,34 +21,29 @@ jobs:
   superpod-b300-xdr:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+
     env:
       NVIDIA_SUPERPOD_PDF: >-
         https://docs.nvidia.com/dgx-superpod/reference-architecture/scalable-infrastructure-b300-xdr/latest/_downloads/f2d6423ee942e3f144511f5df58e3080/RA11339001-DSPB300-XDR-ReferenceArch.pdf
-    steps:
-      - uses: actions/upload-artifact@curl \
-          --fail \
-          --silent \
-          --show-error \
-          --location \
-          "$NVIDIA_SUPERPOD_PDF" \
-          --output /tmp/nvidia-superpod-reference.pdf
-        with:
-          path: /tmp/nvidia-superpod-reference.pdf
 
-      - name: Fetch official NVIDIA reference into ephemeral storage
+    steps:
+      - name: Download PDF
         shell: bash
         run: |
-          set -euo pipefail
-          effective_url="$(
-            curl               --fail               --silent               --show-error               --location               --retry 3               --retry-all-errors               --connect-timeout 15               --max-time 120               --output /tmp/nvidia-superpod-reference.pdf               --write-out '%{url_effective}'               "$NVIDIA_SUPERPOD_PDF"
-          )"
-          case "$effective_url" in
-            https://docs.nvidia.com/*) ;;
-            *)
-              echo "Unexpected redirect target: $effective_url" >&2
-              exit 1
-              ;;
-          esac
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            "$NVIDIA_SUPERPOD_PDF" \
+            --output /tmp/nvidia-superpod-reference.pdf
+
+      - name: Upload PDF as workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nvidia-superpod-reference
+          path: /tmp/nvidia-superpod-reference.pdf
+          if-no-files-found: error
 
       - name: Validate PDF envelope
         shell: bash
