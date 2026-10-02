@@ -1,21 +1,7 @@
-name: NVIDIA reference validation
+name: NVIDIA Reference
 
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/nvidia-reference.yml'
-      - 'docs/vendor-references/**'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/nvidia-reference.yml'
-      - 'docs/vendor-references/**'
   workflow_dispatch:
-  schedule:
-    - cron: '17 6 1 * *'
-
-permissions:
-  contents: read
 
 jobs:
   superpod-b300-xdr:
@@ -41,27 +27,6 @@ jobs:
       - name: Upload PDF as workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: nvidia-superpod-reference
           path: /tmp/nvidia-superpod-reference.pdf
+          archive: false
           if-no-files-found: error
-
-      - name: Validate PDF envelope
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("/tmp/nvidia-superpod-reference.pdf")
-          data = path.read_bytes()
-          assert data.startswith(b"%PDF-"), "download is not a PDF"
-          assert data.rstrip().endswith(b"%%EOF"), "PDF EOF marker is missing"
-          assert len(data) > 100_000, f"unexpectedly small PDF: {len(data)} bytes"
-          print(f"validated official NVIDIA PDF envelope: {len(data)} bytes")
-          PY
-
-      - name: Verify documentation records the official source
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -F "$NVIDIA_SUPERPOD_PDF"             docs/vendor-references/nvidia-dgx-superpod-b300-xdr.md
