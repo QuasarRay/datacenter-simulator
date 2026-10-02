@@ -37,10 +37,13 @@ Obtain a BCM entitlement/product key through NVIDIA and download the BCM ISO tha
 matches the target distribution. The ISO and product key are licensed inputs and
 are deliberately not downloaded or redistributed by this repository.
 
-On the Ansible control node, install Ansible Core and the pinned official
-collection:
+On the Ansible control node, install the pinned Ansible Core release and
+collections. The explicit `community.general` dependency is intentional:
+the current installer110 role calls `community.general.alternatives` but a
+minimal `ansible-core` installation does not provide that collection.
 
 ```bash
+python -m pip install -r integrations/bcm/requirements-control-node.txt
 ansible-galaxy collection install -r integrations/bcm/requirements.yml
 ```
 

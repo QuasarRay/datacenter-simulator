@@ -2,3 +2,7 @@
 collections:
   - name: brightcomputing.installer110
     version: "33.0.484+git940b822"
+  # installer110 currently invokes community.general.alternatives but does not
+  # pull community.general into a minimal ansible-core environment itself.
+  - name: community.general
+    version: "13.0.1"

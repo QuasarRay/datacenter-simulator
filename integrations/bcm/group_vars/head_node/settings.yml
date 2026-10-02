@@ -6,6 +6,7 @@
 # Network topology seen by the target head node.
 external_interface: enp1s0
 external_ip_address: DHCP
+external_network_gateway: "{{ ansible_facts.default_ipv4.gateway }}"
 management_interface: enp2s0
 management_ip_address: 10.142.255.254
 management_network_baseaddress: 10.142.0.0
