@@ -1,0 +1,66 @@
+name: NVIDIA reference validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nvidia-reference.yml'
+      - 'docs/vendor-references/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nvidia-reference.yml'
+      - 'docs/vendor-references/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 1 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  superpod-b300-xdr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      NVIDIA_SUPERPOD_PDF: >-
+        https://docs.nvidia.com/dgx-superpod/reference-architecture/scalable-infrastructure-b300-xdr/latest/_downloads/f2d6423ee942e3f144511f5df58e3080/RA11339001-DSPB300-XDR-ReferenceArch.pdf
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Fetch official NVIDIA reference into ephemeral storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          effective_url="$(
+            curl               --fail               --silent               --show-error               --location               --retry 3               --retry-all-errors               --connect-timeout 15               --max-time 120               --output /tmp/nvidia-superpod-reference.pdf               --write-out '%{url_effective}'               "$NVIDIA_SUPERPOD_PDF"
+          )"
+          case "$effective_url" in
+            https://docs.nvidia.com/*) ;;
+            *)
+              echo "Unexpected redirect target: $effective_url" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Validate PDF envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("/tmp/nvidia-superpod-reference.pdf")
+          data = path.read_bytes()
+          assert data.startswith(b"%PDF-"), "download is not a PDF"
+          assert data.rstrip().endswith(b"%%EOF"), "PDF EOF marker is missing"
+          assert len(data) > 100_000, f"unexpectedly small PDF: {len(data)} bytes"
+          print(f"validated official NVIDIA PDF envelope: {len(data)} bytes")
+          PY
+
+      - name: Verify documentation records the official source
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "$NVIDIA_SUPERPOD_PDF"             docs/vendor-references/nvidia-dgx-superpod-b300-xdr.md
