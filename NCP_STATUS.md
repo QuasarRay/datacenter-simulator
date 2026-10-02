@@ -32,6 +32,7 @@ scenarios and holdout grading remain open; it awards no live mastery.
 | Formal decision source | [Pinned shared kernel](education/rustlings/lab-kernel/README.md) | Seven exact production functions checked with both Verus and Kani |
 | Native runtime contract | [Provisioning](integrations/incus/PROVISIONING.md) | Explicit OS/image identity, ownership checks, journaled lifecycle and separate product gates |
 | Runtime capability adaptation | [Rusternetes profile](integrations/rusternetes/README.md) | No workload fabrication; runtime subresources return 501; TLS plus bearer RBAC |
+| Real BCM 11 deployment path | [BCM integration](integrations/bcm/README.md) | Official installer110 role + actual base-view package + CMDaemon/HTTPS verification; licensed live run still required |
 
 The assessment compiler contains 40 station contracts and 510 facet observations
 per baseline/holdout traversal, including intentional companion coverage. Every
@@ -67,11 +68,13 @@ two source-domain checks grants no unit.
    asset installation, authentication, restart behavior, KWOK pod/lease recovery,
    Slurm, storage services and workload adapters. The Linux Ethernet lifecycle and
    separate API probe are useful evidence, not an integrated production acceptance.
-3. Implement and qualify the private station collectors against actual required
-   products and hardware. BCM, Mission Control/Base View, Run:ai, UFM, NetQ, Air,
-   DPU/GPU/NVSwitch, real RDMA/GDS, physical service tasks and external Docker course
-   evidence cannot be replaced by constant success or renamed simulation. The
-   shipped collector profile stays unqualified; no live mastery is awarded.
+3. Execute and qualify the delivered BCM/Base View path on a licensed supported
+   full head node, then implement and qualify private station collectors against
+   the remaining actual products and hardware: Mission Control, Run:ai, UFM, NetQ,
+   Air, DPU/GPU/NVSwitch, real RDMA/GDS, physical service tasks and external Docker
+   course evidence. Installer syntax or an HTTP probe cannot replace a licensed
+   product run. The shipped collector profile stays unqualified; no live mastery
+   is awarded.
 4. Extend formal specifications beyond the seven-function kernel to the complete
    runner, bank parser and orchestration boundaries. The existing all-facet
    mutation checks are tests, not a proof of all Rustlings or the entire lab bank.

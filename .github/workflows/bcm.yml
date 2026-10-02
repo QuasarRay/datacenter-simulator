@@ -1,0 +1,66 @@
+name: bcm-integration
+
+on:
+  pull_request:
+    paths:
+      - "integrations/bcm/**"
+      - ".github/workflows/bcm.yml"
+  push:
+    branches: [main]
+    paths:
+      - "integrations/bcm/**"
+      - ".github/workflows/bcm.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ansible-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the BCM control-node Ansible version
+        run: python -m pip install -r integrations/bcm/requirements-control-node.txt
+
+      - name: Install pinned BCM installer dependencies
+        run: ansible-galaxy collection install -r integrations/bcm/requirements.yml
+
+      - name: Record resolved automation versions and installer runtime contract
+        run: |
+          ansible --version
+          ansible-galaxy collection list brightcomputing.installer110
+          ansible-galaxy collection list community.general
+          cat "$HOME/.ansible/collections/ansible_collections/brightcomputing/installer110/meta/runtime.yml"
+
+      - name: Enumerate collection calls made by installer110
+        shell: bash
+        run: |
+          grep -RhoE '[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-zA-Z0-9_]+'             "$HOME/.ansible/collections/ansible_collections/brightcomputing/installer110/roles"             | sort -u || true
+
+      - name: Syntax-check real BCM installation automation
+        run: >-
+          ansible-playbook
+          -i integrations/bcm/inventory.example.ini
+          --syntax-check
+          integrations/bcm/install.yml
+
+      - name: Syntax-check live BCM verification
+        run: >-
+          ansible-playbook
+          -i integrations/bcm/inventory.example.ini
+          --syntax-check
+          integrations/bcm/verify.yml
+
+      - name: Confirm no private deployment inputs are tracked
+        shell: bash
+        run: |
+          test ! -e integrations/bcm/group_vars/head_node/credentials.yml
+          if find integrations/bcm -type f \( -name '*.iso' -o -name '*.vault-password' \) | grep -q .; then
+            echo "Private BCM media or vault material is tracked."
+            exit 1
+          fi
