@@ -1,0 +1,37 @@
+---
+# Real BCM 11 head-node installation settings.
+# This profile intentionally uses NVIDIA's supported add-on installer rather than
+# pretending that a system container is a BCM head node.
+
+# Network topology seen by the target head node.
+external_interface: enp1s0
+external_ip_address: DHCP
+management_interface: enp2s0
+management_ip_address: 10.142.255.254
+management_network_baseaddress: 10.142.0.0
+external_name_servers:
+  - 1.1.1.1
+timezone: UTC
+
+# NVIDIA-supplied BCM ISO already present on the target head node.
+# The repository never downloads, redistributes, or checks in proprietary media.
+install_medium: dvd
+install_medium_dvd_path: /srv/nvidia/bcm-11.iso
+
+# License-certificate subject. The secret product key belongs in credentials.yml.
+license:
+  country: XX
+  state: CHANGE_ME
+  locality: CHANGE_ME
+  organization: CHANGE_ME
+  organizational_unit: CHANGE_ME
+  cluster_name: ncp-bcm
+  # Prefer a literal MAC for repeatability. This example resolves the management
+  # interface discovered by Ansible after facts are gathered.
+  mac: "{{ ansible_facts[management_interface].macaddress }}"
+
+# Guardrails used by this repository around the upstream installer.
+bcm_expected_major_version: "11"
+bcm_base_view_port: 8081
+bcm_base_view_path: /base-view
+bcm_require_full_machine: true

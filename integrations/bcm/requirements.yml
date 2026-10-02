@@ -1,0 +1,4 @@
+---
+collections:
+  - name: brightcomputing.installer110
+    version: "33.0.484+git940b822"
