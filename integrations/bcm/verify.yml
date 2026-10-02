@@ -1,0 +1,93 @@
+---
+- name: Verify a live NVIDIA Base Command Manager 11 installation
+  hosts: head_node
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Read installed package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Require the real Base View package
+      ansible.builtin.assert:
+        that:
+          - "'base-view' in ansible_facts.packages"
+        fail_msg: "BCM Base View package is not installed."
+
+    - name: Verify the installed BCM license certificate
+      ansible.builtin.command:
+        argv: [verify-license, verify]
+      register: bcm_license
+      changed_when: false
+
+    - name: Require a valid BCM license
+      ansible.builtin.assert:
+        that:
+          - bcm_license.rc == 0
+        fail_msg: >-
+          NVIDIA verify-license rejected the installed BCM license:
+          {{ bcm_license.stdout }} {{ bcm_license.stderr }}
+
+    - name: Read systemd service facts
+      ansible.builtin.service_facts:
+
+    - name: Require CMDaemon to be active
+      ansible.builtin.assert:
+        that:
+          - "'cmd.service' in ansible_facts.services"
+          - ansible_facts.services['cmd.service'].state == 'running'
+        fail_msg: "BCM cmd.service is not running."
+
+    - name: Query CMDaemon status using the vendor utility
+      ansible.builtin.command:
+        argv: [cmdaemonctl, full-status]
+      register: bcm_cmd_status
+      changed_when: false
+
+    - name: Require CMDaemon status command to identify a running daemon
+      ansible.builtin.assert:
+        that:
+          - bcm_cmd_status.rc == 0
+          - "'running' in bcm_cmd_status.stdout | lower"
+
+    - name: Read the installed BCM version
+      ansible.builtin.command:
+        argv: [versioninfo]
+      register: bcm_version
+      changed_when: false
+
+    - name: Require the intended BCM major version
+      ansible.builtin.assert:
+        that:
+          - ("Cluster Manager " ~ bcm_expected_major_version ~ ".") in bcm_version.stdout
+        fail_msg: >-
+          versioninfo did not report BCM {{ bcm_expected_major_version }}:
+          {{ bcm_version.stdout }}
+
+    - name: Wait for the Base View HTTPS listener
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ bcm_base_view_port }}"
+        timeout: 30
+
+    - name: Verify the Base View application endpoint
+      ansible.builtin.uri:
+        url: "https://127.0.0.1:{{ bcm_base_view_port }}{{ bcm_base_view_path }}"
+        method: GET
+        validate_certs: false
+        follow_redirects: safe
+        status_code: [200, 301, 302, 303, 307, 308, 401, 403]
+      register: bcm_base_view
+      changed_when: false
+
+    - name: Emit live qualification summary
+      ansible.builtin.debug:
+        msg:
+          base_view_packages: "{{ ansible_facts.packages['base-view'] }}"
+          license_valid: true
+          cmd_service: "{{ ansible_facts.services['cmd.service'] }}"
+          cmdaemonctl: "{{ bcm_cmd_status.stdout_lines }}"
+          versioninfo: "{{ bcm_version.stdout_lines }}"
+          base_view_http_status: "{{ bcm_base_view.status }}"
+          base_view_url: "https://{{ ansible_host | default(inventory_hostname) }}:{{ bcm_base_view_port }}{{ bcm_base_view_path }}"

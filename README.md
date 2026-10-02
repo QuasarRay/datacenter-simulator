@@ -13,6 +13,12 @@ Use [native provisioning](integrations/incus/PROVISIONING.md) for real NVIDIA
 DeepOps role execution, Rusternetes, KWOK and service boundaries. Students work
 in code and Ansible. Host lifecycle privileges remain with the trainer.
 
+The [BCM 11 integration](integrations/bcm/README.md) invokes NVIDIA's official
+head-node installer against a supported full machine or VM, installs the actual
+`base-view` GUI package, and verifies CMDaemon plus the HTTPS Base View endpoint.
+Licensed BCM media and product keys remain external inputs; CI does not fabricate
+a successful proprietary-product deployment.
+
 The former deployment runtime has been removed. Historical EX457 text and audit
 fixtures remain under `cheatsheets/` and `flaws/` as source history; they are not
 current deployment instructions. The implementation prohibition in the Incus
