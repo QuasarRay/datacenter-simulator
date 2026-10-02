@@ -20,7 +20,9 @@
           - product_key != 'REPLACE_WITH_NVIDIA_BCM_PRODUCT_KEY'
           - install_medium == 'dvd'
           - install_medium_dvd_path | length > 0
+          - external_interface in ansible_facts
           - management_interface in ansible_facts
+          - external_network_gateway | string | length > 0
           - license.cluster_name | length > 0
         fail_msg: >-
           Configure group_vars/head_node/settings.yml and an Ansible-Vault
