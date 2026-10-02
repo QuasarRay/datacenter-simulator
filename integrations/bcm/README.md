@@ -38,9 +38,17 @@ matches the target distribution. The ISO and product key are licensed inputs and
 are deliberately not downloaded or redistributed by this repository.
 
 On the Ansible control node, install the pinned Ansible Core release and
-collections. The explicit `community.general` dependency is intentional:
-the current installer110 role calls `community.general.alternatives` but a
-minimal `ansible-core` installation does not provide that collection.
+collections. The explicit `ansible.posix`, `community.crypto`,
+`community.general`, and `community.mysql` entries are intentional: the
+current installer110 role calls modules from those collections while its
+published Galaxy metadata declares no collection dependencies. `jmespath`
+is pinned because installer110 also uses `community.general.json_query`.
+
+The current installer110 artifact also publishes
+`requires_ansible: ">=8.3"`. Ansible interprets that metadata field against
+the 2.x `ansible-core` version, so it emits a compatibility warning even with
+a syntactically valid tested core. CI records the upstream metadata and tests
+this integration against the explicit core pin instead of hiding that warning.
 
 ```bash
 python -m pip install -r integrations/bcm/requirements-control-node.txt
