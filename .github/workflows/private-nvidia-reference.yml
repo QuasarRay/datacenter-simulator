@@ -1,0 +1,107 @@
+name: Publish private NVIDIA reference
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-private-superpod-reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NVIDIA_SUPERPOD_PDF: >-
+        https://docs.nvidia.com/dgx-superpod/reference-architecture/scalable-infrastructure-b300-xdr/latest/_downloads/f2d6423ee942e3f144511f5df58e3080/RA11339001-DSPB300-XDR-ReferenceArch.pdf
+      PACKAGE: ghcr.io/quasarray/private-nvidia-superpod-b300-xdr
+      TAG: ra-11339-001-v01
+      PDF_NAME: RA11339001-DSPB300-XDR-ReferenceArch.pdf
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Require owner-only GHCR credential
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.PRIVATE_DOCS_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GHCR_TOKEN:-}" ]; then
+            echo "Missing repository secret PRIVATE_DOCS_GHCR_TOKEN." >&2
+            echo "Create a classic PAT owned by QuasarRay with read:packages and write:packages, then store it under that secret name." >&2
+            exit 1
+          fi
+
+      - name: Fetch official NVIDIA PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          effective_url="$(
+            curl               --fail               --silent               --show-error               --location               --retry 3               --retry-all-errors               --connect-timeout 15               --max-time 120               --output "$RUNNER_TEMP/$PDF_NAME"               --write-out '%{url_effective}'               "$NVIDIA_SUPERPOD_PDF"
+          )"
+          case "$effective_url" in
+            https://docs.nvidia.com/*) ;;
+            *)
+              echo "Unexpected redirect target: $effective_url" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Validate PDF envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/$PDF_NAME" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          data = path.read_bytes()
+          assert data.startswith(b"%PDF-"), "download is not a PDF"
+          assert data.rstrip().endswith(b"%%EOF"), "PDF EOF marker is missing"
+          assert len(data) > 100_000, f"unexpectedly small PDF: {len(data)} bytes"
+          print(f"validated PDF envelope: {len(data)} bytes")
+          PY
+          sha256sum "$RUNNER_TEMP/$PDF_NAME"
+
+      - name: Install pinned ORAS client
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/oras-bin"
+          GOBIN="$RUNNER_TEMP/oras-bin" go install oras.land/oras/cmd/oras@v1.3.4
+          echo "$RUNNER_TEMP/oras-bin" >> "$GITHUB_PATH"
+
+      - name: Publish as private unlinked GHCR artifact
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.PRIVATE_DOCS_GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | oras login ghcr.io             --username QuasarRay             --password-stdin
+
+          cd "$RUNNER_TEMP"
+          oras push "$PACKAGE:$TAG"             --artifact-type application/vnd.nvidia.reference-document.v1             "$PDF_NAME:application/pdf"
+
+          oras logout ghcr.io
+
+      - name: Verify anonymous access is denied
+        shell: bash
+        run: |
+          set -euo pipefail
+          if oras manifest fetch "$PACKAGE:$TAG" >/dev/null 2>&1; then
+            echo "Private-package invariant failed: anonymous read unexpectedly succeeded." >&2
+            exit 1
+          fi
+          echo "Anonymous read denied as expected."
+
+      - name: Print owner download command
+        shell: bash
+        run: |
+          cat <<EOF
+          Owner-only retrieval:
+            printf '%s' "\$GHCR_READ_TOKEN" | oras login ghcr.io -u QuasarRay --password-stdin
+            oras pull $PACKAGE:$TAG
+          EOF

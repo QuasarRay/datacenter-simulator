@@ -23,3 +23,11 @@ Portable checks do not imply a validated physical GPU datacenter. Live Incus,
 vendor services, proprietary control planes, optical hardware and native GPU/RDMA
 execution require their corresponding evidence tiers. Read each integration's
 validation status before interpreting its results.
+
+
+## Architecture references
+
+The project tracks the official
+[NVIDIA DGX SuperPOD B300 / Quantum-X800 reference architecture](docs/vendor-references/nvidia-dgx-superpod-b300-xdr.md)
+as an external source of record. CI verifies the official NVIDIA PDF remains
+reachable and structurally valid without republishing the vendor document.
